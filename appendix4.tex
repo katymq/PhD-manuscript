@@ -1,0 +1,521 @@
+% !TEX root = late\obs_avec_réduction_pour_impression_recto_verso_et_rognage_minimum.tex
+\chapter{Unsupervised Bayesian classification}
+\label{chap:appendix4}
+
+
+\tocless\section{Partially Pairwise Markov Chains}
+\label{sec-rnn}
+In this section, we propose a particular class of TMC which aims at extending the PMC model 
+proposed in Section 
+\ref{sec:generalParam}. The main motivation
+underlying this particular model is
+to introduce an explicit
+dependency on 
+the past observations $\obs_{t-1}$ of the 
+pair $(\lab_t,\obs_t)$, for all $t$. This
+dependency is introduced through
+the continuous latent process $\latent_{0:T}$
+and enables us to build an 
+explicit joint 
+distribution $\p(\lab_{0:T},\obs_{0:T})$
+which does 
+not satisfy the Markovian property of
+the PMC \eqref{eq:pmc_intro_uns}. The main difference
+with Section \ref{sec-tmc} is that 
+$\latent_{0:T}$ is now a conditional deterministic 
+latent process.
+The resulting model is called a~\gls*{ppmc}.
+As we will see, this particular
+construction enables us to use directly the Bayesian inference framework developed in Section~\ref{sec:generalParam}.
+Finally, since PMCs appears
+as particular TMCs, the pretraining of
+deep parameterized PPMCs is a direct adaptation of 
+Section \ref{sec-deep-tmc}.
+%In this section we propose the Partially Pairwise Markov Chains (PPMC)
+% ~\citep{pieczynski2005restoring, lapuyade2010unsupervised} 
+% combined with Recurrent Neural Networks (RNN)~\citep{mikolov2014learning}. 
+% In the PPMC models, the Markovian property of $(\obs_{0:T}, \lab_{0:T})$ 
+% does not hold anymore and the conditioning depends on all the previous 
+% realizations of the observed r.v. However, $\lab_{0:T}$ given a realization 
+% of $\obs_{0:T}$ remains Markovian. On the other hand, a  
+% RNN is type of a neural networks which uses sequential data and depends on 
+% the previous elements within the sequence. 
+
+\tocless\subsection{Deterministic TMCs}
+\label{sec:def-ppmc}
+Let us focus on a particular case 
+of the TMC \eqref{tmc-trans}-\eqref{tmc-theta-3}. 
+From now on, 
+we consider that the conditional distribution $\eta$
+coincides with the Dirac distribution $\delta$, 
+and that function $\pzun$ only depends on $(\latent_{t-1},\obs_{t-1})$.
+Thus, $\latent_t$ becomes deterministic given $(\latent_{t-1},\obs_{t-1})$,
+\begin{equation}
+\label{z-ptmc}
+\latent_t=\pzun(\latent_{t-1},\obs_{t-1}) \text{.}
+\end{equation}
+Each variable $\latent_t$ can be interpreted
+as a summary of all the past observations $\obs_{t-1}$. Consequently, it is easy to see
+that 
+\eqref{tmc-theta-2} and \eqref{tmc-theta-3} now coincide with 
+$\p(\lab_t|\lab_{t-1},\obs_{t-1})$ and $\p(\obs_t|\lab_{t-1:t},\obs_{t-1})$, 
+respectively, and marginalizing \eqref{eq:tmc_intro} w.r.t.~$\latent_{0:T}$
+gives the explicit distribution of
+$(\lab_{0:T},\obs_{0:T})$,
+\begin{align}
+ \label{eq:ppmc_general}
+    \p(\lab_{0:T},\obs_{0:T})=\p(\lab_0,\obs_0)
+    \prod_{t=1}^T   & \underbrace{\vartheta(\lab_t;\pyun(\latent{t-1:t},\lab_{t-1},\obs_{t-1}))}_{\p(\lab_t|\lab_{t-1},\obs_{t-1})} \times \nonumber \\
+    & \quad \underbrace{\zeta(\obs_t;\pxun(\latent{t-1:t},\lab_{t-1:t},\obs_{t-1}))}
+_{p(\obs_t|\lab_{t-1:t},\obs_{t-1})} \text{,}
+\end{align}
+where $\latent_t$ satisfies \eqref{z-ptmc}.
+It can noted that $(\lab_{0:T},\obs_{0:T})$ is no longer
+Markovian. Remark that this property
+is also satisfied by the general TMC \eqref{eq:tmc_intro}. However,
+$\p(\lab_{0:T},\obs_{0:T})$ is now available in a closed-form 
+expression and the relationship between the 
+pair $(\lab_t,\obs_t)$ and the past observations is
+fully characterized by the function $\pzun$.
+
+
+This kind of parameterization has an advantage in 
+terms of Bayesian inference. Since $\latent_t$ is
+a deterministic function of $(\latent_{t-1},\obs_{t-1})$ (and so of $\obs_{t-1}$, by induction),
+the conditional
+posterior distribution $\p(\latent_t|\latent_{t-1},\obs_{0:T})$ reduces 
+to $\delta_{\pzun(\latent_{t-1},\obs_{t-1})}$.
+Consequently, Algorithm~\ref{algo:algo_theta_pmc} and
+Algorithm~\ref{algo:algo_hk_pmc} can be directly applied to estimate $\theta$ and $\lab_t$, for all $t$, by introducing the dependency in $\latent_{t-1:t}$ in functions $\pyun$
+and $\pxun$ of Section \ref{sec:inference_pmc}.
+An alternative point of view is that
+when $\latent_t$ is deterministic,
+Algorithm~\ref{algo:tmc_elbo_opt} can be seen as a particular instance of Algorithm~\ref{algo:algo_theta_pmc} 
+in which we have set $\q(\latent_{0:T}|\obs_{0:T})=\p(\latent_{0:T}|\obs_{0:T})$,
+$\beta_1=1$ and $\beta_2=0$. Indeed, for this particular setting the objective function
+\eqref{L-approx} coincides with the ELBO but also with the log-likelihood $\p(\obs_{0:T})$. 
+
+
+\tocless\subsection{Deep PPMCs} 
+\label{sec:dppmc}
+As previous models, we consider the case where
+PPMCs \eqref{eq:ppmc_general} are parameterized with~\gls*{dnns}. 
+Such models will be
+referred to as~\gls*{dppmc}.  
+In the 
+particular case of PPMCs, 
+%$\pzun(\latent_{t-1},\obs_{t-1})$ is parameterized 
+%by a DNN. Since the objective is to model
+%long term dependency in the past observations, 
+$\pzun$ can be seen as a RNN, \ie~a neural network
+which admits the output of the network at previous
+time $t-1$ as input at time $t$~\citep{LSTM}.
+It is thus possible to directly combine our models
+with powerful RNN architectures such as 
+Long Short Term Memory (LSTM) RNNs or
+Gated Recurrent Unit (GRU) RNNs which have
+been developed to introduce
+emphasize sequential dependencies.
+Note that the gradient of $\pzun$ w.r.t.~$\theta$
+can also be computed with a version of the backpropagation algorithm adapted to
+RNNs~\citep{LSTM, GRU}.
+
+The pretraining of this deep architecture
+is direct. The constrained output layer step
+is an application of Paragraph \ref{constraint-tmc}
+with $\q(\latent_{0:T}|\obs_{0:T})=\p(\latent_{0:T}|\obs_{0:T})$, $\beta_1=1$ and $\beta_2=0$; so it can be seen as the step
+described for PMCs in Paragraph \ref{sec:constrained_archi} up
+to the additional input $\latent_{t-1:t}$.
+
+The second step of our pretraining procedure of Paragraph \ref{tmc-unfrozen} can also be simplified. Since in this particular case we have implicitly computed  the optimal conditional variational distribution $\q^{\rm opt}(\latent_t|\latent_{0:t-1},\obs_{0:T})=\delta_{\pzun(\latent_{t-1},\obs_{t-1})}(\latent_t)$, the reparameterized sample $\latent_{t-1:t}$ of Figure~\ref{fig:pretrain_dmtmc}  is now deterministic and coincides directly with the output of $\pzun$, as shown in  Figure~\ref{fig:pretrain_dppmc}. Note that the parameters of $\pzun$ are unfrozen.
+The training process is summarized in Algorithm~\ref{algo:algo_train_dppmc}.
+%Also, following Remark~\ref{rk:multiclass}, the prodecure can be extended to the multi-class and multi-channel case.
+
+
+%Now we  propose a new and practical way to take advantage of all the modeling possibilities that are introduced using a deep parameterization. More precisely, we propose to embed a RNN, denoted as $r_{\theta}$, in the model and we call it the Deep-PPMC (DPPMC). The auxiliary latent r.v. $\latent_{0:T}$ takes a new meaning within the DPPMC context: $\latent_t$ is now the deterministic hidden states of $r_{\theta}$, with values in $\mathbb{R}^{d_z}$. These new deterministic r.v. summarize the information contained in the previous observations.
+%In this case, the DPPMC model is defined by the equations:
+%\begin{eqnarray}
+%\label{eq:rnn}
+%\latent_t &=& r_{\theta}(\obs_{t-1},\latent_{t-1}) \text{, }\\
+%\label{ppmc-theta-1}
+%\p(\lab_t|\lab_{t-1},\obs_{1:t-1})&=&\vartheta(\lab_t;\pyun(\lab_{t-1},\latent_{t-1})) \text{, } \\
+%\label{ppmc-theta-2}
+%\p(\obs_t|\lab_t,\lab_{t-1},\obs_{1:t-1})&=&\zeta(\obs_t;\pxun(\lab_t,\lab_{t-1},\latent_{t-1})) \text{, }
+%\end{eqnarray}
+%where the two last equations can be related to Equations~\eqref{pmc-theta-1} and~\eqref{pmc-theta-2}.\\
+
+
+%On the other hand, we can similarly define the Deep-Partially Semi Pairwise Markov Chain (DPSPMC) where $\obs_t$ no longer depends on $\lab_{t-1}$  and the factorization reads
+%\begin{eqnarray}
+%\latent_t &=& r_{\theta}(\obs_{t-1},\latent_{t-1}) \text{, }\\
+%\label{sppmc-theta-1}
+%\p (\lab_t|\lab_{t-1},\obs_{1:t-1})&=&\vartheta(\lab_t;\pyun(\lab_{t-1},\latent_{t-1})) \text{, } \\
+%\label{sppmc-theta-2}
+%\p(\obs_t|\lab_t,\obs_{1:t-1})&=&\zeta(\obs_t;\pxun(\lab_t,\latent_{t-1})).
+%\end{eqnarray}
+%The DPSPMC model will be used in our experiments because of difficulties in the parameter estimation for the DPPMC model (also seen for the DPMC model) which requires further investigation out of the scope of this article. 
+%The graphical representations of the PPMC model and the PSPMC model are given in Figure~\ref{fig:ppmc_graphs}.
+
+
+%\begin{remark}
+%An intermediate linear layer is introduced in the model transforming the output of the RNN layer $\latent_t\in\mathbb{R}^{d_z}$ in a vector of $\mathbb{R}^{d_{\obs}}$ which can be fed into the subsequent parts of the network. This layer does not appear explicitly in the previous equations not to overload the expressions but will be mentionned in the technical details that follow.
+%Thanks to this linear layer, we ensure that we are able to work with arbitrary dimensions for the RNN internal states, while keeping conssitency with respect to the DPMC model to derive our pretraining procedure that is described next.
+%\end{remark}
+
+
+%\begin{figure}[h!]
+%\centering
+%\begin{subfigure}{0.3\textwidth}
+%\centering
+%\input{tikz/ppmc}
+%\caption{PPMC}
+%\label{fig:ppmc_graph}
+%\end{subfigure}
+%\begin{subfigure}{0.3\textwidth}
+%\centering
+%\input{tikz/pspmc}
+%\caption{PSPMC}
+%\label{fig:pspmc_graph}
+%\end{subfigure}
+%\caption{Graphical representations of the PPMC and the PSPMC. The light gray hexagons represent the deterministic variable $\latent_t$. The other graphical elements follow the convention from Figure~\ref{fig:pmc_graphs}.
+%}
+%\label{fig:ppmc_graphs}
+%\end{figure}
+
+
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=0.85\textwidth]{Figures/Graphical_models/d-ppmc.pdf}
+  \caption{Graphical and condensed representation of the parameterization of
+  $\pyun$ in the DPPMC model. 
+  %Note the residual connections between the inputs and the ouput of $\pzun$.
+  The dashed arrows represent the fact that some variables are copied. 
+  %For clarity, we do not represent the entries of $\pyun$ consisting of products of $\lab_{t-1}$, $\latent_{t-1:t}$ or $\obs_{t-1}$, due to the output layer constraint. %Residual connections between the $\pyun$ layer inputs and the last hidden layer of $\pyun$ are also omitted.
+  }
+  \label{fig:pretrain_dppmc}
+\end{figure}
+
+
+\begin{algorithm}[htbp!]
+  \caption{A general estimation algorithm for deep parameterizations of PPMC models.}
+  \label{algo:algo_train_dppmc}
+  \begin{algorithmic}[1]
+    \Require{$\obs_{0:T}$, the observation}
+    \Ensure{$\hat{{\lab}_{0:T}}$, the final classification}
+    \Statex{\textbf{Initialization of the output layer of $\pyun$ and $\pxun$}}
+    \State Estimate $\theta_{\fr}^*$ and $\hat{\lab}_{0:T}^{\pre}$ with Lines \eqref{line:nondeep1}-\eqref{line:nondeep3} of Algorithm~\ref{algo:algo_train_dpmc}
+    \Statex{\textbf{Pretraining of $\theta_{\ufr}$}}
+    \State   $\theta_{\ufr}^{(0)} \leftarrow$ ${\rm Backprop}(\hat{\lab}_{0:T}^{\pre},\obs_{0:T},\theta_{\fr}^*, \mathcal{C}_{\f}, \mathcal{C}_{\g})$
+    \Statex{\textbf{Fine-tuning of the complete model}}
+    \State Update all the models parameters (except $\theta_{\fr}$) with Algorithm~\ref{algo:algo_theta_pmc}
+    \State Compute $\hat{\lab}_{0:T}$ with Algorithm~\ref{algo:algo_hk_pmc} 
+  \end{algorithmic}
+\end{algorithm}
+
+
+
+\tocless\subsection{Simulations}
+We start again with the same experiments 
+as those in Section \ref{sec:pmc}, but we use 
+an alternative noise which aims
+at introducing longer dependencies on the observations. We now set
+\begin{equation}
+    \label{eq:longer_noise_eq1}
+    \obs_t| \lab_{t},\obs_{t-2:t-1} \sim \mathcal{N}\Big(\sin(a_{\lab_t}+0.2(\obs_{t-1}+\obs_{t-2}));
+    \sigma^2\Big).
+\end{equation}
+where $a_{\omega_1}=0$, $\sigma^2=0.25$ 
+and $a_{\omega_2}$ is a varying parameter.
+We compare the deep models of Section \ref{sec:generalParam} (DSMPC and DPMC) with their natural extensions
+developed in this section (DPSPMC and DPPMC).
+ 
+Figure~\ref{fig:nonlin_corr_ppmc_sce1_a} illustrates the results involving the models we have just introduced. For $\pzun$ we use two independent standard RNNs with ReLU activation function, i.e. $\latent_t=[\latent_t^1,\latent_t^2]=[{\pzun}^1(\latent_{t-1}^1,\obs_{t-1}),
+{\pzun}^2(\latent_{t-1}^2,\obs_{t-1})]$; $\pyun$ (resp. $\pxun$) depends on $\latent_{t-1:t}^1$ (resp. $\latent_{t-1:t}^2$). %their output replaces the observation input of $\pyun$ and $\pxun$, respectively.
+In this setting, we found that the models worked the best when the dimensions of $\latent_t^1$ and of $\latent_t^2$  is $5$.
+%\ie there are $5$ hidden neurons in each RNN. Graphical illustrations are provided in Figure~\ref{fig:nonlin_corr_ppmc_sce1_b}.
+We can see that the more general parameterizations embedded in   DPSPMC and DPPMC lead to an improvement of the DPMC models; each DPPMC model leading to a better accuracy than its DPMC counterpart. The ability to model long term dependencies proves to be important to better solve the correlated noise. This experiment illustrates a way to take advantage of a deterministic auxiliary process: by strengthening the sequential dependencies between the hidden random variables.
+
+\input{Figures/nonlin_corr_ppmc_sce1}
+
+\tocless\section{Additional material}
+\tocless\subsection{Proof of Proposition \ref{prop:prop1}}
+\label{app:prop1}
+The ELBO 
+\begin{equation}
+\label{elbo-proof}
+Q(\theta,\phi)= \sum_{\lab_{0:T}} \int \q(\lab_{0:T},\latent_{0:T}|\obs_{0:T}) \log\left(\frac{\p(\lab_{0:T},\latent_{0:T},\obs_{0:T})}{\q(\lab_{0:T},\latent_{0:T}|\obs_{0:T})}\right) {\rm d}  \latent_{0:T} 
+\end{equation}
+can be decomposed as 
+\begin{align}
+\label{F-decomposed}
+Q(\theta,\phi)   &= \int  \overbrace{\left[\sum_{\lab_{0:T}}  \q(\lab_{0:T}|\latent_{0:T},\obs_{0:T})\right]}^{1} \q(\latent_{0:T}|\obs_{0:T})  \log\left(\frac{\p(\latent_{0:T},\obs_{0:T})}{\q(\latent_{0:T}|\obs_{0:T})}\right) {\rm d}  \latent_{0:T} \nonumber  \\ 
+     %&\phantom{AAAAA} 
+    & -\int \q(\latent_{0:T}|\obs_{0:T}) \dkl \left(\q(\lab_{0:T}|\latent_{0:T},\obs_{0:T})||\p(\lab_{0:T}|\latent_{0:T},\obs_{0:T})\right) {\rm d}  \latent_{0:T}, \\
+    & \leq \int \q(\latent_{0:T}|\obs_{0:T})  \log\left(\frac{\p(\latent_{0:T},\obs_{0:T})}{\q(\latent_{0:T}|\obs_{0:T})}\right) {\rm d}  \latent_{0:T} = Q^{\rm opt} (\theta,\phi)\text{.}
+\end{align}
+We have $Q(\theta,\phi)= Q^{\rm opt} (\theta,\phi)$ when the KLD term in~\eqref{F-decomposed} is null, 
+\ie~when $\q(\lab_{0:T}|\latent_{0:T},\obs_{0:T})=\p(\lab_{0:T}|\latent_{0:T},\obs_{0:T})$.
+It remains to compute $Q^{\rm opt} (\theta,\phi)$.
+Starting again from~\eqref{elbo-proof} where
+we set 
+$$\q(\lab_{0:T},\latent_{0:T}|\obs_{0:T})
+=\q(\lab_{0:T}|\obs_{0:T})\p(\lab_{0:T}|\latent_{0:T},\obs_{0:T}),$$ 
+the Markovian structure of $\p(\lab_{0:T},\latent_{0:T},\obs_{0:T})$
+and the additive property of the logarithm function
+give the decomposition~\eqref{elbo-1}-\eqref{elbo-3}.
+
+Note that the computation of $Q^{\rm opt} (\theta,\phi)$
+via~\eqref{elbo-1}-\eqref{elbo-3}
+relies on the distribution~$\p(\lab_{t-1:t}|\latent_{0:T},\obs_{0:T})$.
+It can be computed from a direct extension of the intermediate quantities $\alpha_{\theta,k}$ and
+$\beta_{\theta,k}$ which are now defined as 
+$\alpha_{\theta,k}(\lab_t)=\p(\lab_t,\latent_{0:t},\obs_{0:t})$
+and 
+$\beta_{\theta,k}(\lab_t)=\p(\latent_{t+1:K},\obs_{t+1:K}|\lab_t,\latent_t,\obs_t)$. Their computation is similar to 
+\eqref{eq:alpha} and~\eqref{eq:beta}, except
+that they now involve the transition 
+$p(\lab_t,\latent_t,\obs_t|\lab_{t-1},\latent_{t-1},\obs_{t-1})$
+rather than $p(\lab_t,\obs_t|\lab_{t-1},\obs_{t-1})$.
+
+\vspace{0.7cm}
+\tocless\subsection{Detailed error rates for experiments \ref{sec:realworld_mct} and \ref{sec:realworld_har} }
+\label{app:error_rates}
+This section provides the full results of the real world experiments described in 
+Section~\ref{sec:realworld}.
+Table~\ref{table:microct_scores_all} 
+provides a comprehensive comparison of the error rates achieved by
+different generalized Triplet Markov Chains in the context of
+unsupervised image segmentation. The table presents detailed error rates for ten
+micro-computed tomography slices, evaluated across four models: HMC-IN, di-MTMC,
+MTMC, and DMTMC.
+
+\newpage
+\begin{table}[htb!]
+\centering
+\setlength\tabcolsep{6pt}
+\begin{tabular}{ccccc}
+\toprule
+Slice & HMC-IN & di-MTMC & MTMC & DMTMC \\\toprule
+\texttt{A}&	$8.5$&	$8.5$&	$6.5$&	$5.4$\\ \midrule
+\texttt{B}&	$10.9$&	$10.9$&	$8.7$&	$6.5$\\ \midrule
+\texttt{C}&	$6.9$&	$7.0$&	$6.0$&	$5.2$\\ \midrule
+\texttt{D}&	$10.0$&	$10.1$&	$8.3$&	$6.1$\\ \midrule
+\texttt{E}&	$6.5$&	$6.3$&	$6.2$&	$5.4$\\ \midrule
+\texttt{F}&	$11.5$&	$11.5$&	$10.8$&	$9.3$\\ \midrule
+\texttt{G}&	$4.6$&	$4.6$&	$3.9$&	$3.7$\\ \midrule
+\texttt{H} & $8.6$ & $8.6$ & $8.5$ & $7.7$\\ \midrule
+\texttt{I} & $11.5$ & $11.5$ & $10.1$ & $9.2$ \\ \midrule
+\texttt{J}& $7.2$ & $7.2$ & $6.9$ & $6.5$\\ \midrule \midrule
+Average & $8.6$ & $8.6$ & $7.6$ & $\pmb{6.5}$\\
+\bottomrule
+\end{tabular}
+\caption{Detailed error rates (\%) in unsupervised image segmentation with all the generalized TMCs assessed on ten micro-computed tomography slices. See Section \ref{sec:realworld_mct}.}
+\label{table:microct_scores_all}
+\end{table}
+
+\begin{table}
+\centering
+\scriptsize
+\setlength\tabcolsep{6pt}
+\begin{tabular}{cccccccc}
+\toprule
+ Data & HMC-IN & SPMC & DSPMC & DPSPMC & PMC & DPMC & DPPMC \\\toprule
+\makecell{\texttt{acc\_exp01\_user01}}&$15.0$&$29.0$ &$20.9$ & $17.8$& $20.9$& $19.9$& $20.1$\\ \midrule
+\makecell{\texttt{acc\_exp02\_user01}} &$16.0$&$20.3$ &$13.3$ &$12.4$ &$13.1$ & $18.2$& $14.6$\\ \midrule
+\makecell{\texttt{acc\_exp03\_user02}} &$25.7$&$16.1$ &$11.7$ &$9.8$ &$11.7$ & $5.6$& $12.7$\\ \midrule
+\makecell{\texttt{acc\_exp04\_user02}} &$24.3$&$15.2$&$10.9$ &$11.5$ &$10.9$ & $5.6$& $11.7$\\ \midrule
+\makecell{\texttt{acc\_exp05\_user03}}&$21.1$ &$28.8$ &$23.2$ &$15.3$ &$22.4$ & $22.7$& $23.4$\\ \midrule
+\makecell{\texttt{acc\_exp06\_user03}}&$26.3$ &$15.6$ &$12.9$ &$11.0$ &$12.3$ & $19.9$& $14.2$\\ \midrule
+\makecell{\texttt{acc\_exp07\_user04}}&$23.3$ &$19.2$ &$14.4$ &$13.4$ &$23.3$ & $21.9$& $14.6$\\ \midrule
+\makecell{\texttt{acc\_exp08\_user04}}&$26.3$ &$17.1$ &$13.1$ &$12.3$ &$12.9$ & $10.4$& $12.9$\\ \midrule
+\makecell{\texttt{acc\_exp09\_user05}}&$24.3$ &$19.0$ &$14.9$ &$12.3$ &$14.7$ & $12.3$& $15.5$\\ \midrule
+\makecell{\texttt{acc\_exp10\_user05}}&$25.8$ &$48.3$ &$24.5$ &$25.4$ &$24.3$ & $27.6$& $24.3$\\ \midrule
+\makecell{\texttt{acc\_exp11\_user06}}&$27.7$ &$15.1$ &$12.7$ &$10.9$ &$12.7$ & $12.6$& $11.9$\\ \midrule
+\makecell{\texttt{acc\_exp12\_user06}}&$36.9$ &$43.5$ &$42.8$ &$43.2$ &$42.8$ & $42.1$& $41.5$\\ \midrule
+\makecell{\texttt{acc\_exp13\_user07}}&$26.1$ &$18.2$ &$14.6$ &$16.5$ &$14.4$ & $13.9$& $13.9$\\ \midrule
+\makecell{\texttt{acc\_exp14\_user07}}&$26.0$ & $18.5$&$14.5$ &$21.9$ &$14.4$ & $18.9$& $13.6$\\ \midrule
+\makecell{\texttt{acc\_exp15\_user08}}&$22.2$ &$16.7$ &$12.9$ &$9.0$ &$12.8$ & $10.0$& $13.0$\\ \midrule
+\makecell{\texttt{acc\_exp16\_user08}}&$26.2$ &$19.4$ &$16.5$ &$14.7$ &$16.5$ & $15.8$& $14.3$\\ \midrule
+\makecell{\texttt{acc\_exp17\_user09}}&$25.6$ &$17.0$ &$13.1$ &$17.9$ &$12.9$ & $14.0$& $11.0$\\ \midrule
+\makecell{\texttt{acc\_exp18\_user09}}&$24.8$ & $13.8$&$10.9$ &$11.3$ &$10.8$ & $8.1$& $12.3$\\ \midrule
+\makecell{\texttt{acc\_exp19\_user10}}&$26.1$ &$13.3$ &$10.4$ &$21.4$ &$10.3$ &$8.0$ & $15.2$\\ \midrule
+\makecell{\texttt{acc\_exp20\_user10}}&$34.9$ &$22.1$ &$27.2$ &$26.8$ &$27.1$ & $29.1$& $25.9$\\ \midrule
+\midrule
+Average & $25.2$ &$21.3$ &$16.8$ & $\pmb{16.7}$&$17.1$ & $16.8$& $16.8$\\
+\bottomrule
+\end{tabular}
+\caption{Detailed Error rates (\%) in the binary clustering of the first twenty raw entries of the HAPT dataset \citep{reyes2016transition}.}
+\label{table:har_scores_all}
+\end{table}
+
+
+\color{black}
+\tocless\subsection{Additional experiments}
+In this section, we provide additional experiments. The first one consists 
+in introducing experiments in the case where the number of classes is $C>2$.
+In the second one, we study experimentally the impact of the variational
+distribution for the TMC model of  Scenario~\eqref{scenario-2-tmc}.
+
+
+\subsubsection{Multi-class extension}
+In this section, we illustrate an extension of our models when $C>2$. For $C>2$, Eq.~\eqref{param-1} becomes a vector of softmax function,
+\begin{equation}
+    \f(\lab_{t-1},\obs_{t-1})=\left[\frac{e^{b_{\omega_1,\lab_{t-1}}}}{\sum_{j=1}^C e^{b_{\omega_j,\lab_{t-1}}}}, \cdots,\frac{e^{b_{\omega_C,\lab_{t-1}}}}{\sum_{j=1}^C e^{b_{\omega_j,\lab_{t-1}}}} \right] \text{,}
+\end{equation}
+while the distribution $\lambda(\lab_t,\f(\lab_{t-1},\obs_{t-1}))$ coincides
+with the Categorical distribution whose parameters 
+are described by $\f(\lab_{t-1},\obs_{t-1})$, \ie
+\begin{equation}
+  \p(\lab_t=\omega_i |\lab_{t-1},\obs_{t-1})\overset{\rm HMC}{=}\p(\lab_t=\omega_i |\lab_{t-1})= \frac{e^{b_{\omega_i,\lab_{t-1}}}}{\sum_{j=1}^C e^{b_{\omega_j,\lab_{t-1}}}}  \text{.}
+\end{equation}
+
+Figure~\ref{fig:mc_segmentation} displays an extension of Scenario~\eqref{eq:noise_eq1} to the multi-class case. One can note that the relative performances of the models remain similar to those established in the article.
+ 
+ 
+\begin{figure}[H]
+    \centering
+\renewcommand{\arraystretch}{0.4}
+
+\begin{tabular}{Z{0.08\columnwidth} Z{0.15\columnwidth} Z{0.15\columnwidth}
+Z{0.15\columnwidth}Z{0.15\columnwidth}Z{0.15\columnwidth}}
+ & $\lab_{0:T}$ & $\obs_{0:T}$ &{HMC-IN}&{SPMC}&DSPMC \\
+$C=3$&
+\includegraphics[width=0.15\columnwidth, cfbox=black 1pt 0pt]
+{Figures/ress/multi_class/cattle_img.png}&
+ \includegraphics[width=0.15\columnwidth, cfbox=black 1pt 0pt]
+{Figures/ress/multi_class/cattle_X.png}
+&
+ \includegraphics[width=0.15\columnwidth, cfbox=black 1pt 0pt]
+{Figures/ress/multi_class/cattle_hmcin.png}
+&
+ \includegraphics[width=0.15\columnwidth, cfbox=black 1pt 0pt]
+{Figures/ress/multi_class/cattle_spmc.png}
+&
+ \includegraphics[width=0.15\columnwidth, cfbox=black 1pt 0pt]
+{Figures/ress/multi_class/cattle_dspmc.png}\\
+$C=3$&
+\includegraphics[width=0.15\columnwidth, cfbox=black 1pt 0pt]
+{Figures/ress/multi_class/cattle2_img.png}&
+ \includegraphics[width=0.15\columnwidth, cfbox=black 1pt 0pt]
+{Figures/ress/multi_class/cattle2_X.png}
+&
+ \includegraphics[width=0.15\columnwidth, cfbox=black 1pt 0pt]
+{Figures/ress/multi_class/cattle2_hmcin.png}
+&
+ \includegraphics[width=0.15\columnwidth, cfbox=black 1pt 0pt]
+{Figures/ress/multi_class/cattle2_spmc.png}
+&
+ \includegraphics[width=0.15\columnwidth, cfbox=black 1pt 0pt]
+{Figures/ress/multi_class/cattle2_dspmc.png}\\
+$C=5$ &
+\includegraphics[width=0.15\columnwidth, cfbox=black 1pt 0pt]
+{Figures/ress/multi_class/cattle3_img.png}&
+ \includegraphics[width=0.15\columnwidth, cfbox=black 1pt 0pt]
+{Figures/ress/multi_class/cattle3_X.png}
+&
+ \includegraphics[width=0.15\columnwidth, cfbox=black 1pt 0pt]
+{Figures/ress/multi_class/cattle3_hmcin.png}
+&
+ \includegraphics[width=0.15\columnwidth, cfbox=black 1pt 0pt]
+{Figures/ress/multi_class/cattle3_spmc.png}
+&
+ \includegraphics[width=0.15\columnwidth, cfbox=black 1pt 0pt]
+{Figures/ress/multi_class/cattle3_dspmc.png}
+\end{tabular}
+    \caption{Multi-class segmentations with the HMC-IN, SPMC and DSPMC models. The noisy image is simulated according to Eq.~\eqref{eq:noise_eq1} from the paper with $a_{\omega_1}=0, a_{\omega_2}=1$ and $a_{\omega_3}=2$ for the top row, $a_{\omega_1}=0, a_{\omega_2}=0.5$ and $a_{\omega_3}=1$ for the middle row and $a_{\omega_1}=0, a_{\omega_2}=0.75, a_{\omega_3}=1.5, a_{\omega_4}=2.25$ and $a_{\omega_5}=3$ for the bottom row. Note that the segmentation can be affected by label switching, which is another different problem out of scope of the article.}
+    \label{fig:mc_segmentation}
+\end{figure}
+ 
+\subsubsection{Influence of the variational distribution}
+\label{app:var_distrib}
+In this section, we performed new simulations in the case of the non-stationary noise experiment (Scenario~\eqref{scenario-2-tmc}) with $3$ different variational distributions for the DMTMC model, namely:
+    \begin{equation*}
+    q_{\phi}^1(\latent_{0:T}|\obs_{0:T})=\prod_{t=1}^T
+    \mathcal{N}(\latent_t;\nu_{\phi}(\obs_t)),    
+    \end{equation*}
+    \begin{equation*}
+        q_{\phi}^2(\latent_{0:T}|\obs_{0:T})=\prod_{t=1}^T
+    \mathcal{N}(\latent_t;\nu_{\phi}(\latent_{t-1},\obs_t)), 
+    \end{equation*}
+    and
+    \begin{equation*}
+        q_{\phi}^3(\latent_{0:T}|\obs_{0:T})=\prod_{t=1}^T
+    \mathcal{N}(\latent_t;\nu_{\phi}(\latent_{k-2}, \latent_{t-1},\obs_t)).
+    \end{equation*}
+Figure~\ref{fig:nonstatio_noise_additional} summarizes this additional experiment.
+
+It can be observed that  the choice of the variational distribution does not lead to significant changes in the results as compared to, for example, the Mean-Field variational distribution with fully independent random variables. However, adding more dependencies led to worse results probably because of the complexity of the noise to estimate.
+\begin{figure}
+\centering
+\begin{tikzpicture}[spy using outlines={rectangle, lens={scale=1.47},
+    connect spies}]
+\begin{axis}[
+title=Scenario $(55)$,
+grid=major,
+axis x line=bottom, axis y line=left, width=0.5\textwidth, height=5.5cm,
+compat=1.10,
+ymin=0, ymax=0.5,
+label style={font=\small}, %tick label style={font=\tiny},
+legend style={font=\small},
+%y tick label style={/pgf/number format/.cd, fixed, fixed %zerofill, precision=2,
+%/tikz/.cd},
+legend columns=1, ytick distance=0.05, legend
+style={at={(1.55,0.8)},name=leg1,font=\footnotesize, draw=black},ytick distance=0.1, xtick distance=.2,
+xmin=1.5,xmax=2.5, xshift=-0.cm, xlabel={$a_{\omega_2}$}, ylabel={Error rate (MPM)}] 
+
+
+\addplot+[orange, thick, mark options={scale=0.7}] table[x index=0, y
+index=1, col
+sep=comma, skip first n=1]{Figures/data/nonstatio_noise_add/summary.csv};
+\addlegendentry{with $q_{\phi}^1(\latent_{0:T}|\obs_{0:T})$}
+\addplot+[teal, thick, mark options={scale=0.7}] table[x index=0, y
+index=2, col
+sep=comma,  skip first n=1]{Figures/data/nonstatio_noise_add/summary.csv};
+\addlegendentry{with $q_{\phi}^2(\latent_{0:T}|\obs_{0:T})$}
+\addplot+[brown, thick, mark options={scale=0.7}] table[x index=0, y
+index=3, col
+sep=comma,  skip first n=1]{Figures/data/nonstatio_noise_add/summary.csv};
+\addlegendentry{with $q_{\phi}^3(\latent_{0:T}|\obs_{0:T})$}
+\end{axis}
+\end{tikzpicture}
+
+\caption{Error rate from the unsupervised segmentations of Scenario~\eqref{scenario-2-tmc}. Results are averaged on all the \emph{dog}-type images from the database.}
+\label{fig:nonstatio_noise_additional}
+\end{figure}
+\color{black}
+
+
+
+% % \section{Super-resolution via Variational Auto-Encoders}
+% \label{anex:perspectives_medical_images}
+% % \subsection{Super-resolution via Variational Auto-Encoders}
+% Super-resolution Variational Auto-Encoders architectures have been proposed
+% by~\citep{gatopoulos2020super}, 
+% which requires a dataset of high-resolution images and their corresponding
+% low-resolution images. 
+% \begin{figure}[htb]
+%     \centering
+%     \includegraphics[width=0.6\textwidth]{Figures/sr_vae_sup.PNG}
+%     \caption{Stochastic dependencies of the proposed model. Our approach
+%     takes advantage of a compressed representation y of the data in the
+%     variational part, that is then utilized in the super-resolution in the
+%     generative part.
+%     Figure taken from~\citep{gatopoulos2020super}}
+%     \label{fig:srvae_network_sup}
+% \end{figure}
+
+% On the one hand, an unsupervised real image denoising 
+% and Super-Resolution approach via Variational
+% AutoEncoder (dSRVAE) was proposed by~\citep{liu2020unsupervised}.
+% The architecture of the proposed model is shown in Figure~\ref{fig:srvae_network}.
+
+% \begin{figure}[htb]
+%     \centering
+%     \includegraphics[width=1\textwidth]{Figures/dSRVAE.png}
+%     \caption{Complete structure of the proposed dSRVAE model. It includes
+%     Denoising AutoEnocder (DAE) and Super-Resolution SubNetwork (SRSN). The
+%     discriminator is attached for photo-realistic SR generation.
+%     Figure taken from~\citep{liu2020unsupervised}}
+%     \label{fig:srvae_network}
+% \end{figure}

@@ -1,0 +1,551 @@
+% !TEX root = latex_avec_réduction_pour_impression_recto_verso_et_rognage_minimum.tex
+\chapter{Medical Perspectives}
+\markboth{CHAPTER 5. MEDICAL PERSPECTIVES}{Short right heading}
+\label{chap:medical_perspectives}
+\localtableofcontents
+\pagebreak
+
+% \begin{algorithm}[htbp!]
+%     \caption{}
+%     \label{}
+%     \begin{algorithmic}[1]
+%     \Require{}
+%     \Ensure{}
+%     \Statex{\textbf{}}
+%     \\ 
+%     \Statex{\textbf{}}
+%     \\\end{algorithmic}
+%     % \vspace*{0.2cm}
+% \end{algorithm}
+  
+
+
+
+\section{Context and motivation}
+
+
+Cardiovascular diseases (CVDs) represent a leading global cause of mortality, as
+highlighted by data from the World Health Organization\footnote{https://www.who.int/}. 
+CVDs include a wide range of conditions that affect the heart and blood vessels.
+Among these, atherosclerosis is the most common cause of CVDs, which 
+is characterized by the build-up of plaque inside the arteries.
+This atheromatous plaque is made up of fat, cholesterol,
+calcium, and other substances found in the bloodstream.
+Over time, this plaque hardens, leading to the obstruction of the arteries
+and can cause serious health problems~\citep{insull2009pathology}. 
+For example, it can limit the flow of oxygen-rich blood to the organs 
+and other parts of the
+body~\citep{rafieian2014atherosclerosis}.
+Figure~\ref{fig:data_arteria}
+shows an example of a normal artery (A) and an artery
+with atherosclerosis (B)~\footnote{http://vascularsurgeon.ie/peripheral-arterial-disease-pad/}.
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.45\textwidth]{Figures/Medical_images/peripheral_arterial.png}  
+    \caption{Peripheral arterial disease results from narrowing or
+    blockage of the arteries of the  legs.}
+    \label{fig:data_arteria}
+\end{figure}
+
+In this context, the GEPROMED (European Research Group on Prostheses Applied to Vascular Surgery)
+has been established to develop new biomaterials and surgical techniques for
+vascular surgery. The group has access to a database of medical images, which
+they have made available to us for the purpose of developing new methods for
+medical images processing in vascular surgery.
+The images in this database  are Computed Tomography (CT) or
+micro-Computed Tomography (micro CT) images of the femoro-popliteal arterial
+segment (SAFP) of different patients. 
+The SAFP is one of the longest arteries in
+the human body, subject to diverse mechanical forces 
+(\eg~torsion, flexion, and extension) due to the movement of the
+lower limbs. 
+
+Atherosclerosis disease comprises 3 categories of plaque: calcified (calcium)
+($\approx  70\%$), fibrous ($\approx 20\%$), and lipid 
+($\approx 10\%$)~\citep{kuntz2021co}. 
+To treat these, some endovascular techniques have been
+developed, such as angioplasty and stenting.
+There is no non-invasive method (imaging) that can accurately differentiate
+lesions along the SAFP. The analysis is usually based on the preoperative CT scan 
+(low resolution images), but
+there are high-resolution scanners that allow a quasi-histological analysis of
+the tissue. In other words, we have a micro CT scanner 
+\textit{ex vivo} \footnote{The term \textit{ex vivo} refers to experimentation 
+performed 
+on tissue samples outside the living organism.}, 
+and then correlate the images with the histology\footnote{
+Histology is considered as a gold or criterion standard 
+for the diagnosis of many diseases.}.
+\cite{gangloff2020probabilistic} has already proposed a method to segment
+micro CT images of the SAFP. 
+However, a major limitation of this method is that it is not possible to directly
+segment the CT images of the SAFP, which are of low resolution.
+This problem is the motivation for the work presented in this chapter.
+
+\section{Data and preprocessing}
+\subsection{Data availability}
+A protocol was developed to obtain the data for this study, which 
+is described in~\citep{kuntz2021co} and is detailed in
+Appendix~\ref{anex:protocol_database}.
+Figure~\ref{fig:data_availability_summary} 
+shows the available data.  We  have the histologic slices~\ref{fig:histo},
+ the (2D) micro CT images~\ref{fig:mct_histo},
+ and their corresponding ground 
+truth~\ref{fig:mct_annotation}. 
+The ground truth is composed of 6 classes, which are described in
+Figure~\ref{fig:data_notation}.
+\begin{figure}[htb!]
+    \begin{subfigure}[b]{\textwidth}
+            \centering
+            \includegraphics[width=0.75\textwidth]{Figures/Medical_images/intro_histo.PNG}
+            \caption{Three histologic slices. }
+            \label{fig:histo}
+    \end{subfigure}
+    \begin{subfigure}[b]{\textwidth}
+            \centering
+            \includegraphics[width=0.75\textwidth]{Figures/Medical_images/intro_mCT.PNG}
+            \caption{Three microCT images correlated with their
+            histologic truth.}
+            \label{fig:mct_histo}
+    \end{subfigure}
+    \begin{subfigure}[b]{\textwidth}
+        \centering
+        \includegraphics[width=0.75\textwidth]{Figures/Medical_images/intro_gt.PNG}
+        \caption{Three expert annotated microCT images obtained.}
+        \label{fig:mct_annotation}
+    \end{subfigure}
+    \caption{Illustration of part of the  available data for the study.
+    Figure taken from~\citep{gangloff2020probabilistic}.}
+    \label{fig:data_availability_summary}
+\end{figure} 
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{Figures/Medical_images/intro_notation.PNG}
+    \caption{Notation of the classes of the ground truth~\ref{fig:mct_annotation}.
+    Figure taken from~\citep{gangloff2020probabilistic}.}
+    \label{fig:data_notation}
+\end{figure}
+These annotations are only available for some slices
+of the 3D scan as shown in 
+Figure~\ref{fig:data_availability_2}.
+Here, the red rectangles represent all the 2D slices of the 3D micro CT image.
+However, the combined information (depicted as light gray and purple rectangles)
+is not uniformly distributed across these slices; it is only present in certain
+slices without following a specific pattern.
+Figure~\ref{fig:data_availability}
+shows the correlation between  the CT scanner and the micro CT scanner, 
+that is predominantly available in segments of the artery
+where specific lesions, particularly calcifications, are present.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.40\textwidth]{Figures/Medical_images/data_2.pdf}
+    \caption{Illustration of the available pair of information: 2D micro CT image 
+    (light gray rectangle) and its corresponding ground truth (purple rectangle).
+    The pairs of information are only available for some slices of the 3D micro CT image.
+    The red rectangles represent all the 2D slices of the 3D micro CT image.
+    Figure based on~\citep{kuntz2021co}}
+    \label{fig:data_availability_2}
+\end{figure}
+
+
+
+The aim of this study is to assess the technical
+feasibility of histological segmentation using the SAFP algorithm based on the
+preoperative CT scan. The results of this study will provide initial data to
+assess the value of a subsequent, larger-scale study to validate the diagnostic
+capabilities of automated segmentation.
+As far as we know,  there is no non-invasive method (imaging) that can accurately
+differentiate lesions along the SAFP. Characterization of  AOMI 
+plaques will enable a patient-centred treatment strategy to be devised, based on the 
+type of plaque in the lesion. 
+Automated segmentation will be a tool that will make it possible to dispense
+with histopathological analysis and detect the type of plaque on the
+preoperative CT scan. 
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{Figures/Medical_images/data_new.pdf}
+    \caption{Illustration of the available correlation between CT scanner [B, B1, B2] and
+    micro CT scanner [C, C1, C2] using standard references after Step~\ref{item:correlation}. 
+    They represent different types of calcifications in SAFP plaques.
+    Figure based on~\citep{kuntz2021co}.}
+    \label{fig:data_availability}
+\end{figure}
+The expected long-term benefits for other patients are very significant. They
+can be offered individualized treatment depending on the nature of their lesions
+by adapting the medical device.
+Previous work has shown that it is possible to segment the micro CT images of the
+SAFP. However, a segmentation of the CT images is also necessary, since the
+micro CT images are not available for all patients.
+In this chapter, the objective is to perform image segmentation on CT
+images of the SAFP. Our particular focus
+lies on the most common type of plaques, the calcifications (sheet and nodular), 
+which is a first step to segment other types of plaques in the future.
+
+\subsection{Challenges}
+\label{sec:challenges}
+% In the previous sections, we have provided an overview of the available data and the
+% foundational work upon which our research is built. 
+While we have achieved
+success in segmenting micro CT images, a notable limitation remains: the
+segmentation of CT images. Extending our segmentation to CT
+images is a challenging task for several reasons. First, the low resolution of CT
+images introduces additional complexity into the segmentation process, in 
+contrast to the higher-resolution micro CT images that~\cite{gangloff2020probabilistic} 
+has been working with. As
+depicted in Figure~\ref{fig:data_availability}, 
+the discrepancy in image quality between the CT scanner (B1 and B2) and the micro CT 
+scanner (C1 and C2) is evident. 
+Moreover, the limited availability of data poses a significant
+challenge. While we possess both 3D micro CT images and their corresponding 3D
+CT images, establishing a clear and precise correspondence between the two 
+sequences of images is far from straightforward. 
+These images are not perfectly aligned, and
+their correspondence is not as simple as a `mirror' image. Furthermore, the
+availability of annotations for only some slices of the micro CT image is a
+notable limitation when it comes to training a segmentation algorithm
+for the CT images. 
+% In essence, this chapter is dedicated to addressing the
+% intricate complexities associated with CT image segmentation, which include low
+% resolution, the intricacies of aligning micro CT and CT images for accurate
+% segmentation, and the limited data.
+
+
+\subsection{Pre-processing of the CT and micro CT images}
+We have developed a workflow to segment the calcifications in the CT images
+depicted in Figure~\ref{fig:medical_images_workflow}.
+First, we select the region of interest within
+the images, which corresponds to the artery segment containing the
+calcifications. The selection process in the micro CT images is guided by
+annotations and employs a box detection algorithm. In contrast, the
+selection process in the CT images utilizes a centerline algorithm, that is 
+provided by an expert. Normalization of the images is carried out
+to facilitate the subsequent super resolution, and segmentation processes.\\
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.86\textwidth]{Figures/Medical_images/workflow.pdf}
+    \caption{Our workflow for segmenting sheet and nodular calcifications in
+    CT images of the SAFP is
+    structured into five steps. First, we perform pre-processing of the CT and
+    micro CT images, followed by a super resolution algorithm on the CT images,
+    post-processing of the SR-CT images, supervised segmentation, and
+    segmentation on the SR-CT images.}
+    \label{fig:medical_images_workflow}
+\end{figure}
+
+
+Moreover, the original size of the CT images containing calcifications is often small
+($5\times 5$ to $12\times 12$ pixels).
+Thus, we apply a Super Resolution (SR) algorithm to increase the image  
+resolution to facilitate the segmentation process.
+In our case, a primary concern is the preservation of details in the CT images.
+Focusing on methods that enhance resolution without losing crucial information
+is key. 
+Different SR techniques have
+been suggested, encompassing optimization methods and deep learning approaches.
+The latter have emerged as the most promising, with
+exponential growth~\citep{li2021review}. 
+We have considered the LapSRN algorithm proposed by~\cite{lai2017deep},
+which  utilizes a Laplacian pyramid framework. 
+This algorithm has been selected for its ability to accurately
+ reconstruct high-frequency
+details and reduce visual artifacts, which are crucial for medical images, especially CT scans.
+We also studied SR algorithms via VAEs, from a point of view of 
+the applicability to medical images, 
+we won't be able to use those algorithms (more details in Appendix~\ref{sec:applicability_sr}).
+This choice may not
+be definitive, and we will continue to explore other SR algorithms in the future.\\
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.6\textwidth]{Figures/Medical_images/problem_1.pdf}
+    \caption{Example of a CT image of the SAFP and its corresponding
+    micro CT image. In addition, the corresponding Super Resolution CT image
+    after applying the LapSRN algorithm with a factor of up-scaling of 8.}
+    \label{fig:srct_example}
+\end{figure}
+
+Figure~\ref{fig:srct_example} 
+shows an example of a SR-CT image obtained with the LapSRN algorithm.
+The original CT image is of size $12\times 12$ pixels and the SR-CT image is of size
+$96\times 96$ pixels, which is a factor of up-scaling of 8.
+After applying the SR algorithm, a post-processing phase is undertaken to
+eliminate any noise introduced by the SR algorithm. This
+involves an analysis of the SR-CT images in comparison to the micro
+CT images, enabling a medical interpretation of the results. The analysis
+entails a histogram comparison and a visual inspection of the images to
+determine the quality of the SR-CT images.
+
+
+Figure~\ref{fig:srct_example_2} 
+shows an example of a sequence of CT images where the calcifications are present.
+These new sequences of SR-CT images will be used for the 
+segmentation of the calcifications in the next steps.
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=1\textwidth]{Figures/Medical_images/ct_SRct.png}
+    \caption{Example of a sequence of CT and SR-CT images.  From left to right, the 
+    pairs of images (CT, SR-CT).
+    The CT images correspond to a sequence of 2D slices of a 3D CT image, where
+    the calcifications are present. The corresponding Super Resolution CT images
+    are obtained with the LapSRN algorithm with a factor of up-scaling of 8.}
+    \label{fig:srct_example_2}
+\end{figure}
+
+\newpage
+\section{Medical image segmentation}
+% (see  Figure~\ref{fig:medical_images_workflow}). 
+% It is worth mentioning that this workflow remains subject to modifications, as we
+% continue to refine the segmentation of SR-CT images. A primary limitation we
+% have encountered is the challenge of interpreting the results, and we emphasize
+% the importance of a medical interpretation to further enhance the workflow.
+Semantic segmentation is a well-studied problem in the field of computer
+vision. The objective is to assign a label to each pixel of an image. In the
+context of medical imaging, this task is particularly challenging due to the
+complexity of the images and the limited availability of annotated data.
+In this section, we present the segmentation of the calcifications in the CT images
+of the SAFP. This segmentation is performed in two steps. 
+First, we perform a supervised segmentation using the pre-processed micro
+CT (HR images), and their corresponding ground truth data. 
+Once a final segmentation  model is obtained,  we perform a
+segmentation on the SR-CT images. 
+Our results are based on the U-Net model~\citep{ronneberger2015u}, 
+and the Probabilistic U-Net~\citep{kohl2018probabilistic}. 
+
+% \subsection{U-Net}
+\label{sec:unet}
+The U-Net architecture is a type of convolutional neural network (CNN) that was
+specifically designed for biomedical image segmentation tasks
+proposed by~\cite{ronneberger2015u}.
+The U-Net architecture is a fully convolutional network that consists of a contracting path (encoder)
+and an expansive path (decoder), which gives it the U-shape.
+The contracting path follows the typical architecture of a convolutional network 
+(Figure~\ref{fig:unet}).
+% It consists of the repeated application of two $3\times 3$ convolutions (unpadded convolutions),
+% each followed by a rectified linear unit (ReLU) and a $2\times 2$ max pooling
+% operation with stride 2 for downsampling.
+% At each downsampling step, the number of feature channels is doubled.
+% Every step in the expansive path consists of an upsampling of the feature map
+% followed by a $2\times 2$ convolution (up-convolution) that halves the number of
+% feature channels, a concatenation with the correspondingly cropped feature map
+% from the contracting path, and two $3\times 3$ convolutions, each followed by a
+% ReLU. The cropping is necessary due to the loss of border pixels in every
+% convolution. At the final layer, a $1\times 1$ convolution is used to map each
+% 64-component feature vector to the desired number of classes. 
+% % In total, the network has 23 convolutional layers.
+This architecture has been remarkably successful due to its efficiency in
+learning from a limited number of samples while accurately segmenting images.
+The U-Net and its (non-stochastic) variants have been used in a variety of
+medical image segmentation tasks such as the bone 
+segmentation~\citep{caron2023segmentation, ganeshaaraj2022semantic}, and
+the pancreas segmentation~\citep{sriram2020multilevel}.
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.88\textwidth]{Figures/unet_2.png}
+    \caption{U-net architecture (example for $32\times32$ pixels in the lowest
+    resolution). Each blue box corresponds to a multichannel feature map. The
+    number of channels is denoted on top of the box. The x-y-size is provided at
+    the lower left edge of the box. White boxes represent copied feature maps.
+    The arrows denote the different operations.
+    Figure taken from~\citep{ronneberger2015u}}
+    \label{fig:unet}
+\end{figure}
+% \subsection{Probabilistic U-Net}
+
+The Probabilistic U-Net was introduced by~\cite{kohl2018probabilistic},
+and designed
+to address the inherent ambiguities in real-world vision
+problems, especially in medical imaging. 
+With ambiguous problems, there is no single correct answer.
+For example, the same image can be
+segmented in different ways by different experts, leading  to different possible
+segmentations. The overlap between structures in the image can also lead to
+ambiguities.
+The Probabilistic U-Net  incorporates a~\gls*{cvae}
+ into the U-Net 
+architecture (more details in Appendix~\ref{chap:appendix5}).
+The latent space is a low-dimensional space where the segmentation variants are
+represented as probability distributions.
+A sample from the latent space 
+is drawn and then injected into the U-Net to produce the
+corresponding segmentation map. This model is trained using a variational
+inference approach (see Subsection~\ref{subsec:vbi}),
+ which allows the model to learn the distribution of
+segmentations in the latent space.
+
+% The central component of the Probabilistic U-Net is the latent space, which is
+% the key to modeling the ambiguity of the segmentation problem.
+
+\subsection{Results}
+% A segmentation of the micro CT images of the SAFP has been presented with the U-Net
+% model before in~\citep{gangloff2020probabilistic}. 
+% Here,
+We aim to specifically segment calcifications in SR-CT
+images, which show areas of calcification in the artery. The
+segmentation algorithms are trained on a dataset which contains
+micro CT images, and their corresponding ground truth data representing the
+calcification zones.
+We present the results obtained with both, the U-Net, and Probabilistic
+U-Net models. 
+We evaluate their effectiveness by calculating the Dice 
+score~\eqref{eq:dice_score}  on the test set.
+This score provides an assessment of each model's performance in accurately
+segmenting, and classifying each class within CT images, crucial for informed
+doctor analysis
+
+
+\paragraph*{Three class segmentation: }
+Table~\ref{tab:dice_score_test} 
+summarizes the Dice score on the test set
+for the segmentation of the micro CT images.
+Three classes are considered: background (Ba), nodular calcifications (NC), 
+and sheet calcifications (SC). 
+In terms of the Dice score, the Probabilistic U-Net model
+outperforms the U-Net model for the calcifications classes.
+Once the segmentation model is obtained, we perform a 
+segmentation on the SR-CT images.\\
+\begin{table}[htb!]
+    \begin{center}
+    % \small
+    \begin{tabular}{|l|r|r|r|r|}
+    \hline
+    \multirow{2}{*}{Model}  &\multicolumn{3}{c|}{Dice score on the test set}\\
+    \cline{2-4} 
+      & \multicolumn{1}{c|}{Ba} & \multicolumn{1}{c|}{NC} & \multicolumn{1}{c|}{SC} \\ 
+      \hline \hline
+      \multicolumn{1}{|l|}{U-Net}      &0,7688   & 0,6032  & 0,5967  \\ \hline
+      \multicolumn{1}{|l|}{Probabilistic U-Net}    & 0,7178 & 0,6214 & 0,6141\\ \hline
+      \end{tabular}
+      \vspace{-0.2cm}
+      \caption{Dice score on the test set for the U-Net and Probabilistic U-Net models.
+      Three classes are considered: background (Ba), nodular calcifications (NC), 
+      and sheet calcifications (SC).}      
+    \label{tab:dice_score_test}
+    \end{center}
+\end{table}
+
+Figure~\ref{fig:proba_unet_sr_ct}
+shows an example of segmentation of the micro CT image and its corresponding SR-CT image
+with the U-Net and Probabilistic U-Net models.
+We can see that both models are able to 
+segment the calcifications in the SR-CT images, however, this analysis is
+not possible with all the sequence of SR-CT images. 
+The results need to be analyzed carefully by a medical expert.\\
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=1\textwidth]{Figures/Medical_images/ch5_seg_ct_mct.pdf}
+    \caption{Example of a segmentation of the micro CT (first row) and 
+    its corresponding SR-CT images (second row) 
+    with the U-Net and Probabilistic U-Net models. }
+    \label{fig:proba_unet_sr_ct}
+\end{figure}
+
+
+\paragraph*{Four class segmentation: }
+Initially, our segmentation model for CT images was designed to differentiate
+among three classes (background, nodular and sheet  calcifications). 
+However, we observed that calcifications were not
+consistently present across the entire sequence of CT images.
+This led us to introduce an additional class into our model: the soft tissue (ST) class,
+% (see Figures~\ref{fig:data_notation} ).
+% This class has a consistent presence in all images and plays a crucial role in our analysis. 
+that  encompasses both the arterial wall and the surrounding tissue, making its
+segmentation vital for an accurate doctor's interpretation of the results.
+Table~\ref{tab:dice_score_test_4} shows the Dice
+scores obtained on the test set,
+now configured to identify four classes.
+\begin{table}[htb!]
+    \begin{center}
+    % \small
+    \begin{tabular}{|l|r|r|r|r|r|}
+    \hline
+    \multirow{2}{*}{Model}  &\multicolumn{4}{c|}{Dice score on the test set}\\
+    \cline{2-5} 
+      & \multicolumn{1}{c|}{Ba}  & \multicolumn{1}{c|}{ST} & \multicolumn{1}{c|}{NC} & \multicolumn{1}{c|}{SC} \\ 
+      \hline \hline
+      \multicolumn{1}{|l|}{U-Net}      & 0,6027       & 0,6363  & 0,5807  & 0,6016   \\ \hline
+      \multicolumn{1}{|l|}{Probabilistic U-Net}    & 0,6256     & 0,6439  & 0,5817  & 0,6751\\ \hline
+      \end{tabular}
+      \vspace{-0.2cm}
+      \caption{Dice score on the test set for the U-Net and Probabilistic U-Net models, 
+      with four classes: background (Ba), soft tissue (ST), 
+      nodular calcifications (NC), and sheet calcifications (SC).}      
+    \label{tab:dice_score_test_4}
+    \end{center}
+\end{table}
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=1\textwidth]{Figures/Medical_images/ch5_seg_seq_sfa006.pdf}
+    \caption{CT slides, their corresponding SR-CT images, and their corresponding
+    3 class and 4 class segmentations of  SR-CT images.}
+    \label{fig:proba_unet_sr_ct_more_classes}
+\end{figure}
+
+Figure~\ref{fig:proba_unet_sr_ct_more_classes}
+presents some slices of the SR-CT images and their corresponding segmentation
+with Probabilistic U-Net models, with three and four classes.
+When we examine these results with the doctors, it becomes apparent
+that four-class segmentation offers greater interpretability compared to
+three-class segmentation.
+
+\section{Remaining challenges}
+We have made significant progress in the segmentation of sheet and nodular
+calcifications in CT images of the SAFP. However, several challenges remain to
+be addressed. First,
+% in the step improving image resolution, we face the problem of `domain
+% switching', a common challenge in medical imaging, where models trained on one
+% dataset may not perform optimally when applied to a different dataset~\citep{yan2019domain}. 
+% In addition, 
+the super-resolution algorithm itself does not take into
+account the sequential nature of the images, as it is applied independently to
+each slice. This can lead to inconsistencies across the image sequence. To
+address this problem, we have explored a post-processing technique for SR-CT
+images that aims to improve the consistency of results across the image sequence
+prior to segmentation.
+
+On the other hand, segmentation with the U-Net, and Probabilistic U-Net models
+present the limitation related to their static nature. That is, when applied to
+SR-CT images, the segmentation performed by these models
+treats each slice independently, without taking into account the sequential
+context that the images are part of a 3D image. This led to inconsistent
+segmentation results, with  different results between two
+consecutive slices. To address this problem, we adapted the input of each
+model to include not only the target slice, but also the anterior and posterior
+slices, creating a ``sliding window'' effect. This modification is intended to
+incorporate some degree of sequential context into the segmentation process.
+%  The
+% results presented in this chapter reflect the improvements achieved with this
+% adaptation.
+In the future, we plan to explore other approaches to overcome these challenges,
+with the goal of developing more sophisticated models that can more accurately
+reflect the sequential and dynamic nature of the medical data, 
+\eg~a sequential probabilistic U-Net model, a sequential SR VAE.
+
+
+
+
+\section{Conclusions}
+In this chapter, we have described  a structured workflow for the segmentation of sheet and
+nodular calcifications in the CT images of the SAFP. This workflow encompasses
+five steps: pre-processing of the CT and micro CT images, application of the
+SR algorithm on the CT images, followed by post-processing of the SR-CT images, 
+and finally the segmentation on the SR-CT images. 
+First significant results from our research include those obtained using the LapSRN
+algorithm for the SR task, and the U-Net and Probabilistic U-Net models for
+segmentation. In particular, the Probabilistic U-Net model demonstrated superior
+performance to the U-Net model in segmenting the calcification classes. In
+addition, we observed that segmentation into four classes produces more detailed
+results, allowing a clearer distinction between calcifications and soft tissue,
+which is vital for a proper doctor's interpretation.
+% We have placed special emphasis on two critical aspects of this workflow: the
+% super resolution and the segmentation tasks.
+% These components are crucial for addressing modeling challenges and
+% are integral to our ongoing research efforts.
+%  We have presented a brief
+% literature review of the super resolution and segmentation steps. 
+% This review not only helps in understanding the complexities we are addressing,
+% but also guides us in identifying the most promising approaches and determining
+% appropriate methods for future research.

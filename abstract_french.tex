@@ -1,0 +1,131 @@
+\chapter*{Introduction générale}
+\markboth{INTRODUCTION}{INTRODUCTION} 
+\addcontentsline{toc}{chapter}{Introduction générale}
+
+
+% \section*{Context} 
+% This thesis explores and models sequential data through the application of
+% various probabilistic models with latent variables, complemented by deep neural
+% networks. The motivation for this research is the development of dynamic models
+% that adeptly capture the complex temporal dynamics inherent in sequential data.
+% Designed to be versatile and adaptable, these models aim to be applicable across
+% domains including classification, prediction, and data generation, and adaptable
+% to diverse data types. 
+% The research focuses on several key areas, each detailed
+% in its respective chapter. Initially, the fundamental principles of deep
+% learning, and Bayesian estimation are introduced. Sequential data modeling is then
+% explored, emphasizing the Markov chain models, which set the stage for the
+% generative models discussed in subsequent chapters. 
+% In particular, the research delves into the sequential Bayesian classification 
+% of data in supervised,
+% semi-supervised, and unsupervised contexts. The integration of deep neural
+% networks with well-established probabilistic models is a key strategic aspect of
+% this research, leveraging the strengths of both approaches to address complex
+% sequential data problems more effectively. This integration leverages the
+% capabilities of deep neural networks to capture complex nonlinear relationships,
+% significantly improving the applicability and performance of the models.
+
+
+% In addition to our contributions, this thesis also
+% proposes novel approaches to address specific challenges posed by the
+% \gls*{gepro}. These proposed solutions reflect the practical and a possible
+% impactful application of this research, demonstrating its potential
+% contribution to the field of vascular surgery.
+\vspace{.65cm}
+\section*{Contexte}
+Cette thèse vise à modéliser des données séquentielles à travers l'utilisation
+de modèles probabilistes à variables latentes et paramétrés par des
+architectures de type réseaux de neurones profonds. Notre objectif est de
+développer des modèles dynamiques capables de capturer des dynamiques
+temporelles complexes inhérentes aux données séquentielles tout en étant
+applicables dans des domaines variés tels que la classification, la prédiction
+et la génération de données pour n'importe quel type de données séquentielles.\\
+
+
+Notre approche se concentre sur plusieurs problématiques liés à la modélisation
+de ce type de données, chacune étant détaillé dans un chapitre de ce manuscrit.
+Dans un premier temps, nous balayons les principes fondamentaux de
+l'apprentissage profond et de l'estimation bayésienne. Par la suite, nous nous
+focalisations sur la modélisation de données séquentielles par des modèles de
+Markov cachés qui constitueront le socle commun des modèles génératifs
+développés par la suite. Plus précisément, notre travail s'intéresse au problème
+de la classification (bayésienne) séquentielle de séries temporelles dans
+différents contextes : supervisé (les données observées sont étiquetées) ;
+semi-supervisé (les données sont partiellement étiquetées) ; et enfin non
+supervisés (aucune étiquette n'est disponible). Pour cela, la combinaison de
+réseaux de neurones profonds avec des modèles probabilistes markoviens vise à
+améliorer le pouvoir génératif des modélisations plus classiques mais pose de
+nombreux défis du point de vue de l'inférence bayésienne : estimation d'un grand
+nombre de paramètres, estimation de lois à postériori et interprétabilité de
+certaines variables cachées (les labels). En plus de proposer une solution pour
+chacun de ces problèmes, nous nous intéressons également à des approches
+novatrices pour relever des défis spécifiques en imagerie médicale posés par le
+Groupe Européen de Recherche sur les Prothèses Appliquées à la Chirurgie
+Vasculaire (GEPROMED).\\
+
+
+\vspace{.20cm}
+\section*{Plan}
+Notre manuscrit est organisé en 5 chapitres. 
+
+Le chapitre~\ref{chap:main_concepts} 
+consiste en une introduction technique dans lequel nous discutons du principe de
+l'apprentissage profond et de l'estimation bayésienne. Nous y introduisons
+également des modèles Markoviens pour le traitement des données temporelles.
+
+Le chapitre~\ref{chap:pmc} 
+propose s’intéresse aux chaînes de Markov génératives,
+en se concentrant spécifiquement sur les chaînes de Markov couples (PMCs). 
+Nous montrons que ce modèle propose un cadre unificateur pour les modèles de
+Markov cachés ainsi que les récentes architectures de type « réseaux de neurones
+récurrents stochastiques ». Nous proposons une paramétrisation de ces modèles
+basée sur des réseaux de neurones profonds et nous détaillons des méthodes
+d'estimation paramétriques basées sur l'adaptation de l'inférence variationnelle
+au cas séquentiel. Nous mettons en évidence le pouvoir génératif de ces nouveaux
+modèles, tant d'un point de vue expérimental que théorique.
+
+Le chapitre~\ref{chap:semi_supervised_pmc_tmc}  
+vise à utiliser les modèles précédemment développés pour le problème de la
+classification séquentielle de données. Dans la mesure où le cas supervisé ne
+présente pas de difficultés supplémentaires par rapport aux techniques mises en
+place dans le Chapitre 2, nous nous intéressons au cas où les étiquettes/labels
+associés aux données ne sont que partiellement accessibles. Cette contrainte
+nous amène à revoir les méthodes d'inférence variationnelle précédemment
+discutées et à étendre nos modèles de manière à pouvoir prendre en compte deux
+types de variables cachées : les variables latentes du modèles et les labels non
+accessibles que l'on cherche à retrouver. Pour cela, nous faisons appel aux
+modèles de Markov triplet. Notre approche est validée par des simulations
+numériques portant sur le problème de segmentation d'images binaires en contexte
+semi-supervisé.
+
+
+
+
+Le chapitre~\ref{chap:unsp_pmc_tmc} 
+étend le problème au cas non supervisé. L'application directe des méthodes
+précédentes peut conduire à l'apprentissage de modèles probabilistes dans
+lesquels la variable étiquette/label n'est pas interprétable physiquement (ex :
+classe blanc/noir associée à un pixel en niveau de gris), en particulier dans
+des modèles reposant sur un grand nombre de paramètres. Pour résoudre ce
+problème, nous proposons des méthodes d'estimation ad-hoc visant à prendre en
+compte cette contrainte d'interprétabilité. Pour ce faire, nous commençons avec
+des modèles de Markov couple visant à modéliser le couple observation/label,
+puis nous réintroduisons dans un second temps une troisième variable latente
+continue visant à complexifier la loi du couple précédent. Les apports de nos
+modèles couple/triplet, paramétrisés par des architectures profondes, ainsi que
+de nos algorithmes d'estimation paramétrique sont évalués sur différentes tâches
+telles que la segmentation d'images biomédicales ou la reconnaissance
+d'activités humaines.
+
+Enfin, le chapitre~\ref{chap:medical_perspectives}  
+ donne quelques perspectives sur les outils développés précédemment pour des
+problématiques relatives aux données manipulées par le GEPROMED. Nous y
+décrivons quelques problématiques liées aux images médicales acquises dans un
+cadre préopératoire, présentons des résultats préliminaires et proposons une
+feuille de route pour s'attaquer aux différents défis restant. 
+
+
+Finalement, le manuscrit s'achève par un résumé des résultats ainsi qu'une discussion
+sur les orientations futures pour l'exploration et l'application des résultats
+obtenus.
+

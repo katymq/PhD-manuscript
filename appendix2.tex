@@ -1,0 +1,107 @@
+% !TEX root = late\obs_avec_réduction_pour_impression_recto_verso_et_rognage_minimum.tex
+\chapter{Supervised Bayesian classification}
+\label{chap:appendix2}
+
+% \yohan{Not here. I think that it should be discussed in the introduction of the
+% next chapter and justify why supervised estimation is a direct consequence of
+% your previous chapter. So you consider semi-supervised problems.}
+PMCs can be adapted for the supervised classification task 
+by considering an observed variable in an augmented dimension
+$\obs_{t}  \leftarrow (\obs_{t},\lab_{t})$. 
+We add a discrete variable $\lab_{t}$ label associated to 
+$\obs_{t}$, for all $t \in \NN$.
+% $\lab_t \in \Omega = \{\omega_1, \dots, \omega_C \}$ with $C$ the number of classes.
+The parameter estimation is realized by maximizing the ELBO with 
+respect to $\theta$ and $\phi$
+where the general ELBO in~\eqref{eq:elbo_general} 
+is still valid and  reads as
+\begin{align*}
+    % \label{eq:elbo-pmc_sup}
+    \Qsup(\theta,\phi)= & - \int \log \left(\frac{\q(\latent_0|\obs_{0:T}, \lab_{0:T})}
+    {p(\obs_0, \lab_0, \latent_0)}\right) \q(\latent_0|\obs_{0:T}, \lab_{0:T}) {\rm d} \latent_{0:T}
+    \nonumber \\
+    &- \sum_{t=1}^T \int  \log\! \left(\frac{\q(\latent_t|\latent_{0:
+    t-1},\obs_{0:T}, \lab_{0:T})}{\p(\latent_t,\obs_t, \lab_t|\latent_{t-1},\obs_{t-1}, \lab_{t-1})}\right) 
+    \q(\latent_{0:T}|\obs_{0:T}, \lab_{0:T}){\rm d}\latent_{0:T} \text{.}
+\end{align*}
+% \katyobs{the notation $Q_{sup}$ is not consistent with the previous notation???}
+The transition distribution 
+$\p((\obs_t, \lab_t), \latent_t| (\obs_{t-1}, \lab_{t-1}), \latent_{t-1})$
+% given in~\eqref{pmc-transition} 
+can be factorized in two terms as shown in~\eqref{eq:pmc_gen_transition}.
+Without loss of generality, we can consider the following factorization,
+\begin{align}
+    \p(\latent_t,\obs_t, \lab_t|\latent_{t-1},\obs_{t-1}, \lab_{t-1}) = &    
+    \p(\obs_{t},\lab_{t} | \latent_{t-1:t}, \obs_{t-1},\lab_{t-1}) 
+    \p(\latent_t|\latent_{t-1}, \obs_{t-1},\lab_{t-1}) \nonumber \\
+    = &  \p(\obs_{t}|\latent_{t-1:t}, \obs_{t-1},\lab_{t-1})
+    \p(\lab_{t}|\latent_{t-1:t}, \obs_{t-1:t},\lab_{t-1})\times \nonumber \\
+    \label{eq:pmc-superv}
+    & \;  \p(\latent_t|\latent_{t-1}, \obs_{t-1},\lab_{t-1}) \text{,}
+\end{align}
+which is nothing more than a TMC with transition~\eqref{eq:pmc-superv}.
+The ELBO now reads 
+\begin{align}
+    \label{eq:elbo_sup_pmc}
+    \Qsup(\theta,\phi) =& \L_1(\theta,\phi) +  \L_2(\theta,\phi)
+\end{align}
+with 
+\begin{align*}
+    \L_1(\theta,\phi) =& \;  \E_{\q(\latent_0| \obs_{0:T}, \lab_{0:T} )} 
+    \log \p(\obs_0| \latent_0) 
+    + \E_{\q(\latent_0| \obs_{0:T}, \lab_{0:T} )} 
+    \log \p(\lab_0 |\latent_0, \obs_0) 
+    \\ &+  
+    \sum_{t=1}^T \E_{\q(\latent_t|\latent_{0:t-1},\obs_{0:T}, \lab_{0:T})}
+    \log \p(\obs_t|\latent_{t-1:t}, \obs_{t-1},\lab_{t-1} )
+    \text{}\\
+    &+  
+    \sum_{t=1}^T \E_{\q(\latent_t|\latent_{0:t-1},\obs_{0:T}, \lab_{0:T})}
+    \log \p(\lab_{t}|\latent_{t-1:t}, \obs_{t-1:t},\lab_{t-1}) \text{,}\\
+    \L_2(\theta,\phi) =& - \dkl(\q(\latent_0| \obs_{0:T}, \lab_{0:T} ) | |  \p(\latent_0)) \\
+    &- \sum_{t=1}^T  \dkl(\q(\latent_t|\latent_{0:t-1},\obs_{0:T}, \lab_{0:T}) 
+    | | \p(\latent_t|\latent_{t-1}, \obs_{t-1},\lab_{t-1})) \text{.}
+\end{align*}
+
+The training procedure of the  PMC model 
+presented in Algorithm~\ref{algo:algo_train_dpmc_gen}, 
+can be adapted for the supervised classification task.
+The only distinction with the previous algorithm is the set of parameters $\theta$,     
+which now includes the parameters of the conditional distribution of the labels 
+$\p(\lab_t|\latent_{t-1:t}, \obs_{t-1:t},\lab_{t-1}).$
+% Since $\lab_{0:T}$ is assumed to be observed, 
+% a variational distribution $\q$ for $\lab_{0:T}$ is not required.
+
+% \begin{example}
+%     We recall the example of binary image segmentation, %in particular 
+%     where $\obs_{0:T}$ represents the noisy grayscale image 
+%     and $\lab_{0:T}$ the original black and white image. 
+%     The previous transition~\eqref{eq:pmc-superv} is simplified as follows
+%     \begin{align*}
+%         \p(\latent_t,\obs_t, \lab_t|\latent_{t-1},\obs_{t-1}, \lab_{t-1}) = &  
+%         \p(\obs_{t}|\latent_{t-1:t}, \obs_{t-1})
+%         \p(\lab_{t}|\obs_{t},\lab_{t-1})
+%         \p(\latent_t|\latent_{t-1}, \obs_{t-1}) \text{,}
+%     \end{align*}
+%     and its graphical model is presented in Figure~\ref{fig:pmc_supervised_learning}. 
+   
+%     In this case, we can choose the Gaussian distribution for $\p(\obs_{t}|\latent_{t-1:t}, \obs_{t-1})$ and 
+%     $\p(\latent_t|\latent_{t-1}, \obs_{t-1})$, and the Bernoulli distribution for $\p(\lab_{t}|\obs_{t},\lab_{t-1})$.
+%     Moreover, the variational distribution (\eg  $\q(\latent_t | \obs_{t}, \lab_{t})$ )
+%     can also be a Gaussian one.
+%     Then the set of parameters $\theta$ includes the mean and covariance matrix of the Gaussian distributions
+%     and the parameters of the Bernoulli ones; and the set of parameters $\phi$ includes 
+%     the mean and covariance matrix of the Gaussian variational distributions.
+%     Finally, the parameter estimation can be realized by maximizing the
+%     associated ELBO with respect to $\theta$ and $\phi$ as in the previous section.
+%     \begin{figure}[htb]
+%         \centering
+%         \includegraphics[width=0.4\textwidth]{Figures/Graphical_models/spmc_sup.pdf}
+%         \caption{Graphical representation of a particular instance of the PMC with 
+%         an observed variable in an augmented dimension  
+%         $\obs_{t}  \leftarrow (\obs_{t},\lab_{t})$ for 
+%         supervised classification.}
+%         \label{fig:pmc_supervised_learning}
+%     \end{figure}
+    
+% \end{example}

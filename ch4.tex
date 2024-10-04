@@ -1,0 +1,2727 @@
+% !TEX root = latex_avec_réduction_pour_impression_recto_verso_et_rognage_minimum.tex
+\chapter{Deep Markov models for unsupervised classification}
+\markboth{CHAPTER 4. DEEP MCs FOR UNSUPERVISED CLASSIFICATION}{Short right heading}
+
+\label{chap:unsp_pmc_tmc}
+
+\localtableofcontents
+\pagebreak
+
+\section{Introduction}
+% \yohan{Here you have to explain that the challenges is that we do not have any y
+% in the database. So one could apply the previous methodology, but it does not
+% guarantee the interpretability of the estimated labels.}
+
+
+
+In the previous Chapters~\ref{chap:pmc}
+and~\ref{chap:semi_supervised_pmc_tmc}, 
+we have introduced the PMC and TMC models as frameworks for generative models,
+supervised and semi-supervised classification.
+In this chapter, we consider the problem of unsupervised classification
+where only the sequence of observations $\obs_{0:T}$ is observed,
+and that we want to estimate the sequence of hidden labels $\lab_{0:T}$.
+We recall that the estimation of $\lab_t$ from $\obs_{0:T}$, for all $t$, $0\leq t \leq T$, relies 
+on the  unknown posterior distribution $p(\lab_t|\obs_{0:T})$,
+% ~\eqref{eq:post_distrib}. 
+\begin{equation*}
+  % \label{eq:post_distrib}
+  \p(\lab_t|\obs_{0:T})=
+  \frac{\sum_{\lab_{0:t-1},\lab_{t+1:T}} \p(\obs_{0:T}, \lab_{0:T}) } 
+  {\sum_{\lab_{0:T}} \p(\obs_{0:T}, \lab_{0:T})} \text{,}
+\end{equation*} 
+which can be derived from the distribution $\p(\lab_{0:T},\obs_{0:T})$
+or $\p(\latent_{0:T},\lab_{0:T},\obs_{0:T})$ since 
+$\p(\lab_{0:T},\obs_{0:T})=\int \p(\latent_{0:T},\lab_{0:T},\obs_{0:T}) 
+\mathrm{d}\latent_{0:T}$.
+% The distribution $\p(\obs_{0:T}, \lab_{0:T})$ can be also seen as a marginal distribution of 
+% a distribution in augmented dimension $\p(\latent_{0:T},\lab_{0:T},\obs_{0:T})$.
+Thus, we continue to consider the PMC and TMC models, where their 
+associated conditional distributions can be parameterized by 
+universal approximators (DNNs) under the constraint
+that $\lab_{0:T}$ is an interpretable hidden process. 
+As we will see, this particular constraint requires us to review previous
+techniques to include the learning of an interpretable label.
+
+
+% In terms of modeling, a direct consequence is 
+% that~\eqref{eq:pmc_intro_uns}-\eqref{eq:tmc_intro}
+%  do not require 
+% any additional assumption on the involved distributions. 
+
+% in the spirit of the Variational Auto-Encoders (VAEs) \citep{kingma2013auto}.
+% However, while VAEs and their extensions
+% \citep{chung2015recurrent,gregor2015draw}
+% aim at building powerful generative
+% models (\ie~an expressive 
+% probability distribution $\p(\obs_{0:T})$ on the observations), 
+% Next, a main advantage of embedding
+% the DNN framework into a probabilistic framework
+% is that it is possible to derive 
+% unsupervised Bayesian estimation algorithms to jointly
+% estimate $\theta$ and $\lab_t$, for all $t$.
+% The counterpart of this generalization is that
+% the resulting models can be highly parameterized
+% in such a way that the final estimated models can suffer 
+% from a lack of interpretability as compared to the simple 
+% HMC~\eqref{eq:hmc_intro}.
+% Thus,  starting from a simple but interpretable
+% model \textcolor{black}{(\ie~a model where the hidden process of interest 
+% is interpretable as defined earlier)}, we include this constraint 
+% in our parameterized models and their associated Bayesian inference algorithms.
+% Our models are based on the declination of
+% the general TMCs \eqref{eq:tmc_intro} in three versions
+% and aim at modeling different kinds of problems:
+
+
+
+
+
+This chapter is organized in three parts.
+First, we give up the latent variable $\latent_t$ and
+consider a PMC model~\eqref{eq:pmc_intro_uns} 
+without any latent variable.
+We directly parameterize the joint distribution
+$\p(\lab_{0:T},\obs_{0:T})$ of a PMC.
+We continue considering a DNN parameterization and 
+an ad hoc procedure based on a pretraining of DNNs which aims at
+transforming a simple and interpretable model such as~\eqref{eq:hmc_intro}
+into a complex probabilistic architecture while keeping this interpretability constraint.
+We show that it is possible to adapt existing  Bayesian inference algorithms
+to our models and the VI framework is not necessary in the PMC case.
+
+
+Next, we reintroduce the continuous latent variables $\latent_{0:T}$, and propose
+a modified VI framework to estimate the parameters of the model
+which takes into account the interpretability of $\lab_{0:T}$ and also 
+the different roles of $\lab_{0:T}$ and $\latent_{0:T}$. 
+We also propose a Sequential Monte Carlo algorithm~\citep{doucet2009tutorial} 
+based on the previous variational framework to obtain the final estimates of $\lab_t$.
+% Finally,  we propose an alternative use of the latent process, where our
+% objective is to characterize explicitly the relationship
+% between the pair $(\lab_t,\obs_t)$ and the past observations $\obs_{t-1}$ when
+% $\latent_{0:T}$ is deterministic given the observations. Thus,  a closed-form
+% expression of $\p(\lab_t,\obs_t|\lab_{t-1},\obs_{t-1})$ is available contrary to
+% the general TMC introduced before.
+% A direct advantage of the resulting TMC model is that
+% it can be interpreted as the combination of a PMC model \eqref{eq:pmc_intro_uns}
+% with an RNN~\citep{rumelhart1986learning,
+% mikolov2014learning}, and that the distributions of interest can be computed
+% exactly, without any approximation.
+% \begin{itemize}
+% \item first, we consider a model
+% in which we directly parameterize the joint distribution
+% $\p(\lab_{0:T},\obs_{0:T})$ of a PMC.
+% % (\ie~we consider a TMC \eqref{eq:tmc_intro}
+% % without any latent process $\latent_{0:T}$). 
+% We continue considering a DNN parameterization, we show that it is possible to adapt
+% existing Bayesian inference algorithms,
+% we propose and ad-hoc procedure based on a pretraining of DNNs which aims at
+% transforming a simple and interpretable model such as \eqref{eq:hmc_intro} 
+% into a complex probabilistic architecture while keeping this interpretability constraint;
+% \item in our second version of TMCs,
+% we reintroduce a continuous latent process
+% $\latent_{0:T}$. The aim of this continuous process is to learn
+% the nature of the distribution of $(\lab_{0:T},\obs_{0:T})$; 
+% even if the distributions underlying $p(\latent_{0:T},\lab_{0:T},\obs_{0:T})$ 
+% are simple distributions (\eg~  Gaussian distributions for
+% the continuous r.v.), the implicit marginal one
+% $\p(\lab_{0:T},\obs_{0:T}) = \int p(\latent_{0:T},\lab_{0:T},\obs_{0:T}) {\rm d}\latent_{0:T}$ can become
+% complex and more relevant than a direct parameterization
+% of $\p(\lab_{0:T},\obs_{0:T})$.
+% %\hugo{}{on insère le mot clé \emph{implicit distribution} [YI
+% %2018 Semi implicit VI?]}.
+% However, due to the continuous nature of the latent
+% process, the distributions of interest
+% cannot be computed exactly \textcolor{black}{in general}; thus, we
+% modify the variational Bayesian inference framework
+% \citep{Jordan99anintroduction} in order to propose
+% a parameter estimation algorithm which takes into
+% account the interpretability constraint of $\lab_{0:T}$ but also the different roles of $\lab_{0:T}$ and $\latent_{0:T}$;
+% we finally propose a Sequential Monte Carlo (SMC) algorithm \citep{doucet2009tutorial} based on the previous variational framework to obtain the final estimates of $\lab_t$;
+% \item in our last version of the TMC model, 
+% we propose an alternative use of the latent process $\latent_{0:T}$; here, our objective
+% is to \textcolor{black}{ characterize explicitly 
+% the relationship between the pair $(\lab_t,\obs_t)$ 
+% and the past observations $\obs_{t-1}$: when
+% $\latent_{0:T}$ is deterministic given the observations,
+% a closed-form expression of $\p(\lab_t,\obs_t|\lab_{t-1},\obs_{t-1})$ is available 
+% contrary to the general TMC introduced before.
+% %introduce an explicit long dependency 
+% %on the observations to model
+% %the joint process $(\lab_{0:T},\obs_{0:T})$. To that end, the latent process $\latent_{0:T}$ becomes deterministic given the observations $\obs_{0:T}$. 
+% A direct advantage of the resulting TMC
+% model is that it can be interpreted as the combination of a PMC model \eqref{eq:pmc_intro_uns} 
+% with a Recurrent Neural Network (RNN) \citep{rumelhart1986learning, mikolov2014learning} and that the distributions of interest can be computed exactly, without any approximation.}
+% %while preserving the interpretability of $\lab_t$.}
+% \end{itemize}
+For each model, we perform simulations to evaluate to what extent our
+generalized models lead to a better estimation of the hidden states $\lab_t$.
+Most of the simulations on synthetic and real data are run in the context of
+unsupervised image segmentation 
+(as in Chapter~\ref{chap:semi_supervised_pmc_tmc}).
+% We show that our deep
+% parameterizations and the training procedure that we propose always improve the
+% segmentation accuracy. The results then pave the way towards a new approach for
+% unsupervised signal processing with general hidden Markov models.
+
+
+
+
+% \yohan{Next paragraph. Chapter 3: Unsupervised Learning\\
+%     This should be merged with the introduction of this chapter. 
+%     At this point :\\
+% * we have already discussed of general parameterization of PMC and TMC;\\
+% * VI has been explained.\\
+% So you just had to deal with the problem of this chapter and specificites 
+% ie the interpretabilty of labels when we use deep parameterization :\\
+% * so we start with deep PMC without latent variables z to see if we can generalize simple HMCs. 
+% Inference is simple for that case (no need to VI) \\
+% but the challenge is to keep the interpretability of a simple HMC for eg
+% * we reintroduce the latent variable and VI}
+
+% The use of such models has been proposed
+% in past contributions. It has been shown that when the PMC model
+% is stationary, it is possible to propose an unsupervised estimation 
+% method to estimate jointly  $\theta$ and $\lab_t$ from $\obs_{0:T}$ provided
+% that the distribution of the observation given the hidden 
+% states is restricted to a set of classical distributions
+% such as the Gaussian one~\citep{gorynin2018assessing}.
+% The stationary assumption can be relaxed by considering the TMC model with a third discrete
+% latent process~\citep{lanchantin2004unsupervised}; in this case, the new process models, 
+% the non-stationarity of the pair $(\lab_{0:T},\obs_{0:T})$ and
+% the complete triplet model can also be estimated through an unsupervised
+% procedure \citep{lanchantin2004unsupervised,gorynin2018assessing}.
+% Finally, it is also possible to consider a large class
+% of conditional distributions for the observations by the introduction of 
+% copulas~\citep{derrode2013unsupervised, derrode2016unsupervised}. 
+
+
+% In summary, very general PMC or TMC models can be implicitly built
+% from the introduction of an additional latent process or the use 
+% of copulas~\citep{lanchantin2011unsupervised, li2019adaptive}.
+% %Consequently, and up to our best knowledge, although PMCs and TMCs have been introduced in a very general context,
+% %their application for 
+% %unsupervised estimation 
+% %(\ie~ the joint estimation of $\theta$ and of $\lab_t$ from $\obs_{0:T}$) 
+% %has been possible by making specific assumptions. First, the $\latent_{0:T}$ process has always been considered as discrete in the literature when $\lab_{0:T}$ is also discrete.
+% %Second, we note that most of the literature on PMCs tends towards the choice of a restricted set of classical
+% %distributions for the conditional distributions of the observations $(\obs_{0:1})$
+% %(\eg~ a Gaussian one whose parameters depend on $\lab_{0:1}$),
+% %in this case they can be easily estimated by popular estimation algorithms \citep{gorynin2018assessing}. A notable exception is the line of work which considers the introduction of copulas in the class-conditional distributions~\citep{derrode2013unsupervised, derrode2016unsupervised},
+% %this can lead to much more complex noise models. Note also that in TMC literature, because of the much richer modeling possibilities, it is not hard to find non-Gaussian TMCs~\citep{lanchantin2011unsupervised, li2019adaptive}.
+% %}
+% %\textcolor{}{Third, practical TMC models of the literature are \emph{stationary} processes in augmented dimensions offering a way of dealing with a non-stationary process (\emph{i.e.} estimating the hidden states $\lab_{0:T}$ and the stationarity regimes) by the introduction of an additional auxiliary process. This is one of the most appealing properties of TMCs but the stationarity assumption of the overall model can be restrictive in practice. For example, a stationary TMC has been used to handle a non-stationary PMC in~\citep{lanchantin2004unsupervised}. Another theoretical example, by pushing the same logic one step further, is that a non-stationary TMC $(\lab_{0:T}, \latent_{0:T}, \obs_{0:T})$ (with discrete $\lab_{0:T}$ and $\latent_{0:T}$) could be handled the same way by introducing a fourth process $\pmb{w}$; this gives rise to a stationary $(\h, \z, \pmb{w}, \x)$. We recall the reader that the assumption that, for a discrete $\lab_{0:T}$,
+% %$(\lab_{0:T},\obs_{0:T})$ (resp. $(\latent_{0:T},\lab_{0:T},\obs_{0:T})$, where $\latent_t$ is discrete) is a
+% %stationary process means that the distribution
+% %$\p(\lab_{0:T},\obs_{0:T})$ (resp.  $\p(\latent_{0:T},\lab_{0:T},\obs_{0:T})$) is directly described by the initial distribution $\p(\lab_{0:1},\obs_{0:1})=\p(\lab_{0:1})\p(\obs_{0:1}|\lab_{0:1})$
+% %(resp. $\p(\lab_{0:1},\latent_{0:1},\obs_{0:1})=\p(\lab_{0:1},\latent_{0:1})\p(\obs_{0:1}|\lab_{0:1},\latent_{0:1})$), see for example \citep{pieczynski2003pairwise, gorynin2018assessing}.
+% %}
+% % These distributions coincide with a
+% % discrete distribution on $\Omega\times\Omega$ and a conditional
+% % continuous one on $\mathbb{R}^{d_{\obs}} \times \mathbb{R}^{d_{\obs}}$, respectively; they are
+% % thus easier to model in the sense that 
+% % the conditioning  does not depend on a continuous r.v. 
+% In addition, the PMC and TMC models are presented for unsupervised classification
+% but with an alternative way to build such models
+% which allows, for example, to describe explicitly, with
+% any distribution, the probability distribution of the
+% observation given the hidden states. Moreover, we also 
+% consider the case where the third latent process $\latent_{0:T}$
+% is continuous when $\lab_{0:T}$ remains discrete. The application 
+% is twofold since it leads to models with implicit but
+% potentially complex noise and it can also be considered
+% as an extension of discrete TMCs which is able to model continuous non-stationarity. 
+% Finally, our construction also enables
+% us to cast directly in our models the powerful deep learning framework.
+
+\newpage
+\section{PMCs for unsupervised classification}
+\label{sec:generalParam}
+
+%sec-pmc
+% We also introduce a sequence
+% of labels $\lab_{0:T}=(\lab_{0}, \dots,\; \lab_{T})$ associated to the previous sequence $\obs_{0:T}$. 
+% We will assume that  $\obs_t \in \mathbb{R}^{d_x}$, while the label
+% $\lab_t$ is discrete, so  $\lab_t \in \Omega=\{\omega_1,\dots,\omega_C\}$, 
+% where $C$ is the number of classes.
+
+
+In this section, we do not consider the latent variable $\latent_t$ in order to
+build a solution on a model without latent variables, which is already
+challenging due to the absence of the labels $\lab_t$ associated to 
+the observations $\obs_t$.
+We adapt the PMC model 
+discussed in Chapter~\ref{chap:pmc} 
+to the unsupervised classification problem, where
+the pair $(\latent_t,\obs_t)$ is replaced by $(\lab_t,\obs_t)$, 
+where $\lab_t$ is a discrete r.v.
+% where $\lab_t$ is a discrete r.v. associated to the observation $\obs_t$.
+This modification addresses the need for interpretable models. 
+
+The PMC model reads
+\begin{equation}
+  \label{eq:pmc_intro_uns}
+  \p(\lab_{0:T},\obs_{0:T}) = \p(\lab_0)
+  \prod_{t=1}^T \p(\lab_t, \obs_t |\lab_{t-1}, \obs_{t-1}) \text{,}
+\end{equation}
+where  the factorization of the transition distribution is given by
+\begin{align}
+  \label{eq:pmc_gen}
+  \p(\lab_t,\obs_t|& \lab_{t-1},\obs_{t-1}) =
+  \p(\lab_t|\lab_{t-1},\obs_{t-1})\p(\obs_t|\lab_{t-1:t},\obs_{t-1}) \text{.}
+\end{align}
+
+We also define the~\gls*{semipmc}, a particular instance of the PMC model, 
+where the observation $\obs_t$ does not depend on $\lab_{t-1}$, 
+given $(\lab_t,\obs_{t-1})$, \ie~
+\begin{align}
+  \p(\lab_t,\obs_t|& \lab_{t-1},\obs_{t-1}) =
+   \p(\lab_t|\lab_{t-1},\obs_{t-1}) \p(\obs_t|\lab_t,\obs_{t-1}) \text{.}
+\end{align}
+This model is particularly interesting in the context of unsupervised classification, 
+where the interpretability problem may be easier.
+Figure~\ref{fig:pmc_graphs} illustrates the graphical representation of the PMC model 
+and its particular instances that we consider in this section, 
+\ie~the SPMC, and the HMC models.
+
+\begin{figure}[htb]
+    \begin{subfigure}[b]{0.3\linewidth}
+      \centering
+      \includegraphics[width=4cm]{Figures/Graphical_models/hmc_un.pdf}
+      \caption{HMC}
+      \label{fig:dhmcin}
+      % \vspace{1.1cm}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\linewidth}
+      \centering
+      \includegraphics[width=4cm]{Figures/Graphical_models/spmc_un.pdf}
+      \caption{SPMC}
+      \label{fig:dpmccn1}
+      % \vspace{1.1cm}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\linewidth}
+      \centering
+      \includegraphics[width=4.0cm]{Figures/Graphical_models/pmc_un.pdf}
+      \caption{PMC}
+      % \vspace{1.1cm}
+      \label{fig:dpmccn2}
+    \end{subfigure}
+    \caption{Graphical representations of the HMC, SPMC, and PMC models.}
+    % The white circles (resp. gray squares) represent the hidden (resp. observed) r.v. $\lab_t$ (resp. $\obs_t$).}
+\label{fig:pmc_graphs}
+
+\end{figure}
+% In summary, a homogeneous process refers to the invariance of the 
+% probability distribution with respect to the starting point in time, 
+% while a stationary process refers to the constancy of the statistical properties 
+
+
+
+% \subsection{General parameterization of PMCs}
+
+% \yohan{already done in chapter 2. You can just explain that we consider the pair
+% $(x,y)$ as a PMC as a generalization of the HMC for classification and we keep in
+% mind that the objective is to propose complex parameterization}
+We revisit the general parameterization of the PMC model introduced in
+Chapter~\ref{chap:pmc} to adapt it to the unsupervised classification problem.
+We parameterize the
+conditional distributions in \eqref{eq:pmc_gen} as
+\begin{eqnarray}
+\label{pmc-theta-1}
+\p(\lab_t|\lab_{t-1},\obs_{t-1})=\vartheta(\lab_t;\pyun(\lab_{t-1},\obs_{t-1})) \text{, } \\
+\label{pmc-theta-2}
+\p(\obs_t|\lab_{t-1:t},\obs_{t-1})=\zeta(\obs_t;\pxun(\lab_{t-1:t},\obs_{t-1})) \text{.}
+\end{eqnarray}
+
+% \begin{remark}
+%   % In Section~\ref{sec:pmc_parameterization}, 
+%   % we have introduced a general parameterization of the PMC model
+%   % which is different from the one presented here.
+%   In this section, we consider a general parameterization adapted to the
+%   unsupervised classification problem with two different dicrete and 
+%   continuous processes
+%   $\lab_{0:T}$ and $\obs_{0:T}$, respectively.  
+%   In Section~\ref{sec:pmc_parameterization}
+%   the parameterization is adapted to the model that generates new observations $\obs_t$
+%   with (non-interpretable) continuous latent variables $\latent_{0:T}$.
+% \end{remark}
+
+
+% \begin{example}
+%   \begin{align*}
+%       \py(\lab_{t-1},\, \obs_{t-1},\, \latent_t) &= 
+%       {\rm sigm}(a_{\lab_{t-1}} \obs_{t-1} + b_{\lab_{t-1}} \latent_t + c_{\lab_{t-1}})
+%       \text{,} \\
+%       \px(\lab_{t}) 
+%       &= \big[d_{\lab_{t}},\, \sigma_{\lab_{t}} \big] \text{,} \\
+%       \pz(\obs_{t-1},\, \lab_{t-1}) &=  
+%       \big[ e_{\lab_{t-1}}\obs_{t-1},\, \sigma_{\lab_{t-1}}'\big] 
+%       \text{,} \\
+%       \vartheta(\lab_t; \rho)&= \Ber\left(\lab_t; \rho \right) 
+%       \text{,} \\
+%       \zeta(\obs_t; s = [\mu,\, {\sigma}] ) &=     
+%       \mathcal{N}(\obs_t; \mu,\, {\sigma}^2 )
+%       \text{,} \\
+%       \eta(\latent_t; s' = [\mu',\, {\sigma'}])  
+%       &= \N\left(\latent_t;  \mu' ,\, {\sigma'}^2 \right)   
+%       \text{,}
+%   \end{align*}
+
+% \end{example}
+
+\begin{example}
+  Let us show that this general parameterization
+  includes the classical HMC with independent Gaussian noise (HMC-IN).
+  Let us assume that $\Omega=\{\omega_1,\omega_2 \}$ and
+  $\obs_t \in \mathbb{R}$. 
+  % We denote $\mathcal{N}(\obs;m;\sigma^2)$ the Gaussian
+  % distribution with mean $m$ and variance $\sigma^2$ taken at point $\obs$,
+  % ${\rm Ber}(\lab;v)$ the Bernoulli distribution with parameter $v$ such that
+  % ${\rm Ber}(\omega_1;v)=v$ and ${\rm sigm}(z)=1/(1+\exp(-z)) \in [0,1]$ the
+  % sigmoid function. 
+  In this case, the HMC-IN model can be described as
+  \begin{align}
+    \label{param-1}
+    \py(\lab_{t-1},\, \obs_{t-1},\, \latent_t) &= 
+    {\rm sigm}( b_{\lab_{t-1}})
+    \text{,} \\
+    \label{param-2}
+    \px(\lab_{t}) 
+    &= \big[d_{\lab_{t}},\, \sigma_{\lab_{t}} \big] \text{,} \\
+    \label{param-32}
+    \vartheta(\lab_t; \rho)&= \Ber\left(\lab_t; \rho \right) 
+    \text{,} \\
+    \label{param-4}
+    \zeta(\obs_t; s = [\mu,\, {\sigma}] ) &=     
+    \mathcal{N}(\obs_t; \mu,\, {\sigma}^2 )
+    \text{,} 
+\end{align}
+
+%   \begin{align}
+%     \vartheta(\lab_t|\; \lab_{t-1},\obs_{t-1} \;)&= \Ber\left(\lab_t; \ropy \right) 
+% \text{,} \quad \text{ where } 
+% \ropy  = \py(\lab_{t-1},\obs_{t-1}) \text{,}\\
+% \zeta(\obs_t| \lab_{t-1:t},\obs_{t-1} ) &= 
+% \mathcal{N}(\obs_t; \muobs,\, {\sigobs}^2 ) 
+% \text{,} \quad \text{ where}
+% \left[ \muobs,\, \sigobs \right]= \px(\lab_{t-1:t},\obs_{t-1}) \text{,}
+% \end{align}
+% with
+% \begin{align}
+%   \py(\lab_{t-1},\, \obs_{t-1}) &= 
+%   {\rm sigm}\left(b_{\lab_{t-1}}\right)  \text{,} \\
+%   \px(\lab_{t-1:t},\obs_{t-1}) &= \big[d_{\lab_{t}},\, \sigma_{\lab_{t}}^{\obs}  \big] \text{.}
+% \end{align}
+
+  % \begin{eqnarray}
+  % \label{param-1}
+  % \pyun(\lab_{t-1},\obs_{t-1})&=&
+  % {\rm sigm}\left(b_{\lab_{t-1}}\right)  \text{,} \\
+  % \label{param-2}
+  % \pxun(\lab_{t-1:t},\obs_{t-1}) &=& \begin{bmatrix} d_{\lab_t}; 
+  % %\label{param-3}
+  % \sigma_{\lab_t}\end{bmatrix} \text{,} \\
+  % \label{param-32}
+  % \vartheta(\lab;v)&=& {\rm Ber}(h,v) \text{,} \\
+  % \label{param-4}
+  % \zeta\left(\obs;v'=\left[v'_1;v'_2\right]\right)
+  % &=& \mathcal{N}\left(\obs;v'_1;(v'_2)^2\right) \text{.} 
+  % \end{eqnarray}
+  % Here, the notation $[\cdot, \cdot]$ refers to a vectorial output
+  % and ${\rm sigm}(z)=1/(1+\exp(-z)) \in [0,1]$ to the sigmoid function.
+  Indeed, ~\eqref{param-1}-~\eqref{param-2}
+  only depend on $\lab_{t-1}$ and on $\lab_t$, respectively. 
+  Thus, we have  $\p(\lab_t=\omega_1|\lab_{t-1}=\omega_i)={\rm sigm}(b_{\omega_i})$ 
+  and $\p(\obs_t|\lab_t=\omega_j)=\mathcal{N}(\obs_t;d_{\omega_j};\sigma^2_{\omega_j})$. 
+  Finally, the set of parameters is given by
+  $\theta=(b_{\omega_i},d_{\omega_j},\sigma_{\omega_j}|(\omega_i,\omega_j) \in \Omega \times \Omega)$.
+  % This parameterization can be easily extended to
+  % the multi-class cases with $C>2$ by replacing $\pyun$
+  % in \eqref{param-1} by a vector of softmax function.
+  % ,
+  % $$\pyun(\lab_{t-1},\obs_{t-1})=\left[\frac{e^{b_{\omega_1,\lab_{t-1}}}}{\sum_{j=1}^C e^{b_{\omega_j,\lab_{t-1}}}}; \cdots;\frac{e^{b_{\omega_C,\lab_{t-1}}}}{\sum_{j=1}^C e^{b_{\omega_j,\lab_{t-1}}}} \right] \text{,} $$ 
+  % and $\vartheta(\lab;v)$ by the categorical distribution described
+  % by the $C$ components of the vector $v$. 
+  As a further illustrative example in the binary case,
+  it is possible to start from this particular parameterization of HMCs to derive a linear and Gaussian PMC model in which we introduce
+  dependencies on $\obs_{t-1}$ and $\lab_{t-1}$. In this case,
+  $\vartheta$ and $\zeta$ are unchanged but $\pyun$
+  and $\pxun$ now read as
+  \begin{eqnarray}
+  \label{param-1_bis}
+  \pyun(\lab_{t-1},\obs_{t-1})&=&{\rm sigm}\left(a_{\lab_{t-1}}\obs_{t-1}+b_{\lab_{t-1}}\right) \text{,} \\
+  \label{param-2_bis}
+   \pxun(\lab_{t-1:t},\obs_{t-1}) &=& \begin{bmatrix} c_{\lab_{t-1},\lab_{t}}\obs_{t-1}+ d_{\lab_{t-1},\lab_{t}}; \
+  %\label{param-3}
+  \sigma_{\lab_t,\lab_{t-1}}\end{bmatrix} \text{.} 
+  \end{eqnarray}
+  The set of parameters is now given by 
+  $\theta=(a_{\omega_i},b_{\omega_i},c_{\omega_j,\omega_i},
+  d_{\omega_j,\omega_i}, \sigma_{\omega_j,\omega_i}|
+   (\omega_j,\omega_i) \in \Omega^2 )$.
+  As we will see later, these models play a critical role in the construction of parameterization based on DNNs. Indeed, despite their simple form, they generally provide an interpretable classification. 
+  %The parameters related to $\pxun$ can be updated exactly  from \eqref{eq:EMq} while those related to $\pyun$ are updated according to the gradient update rule~\eqref{update-GEM}. Note that, in the SPMC model,  the coefficients describing $\pxun$ in \eqref{param-2} no longer depend on $\lab_{t-1}$.     
+\end{example}
+
+We now show that under this framework it is possible to derive an unsupervised
+estimation algorithm which approximates the ML estimate of $\theta$,
+%and which computes exactly the posterior
+%distributions $\p(\lab_t|\obs_{0:T})$
+no matter the choice of the parameterization $\pyun$ and $\pxun$.
+% This contribution is based on the
+% preliminary result~\citep{gangloff2021unsupervised} but has been revised and
+% extended. 
+In particular, we use a direct ML approach rather than an EM one (see
+Remark~\ref{rem-EM}) and introduce a pretraining approach for deep
+parameterizations. This pretraining approach is a novel contribution that will
+be detailed in the next sections. 
+Once $\theta$ has been estimated, we resort to the classical
+estimation of the posterior distributions $\p(\lab_t|\obs_{0:T})$.
+%\begin{remark}
+%\label{rk:multiclass1}
+%\textcolor{}{In Eqs.~\ref{param-1} and~\ref{param-1_bis}, we illustrate the deep parametrization in the case of the binary hidden random variables $\lab_t$ and scalar observations $\obs_t$, $\forall k$. The results could be straightforwardly extended to the multi-class ($C > 2$) and multi-channel ($d_{\obs} > 1$) case considering a one-hot encoding for $\lab_t$, a dot product between $\lab_{t-1}$ and $\obs_{t-1}$ and transforming the sigmoid function into the softmax function.}
+%\end{remark}
+
+
+
+\subsection{Bayesian inference for PMCs}
+\label{sec:inference_pmc}
+% \yohan{you should make a connection with Chap 2 : explain that in the case where
+% the hidden variable is discrete one can compute exactly the likelihood so we do
+% not need to resort to VBI; equivalently it is because the optimal variational
+% distribution $q(y_{0:t}|x_{0:t})$  is computable.}
+
+
+
+\subsubsection{Estimation of $\theta$} 
+
+
+Since the hidden variable $\lab_t$ is discrete, the likelihood
+$\p(\obs_{0:T})$ can be computed exactly. 
+This accessibility is a key point in the estimation of $\theta$. 
+Here, the VI method is not necessary to approximate the likelihood (equivalently, 
+the optimal variational distribution is available).
+% , and 
+% equivalently, the optimal variational distribution $q(\lab_{0:T}|\obs_{0:T})$ 
+% is available.
+Given the differentiability of the functions $\pyun$, $\pxun$, $\vartheta$, and
+$\zeta$, we can propose a gradient ascent method on the likelihood $\p(\obs_{0:T})$ 
+to approximate 
+the ML estimate of $\theta$. This gradient ascent method is based on the sequential computation 
+of  $\alpha_{\theta,t}(\lab_t)=\p(\lab_t,\obs_{0:t})$,
+for all $t$, $0 \leq t \leq T$,
+from which we deduce the likelihood
+\begin{equation}
+\label{likelihood-pmc}
+\p(\obs_{0:T})=\sum_{\lab_{T}} \alpha_{\theta,T}(\lab_{T}) \text{.}
+\end{equation}
+Based on the Markovian property of \eqref{eq:pmc_intro_uns} and on the general 
+parameterization \eqref{pmc-theta-1}-\eqref{pmc-theta-2}, the
+coefficients $\alpha_{\theta,T}(\lab_{T})$ can be computed 
+recursively from~\citep{pieczynski2003pairwise} as 
+\begin{equation}
+\label{eq:alpha}
+\alpha_{\theta,t}(\lab_t)=\sum_{\lab_{t-1}}\alpha_{\theta,t-1}(\lab_{t-1}) \vartheta(\lab_t;\pyun(\lab_{t-1},\obs_{t-1})) 
+\zeta(\obs_t;\pxun(\lab_{t-1:t},\obs_{t-1})) \text{.}
+\end{equation}
+Consequently, the gradient of the likelihood $\p(\obs_{0:T})$ 
+(or equivalently that of the log-likelihood) w.r.t.~$\theta$ can be
+deduced from that of $\alpha_{\theta,t}$,
+which is itself sequentially computable
+by using the decomposition~\eqref{eq:alpha}  
+because \(p(y_t, x_{0:t}) = \sum_{y_{t-1}} p(y_{t-1:t}, x_{0:t}) = 
+\sum_{y_{t-1}} p(y_{t-1:t}, x_{0:
+t-1}) p(y_t, x_t \mid y_{t-1}, x_{t-1})\)
+This sequential structure has the advantage
+that numerical auto-differentiation methods
+can be used to compute such gradients in practice~\citep{NEURIPS2019_9015}.
+%computed sequentially by using the decomposition of $\alpha_{\theta,t}$; 
+%\textcolor{}{indeed, \eqref{eq:alpha} enables
+%us to compute the gradient of $\alpha_{\theta,t}$ in function of that of $\alpha_{\theta,t-1}$ }
+%Moreover, we consider maximizing the log-likelihood w.r.t.~$\theta$, since it is equivalent and computationally more appealing than maximizing the likelihood w.r.t.~$\theta$.
+The estimation of $\theta$ can thus be deduced
+from an iterative gradient ascent method based on a learning
+rate $\epsilon$ and, for example, on the update
+\begin{equation}
+\label{grad-likelihood}
+\theta^{(j+1)}=\theta^{(j)} + \epsilon {\nabla_{\theta} \log{\p(\obs_{0:T})}}\Big|_{\theta=\theta^{(j)}} \text{.}
+\end{equation}
+The unsupervised estimation of $\theta$ is summarized in Algorithm~\ref{algo:algo_theta_pmc}.
+The gradients can be computed automatically through auto-differentiation tools,
+\eg~JAX by~\cite{jax2018github}.
+
+
+
+\begin{remark}
+\label{rem-EM}
+Generally, the parameter estimation
+procedure for a probabilistic model with hidden r.v. is based on the 
+EM algorithm~\citep{dempster1977maximum} 
+(see Algorithm~\ref{algo:em_algorithm}
+ in Appendix~\ref{chap:appendix}).
+It relies on the computation of 
+$$Q(\theta,\theta^{(j)})=\E_{p_{\theta^{(j)}}(\lab_{0:T}|\obs_{0:T})}\big(\log p_{\theta}(\lab_{0:T},\obs_{0:T}) \big)$$ 
+followed by the maximization of $Q(\theta,\theta^{(j)})$ w.r.t.~$\theta$.
+However, for general parameterizations \eqref{pmc-theta-1}-\eqref{pmc-theta-2},
+the maximization step cannot be computed analytically. In this case, it is
+possible to use a gradient-EM approach to replace the maximization step, but it
+is then strictly equivalent and computationally more demanding than computing
+the gradient of the log-likelihood~\citep{xu1996convergence,
+balakrishnan2017statistical} as we propose in~\eqref{grad-likelihood}. Finally,
+for particular parameterizations for which the maximization step is computable,
+the comparison between these two approaches is an open question and is out of
+scope of this thesis.
+\end{remark}
+
+% \begin{remark}
+% \label{rem:link_pmc_generative}
+% \katy{Link with PMC presentation in Chapter 2??}
+% \end{remark}
+
+\begin{algorithm}[htbp!]
+  \caption{Unsupervised estimation of $\theta$ in general PMC models.}
+  \label{algo:algo_theta_pmc}
+  \begin{algorithmic}[1]
+  %\KwData{$\pmb{x}_{0:T}_{I}$, the observed image}
+  \Require{A realization $\obs_{0:T}$, a set of estimated parameters $\theta^*$}
+  \Ensure{$\theta^*$, a set of estimated parameters}
+  \State  $j=0$\label{line:start_dpmc}
+  \While{\text{ convergence of   $\log p_{\theta^{(j)}}(\obs_{0:T})$ is not attained}}
+  \State  Compute $\log\alpha_{\theta^{(j)},t}(\lab_t)$ and $\nabla_{\theta}\log\alpha_{\theta^{(j)},t}(\lab_t)\Big|_{\theta=\theta^{(j)}}$, for all $\lab_t \in \Omega$, 
+  for all $0 \leq t \leq T$, with \eqref{eq:alpha}
+  \State Compute $\log p_{\theta^{(j)}}(\obs_{0:T})$ and $\nabla_{\theta}\log p_{\theta^{(j)}}(\obs_{0:T})\Big|_{\theta=\theta^{(j)}}$, with~\eqref{likelihood-pmc}
+
+  \State Set $\theta^{(j+1)}=\theta^{(j)} + \epsilon {\nabla_{\theta} \log{\p(\obs_{0:T})}}\Big|_{\theta=\theta^{(j)}}$\label{update-GEM} 
+  \State $j\leftarrow j+1$
+  \EndWhile
+  \State  $\theta^{*} \leftarrow \theta^{(j)}$
+\end{algorithmic}
+  % \vspace*{0.2cm}
+\end{algorithm}
+
+
+\subsubsection{Estimation of $\lab_t$}
+Once we have obtained an estimate $\theta^*$ of $\theta$, it remains to compute
+$p_{\theta^*}(\lab_t|\obs_{0:T})$, for all $t$. Since we deal with particular PMCs, it
+can be done by following the steps of~\citet{pieczynski2003pairwise}, \ie~by
+using the Markovian property of~\eqref{eq:pmc_intro_uns} 
+and by introducing the
+backward coefficients
+$\beta_{\theta^*,t}(\lab_t)= p_{\theta^*}(\obs_{t+1:T}|\lab_t,\obs_t)$, for all $t$,
+with $\beta_{\theta^*,T}(\lab_{T})=1$.
+These coefficients can be computed sequentially from
+\begin{equation}
+\label{eq:beta}
+\beta_{\theta^*,t-1}(\lab_{t-1})= 
+\sum_{\lab_{t}} \beta_{\theta^*,t}(\lab_{t})
+\vartheta(\lab_t;\pyop(\lab_{t-1},\obs_{t-1})) 
+\zeta(\obs_t;\pxop(\lab_{t-1:t},\obs_{t-1})) \text{.}
+\end{equation}
+Thus, we deduce
+% \yohan{next equations $\theta^*$ should be replaced by $\theta$} 
+\begin{eqnarray}
+\label{eq:pair_post_margin}
+p_{\theta^*}(\lab_{t-1:t}|\obs_{0:T}) &\propto&
+\alpha_{\theta^*,t-1}(\lab_{t-1}) \times  \beta_{\theta^*,t}(\lab_t) \times
+\vartheta(\lab_t;\pyop(\lab_{t-1},\obs_{t-1})) \times \nonumber\\
+&&  \;\;  \zeta(\obs_t;\pxop(\lab_{t-1:t},\obs_{t-1}))   \text{,} \\
+\label{eq:post_margin}
+p_{\theta^*}(\lab_t|\obs_{0:T})&=&\sum_{\lab_{t-1}} p_{\theta^*}(\lab_{t-1:t}|\obs_{0:T}).
+\end{eqnarray}
+The computation of the MAP estimate
+of $\lab_t$ is summarized in Algorithm~\ref{algo:algo_hk_pmc}.
+% \katyobs{check acronym MAP with other sections} 
+
+
+%In this section, we present  a general Bayesian inference algorithm for the PMCs. Our objective is to compute $\p(\lab_{t}|\obs_{0:T})$ for all $t$ in model  \eqref{eq:PMC},  which satisfies \eqref{pmc-theta-1}-\eqref{pmc-theta-2}, and we use the general expressions derived in ~\citep{pieczynski2003pairwise}, which are still valid here. 
+%These expressions are a direct extension of the Forward-Backward algorithm, so using  the Markovian property of $\p(\lab_{0:T},\obs_{0:T})$ in \eqref{eq:pmc_gen},  we set  $\alpha_{\theta,t}(\lab_t)=\p(\obs_1,\cdots,\obs_t,\lab_t)$ 
+%and $\beta_{\theta,t}(\lab_t)= \p(\obs_{k+1},\cdots,\obs_{0:T}|\lab_t,\obs_t)$, $\beta_{\theta,T}(\lab_{T})=1$, for all $t$, $1 \leq t \leq T$. The following expression are derived,
+%\begin{align}
+%\label{eq:alpha}
+%&    \alpha_{\theta,t}(\lab_t)=\sum_{\lab_{t-1}}\alpha_{\theta,t-1}(\lab_{t-1}) \p(\lab_t,\obs_t|\lab_{t-1},\obs_{t-1}) \text{,  for all } k \text{, } 1 \leq t \leq T \text{,}\\
+%\label{eq:beta}
+%& \beta_{\theta,t-1}(\lab_{t-1})= \sum_{\lab_{t}} \beta_{\theta,t}(\lab_{t})\p(\lab_t,\obs_t|\lab_{t-1},\obs_{t-1}) \text{,  for all } k \text{, }  K >  k \pxuneq 1 \text{;}
+%\end{align}
+%where  $\p(\lab_{t},\obs_{0:t}|\lab_{t-1},\obs_{t-1})=  
+%\vartheta(\lab_t;\pyun(\lab_{t-1},\obs_{t-1})) \times \zeta(\obs_t;\pxun(\lab_t,\lab_{t-1},\obs_{t-1}))$. We finally deduce $\p(\lab_t|\obs_{0:T})$ using the fact that
+
+%\begin{align}
+%\label{eq:pair_post_margin}
+%& \p(\lab_{t-1},\lab_t|\obs_{0:T}) \propto
+%\alpha_{\theta,t-1}(\lab_{t-1}) \times  \beta_{\theta,t}(\lab_t) \times  \p(\lab_t,\obs_t|\lab_{t-1},\obs_{t-1}) \text{,}
+%\end{align}
+%and it is given by
+%\begin{equation}
+%\p(\lab_t|\obs_{0:T})=\sum_{\lab_{t-1}} \p(\lab_{t-1},\lab_t|\obs_{0:T}).
+%\label{eq:post_margin}
+%end{equation}
+
+%The aim is to estimate the  unknown parameter $\theta$  from a realization $\obs_{0:T}$, \cite{pieczynski2003pairwise} proposed  a generalization of the classical Iterative Conditional Estimation (ICE) as a method of parameter estimation for stationary PMC models. 
+%In this article, we propose a maximum likelihood estimation approach which is a variant of the Expectation-Maximisation (EM) algorithm~\citep{dempster1977maximum}. 
+%The E-step of the EM algorithm computes $Q(\theta,\theta^{(j)})={\rm E}_{\theta^{(j)}}(\log(p_{\theta}(\lab_{0:T},\obs_{0:T}))|\obs_{0:T}) \text{,}$ and the M-step consist of maximizing over $\theta$. 
+%The two steps are repeated until the convergence. 
+%In our case $Q(\theta,\theta^{(j)})$ reads, 
+%\begin{align}
+%\label{eq:EMq}
+%&Q(\theta,\theta^{(j)})= 
+%\sum_{t=2}^T \sum_{\lab_{t-1},\lab_t} p_{\theta^{(j)}}(\lab_{t-1},\lab_{t}|\obs_{0:T}) \log(\vartheta(\lab_t;\pyun(\lab_{t-1},\obs_{t-1}))\zeta(\obs_t;\pxun(\lab_t,\lab_{t-1},\obs_{t-1}))) \text{.}
+%\end{align}
+
+%We have that  $Q(\theta,\theta^{(j)})$ can be exactly computed  regardless of the parametrization \eqref{pmc-theta-1}-\eqref{pmc-theta-2} (E-step), since $p_{\theta^{(j)}}(\lab_{t-1},$ $ \lab_{t}|\obs_{0:T})$ is computable.  The next step is to maximize $Q(\theta,\theta^{(j)})$ w.r.t.~$\theta$ (M-step).  However, the M-step  is not feasible
+%in general PMC models, with the exception of simple models (\emph{e.g.} Gaussian and linear PCM). The Gradient EM (GEM) algorithm~\citep{balakrishnan2017statistical} deals with this problem by considering a gradient step towards the maximum of the expectation calculated in the E-step.  In this case, the computation of the gradient of  $Q(\theta,\theta^{(j)})$ w.r.t.~$\theta$ can be done since $\vartheta(\lab;v)$ and $\zeta_{\obs}(\obs;v')$  (resp. $\pyun$ and 
+%$\pxun$) are differentiable w.r.t.~$v$ and $v'$ (resp. w.r.t.~$\theta$).  Thus, according to ~\cite{balakrishnan2017statistical},   the parameter update reads, 
+
+%\begin{equation}
+%\label{update-GEM}
+%\theta^{(j+1)}=\theta^{(j)} + \epsilon {\nabla_{\theta} Q(\theta,\theta^{(j)})}\Big|_{\theta=\theta^{(j)}} \text{,}
+%\end{equation}
+%where $\epsilon$ is the learning rate. 
+%Finally,  Algorithm \ref{algo:algo_1} summarizes the inference and parameter estimation processes for our general PMC models.
+
+% \begin{algorithm}[htbp!]
+% \DontPrintSemicolon
+% \KwData {A realization $\obs_{0:T}$, a learning rate $\epsilon$, an initial set of parameters $\theta^{(0)}$} 
+% %% \phantom{Data:}~~$\theta^{(0)}$, an initial set of parameters}
+% \KwResult{$\theta^*$, a set of estimated parameters}
+% $j=0$\label{line:start_dpmc}\\
+% \While{\text{ convergence of   $\log p_{\theta^{(j)}}(\obs_{0:T})$ is not attained}}{
+% Compute $\log\alpha_{\theta^{(j)},t}(\lab_t)$ and $\nabla_{\theta}\log\alpha_{\theta^{(j)},t}(\lab_t)\Big|_{\theta=\theta^{(j)}}$, for all $\lab_t \in \Omega$, for all $0 \leq t \leq T$, with \eqref{eq:alpha}\\
+% Compute $\log p_{\theta^{(j)}}(\obs_{0:T})$ and $\nabla_{\theta}\log p_{\theta^{(j)}}(\obs_{0:T})\Big|_{\theta=\theta^{(j)}}$, with~\eqref{likelihood-pmc}
+% \\
+% Set $\theta^{(j+1)}=\theta^{(j)} + \epsilon {\nabla_{\theta} \log{\p(\obs_{0:T})}}\Big|_{\theta=\theta^{(j)}}$\label{update-GEM} \\
+% $j\leftarrow j+1$
+% }
+% $\theta^{*} \leftarrow \theta^{(j)}$\\
+% \caption{}
+% \label{algo:algo_theta_pmc}
+% \end{algorithm}
+
+
+
+
+
+\begin{algorithm}[htbp!]
+  \caption{Unsupervised estimation of $\lab_t$ in general PMC models.}
+  \label{algo:algo_hk_pmc}
+  \begin{algorithmic}[1]
+  %\KwData{$\pmb{x}_{0:T}_{I}$, the observed image}
+  \Require{A realization $\obs_{0:T}$, a set of estimated parameters $\theta^*$}
+  \Ensure{$\hat{{\lab}}_{0:T}$, the estimated hidden r.v.}\\
+  Compute $\alpha_{\theta^{*},t}(\lab_t)$, for all $\lab_t \in \Omega$, for all $0 \leq t \leq T$, with~\eqref{eq:alpha}\\
+  Compute $\beta_{\theta^{*},t}(\lab_t)$, for all $\lab_t \in \Omega$, for all $0 \leq t \leq T$, with~\eqref{eq:beta}\\
+  Compute $p_{\theta^{*}}(\lab_{t-1:t}|\obs_{0:T})$, for all $\lab_{t-1:t} \in \Omega \times \Omega$, for all $0 \leq t \leq T$, with \eqref{eq:pair_post_margin}\\
+  Compute $\hat{\lab}_t= \argmax p_{\theta^{*}}(\lab_t|\obs_{0:T})$, for all $0 \leq t \leq T$, with~\eqref{eq:post_margin}\label{line:end_dpmc}  
+  \end{algorithmic}
+  % \vspace*{0.2cm}
+\end{algorithm}
+
+% \begin{remark}
+% % \yohan{explain that the gradients can be computed due to the sequential
+% % formules; and so that in practice, it is possible to compute them automaticcaly
+% % through auto differenciation and next using any optimizer}
+% The gradients can be computed automatically through auto-differentiation tools
+% (\eg~ JAX by~\cite{jax2018github}), and then
+% used with any optimizer, \eg~ Adam~\citep{kingma2014adam} in Line~\eqref{update-GEM}.
+% % The Adam optimizer~\citep{kingma2014adam} 
+% % is used instead of 
+% % the vanilla gradient update shown in Line~\eqref{update-GEM} 
+% % of Algorithm~\ref{algo:algo_hk_pmc}.
+% % % ~\ref{rem:adam_pmc}.
+% % FROM HERE 
+% % \yohan{should be included in the previous remark. Actually, it means that the
+% % only interest of the EM approach is when we have closed-form updates}
+% % In some rare cases (which exclude the deep models introduced in 
+% % Section~\ref{sec:deeppmc}), the maximization of $Q(\theta,\theta^{(j)})$ 
+% % admits closed form formulas which are then used. 
+% % TO HERE\\
+% % Otherwise, JAX~\citep{jax2018github} is used as the auto-differentiation tool.
+% \end{remark}
+
+% \subsection{Gaussian and linear PMC}
+% \label{mod:m1}
+% \textbf{check that no copy paste remains from}\citep{gangloff2021unsupervised}
+
+
+\subsection{Deep PMCs for unsupervised classification}
+\label{sec:deeppmc}
+We consider the particular parameterization $\pyun$ and $\pxun$ of the
+distributions $\vartheta$ and $\zeta$, respectively, where $\pyun$ and $\pxun$
+are the outputs of two DNNs with $(\lab_{t-1},\obs_{t-1})$ and $(\lab_{t-1:t},
+\obs_{t-1})$ as inputs, respectively (as in Section~\ref{sec:dpmc}).
+% ). Thus, the
+% set of parameters $\theta$ consists of the weights and biases of these DNNs.
+Note that a unique DNN is used for $\pyun$ (resp. $\pxun$) overtime.
+
+Since $\pyun$ and $\pxun$ are differentiable w.r.t.~$\theta$ and their gradients
+are computable from the backpropagation algorithm~\citep{rumelhart1986learning},
+Algorithm~\ref{algo:algo_theta_pmc} can be directly applied to estimate $\theta$.
+However, due to the large number of parameters of these architectures, some
+problems tend to appear in practice. In particular, a random initialization of
+$\theta$ can lead to convergence issues for the optimization of $\log \p(\obs_{0:
+T})$. More importantly, the final r.v. $\lab_t$ learned by such a model may no
+longer be interpretable, \ie~it is not ensured that $\lab_t$ coincides with the
+original class associated to $\obs_t$. In other words, a direct application of
+Algorithm~\ref{algo:algo_theta_pmc} tends to return a final model which gives
+poorer results than the simple models described in Section~\ref{sec:generalParam} 
+in terms of classification, as it considers $\lab_t$ as a latent variable rather
+than an interpretable label.
+
+
+We propose a two-step solution based on a constrained output layer and on a
+pretraining which aims at initializing properly $\theta$. This solution relies
+on a simple model such as the linear and Gaussian PMC described in Section
+\ref{sec:generalParam} where the linear functions $\pyun$ and $\pxun$ in
+\eqref{param-1_bis}-\eqref{param-2_bis} can be seen as the output layer of an
+elementary DNN with no hidden layer. Rather than directly training the DNN
+associated to $\pyun$ and $\pxun$, we first estimate the linear PMC model
+\eqref{param-1_bis}-\eqref{param-2_bis} with Algorithm~\ref{algo:algo_theta_pmc}
+before adding intermediate layers. % and residual connections. 
+These layers are
+next pretrained from the classification obtained with the elementary model, and
+are finally finely trained with our ML approach.
+
+
+%In this section, our aim is to present the contributions of the PMCs models combined with DNNs in the context of  unsupervised binary image; In other words, the functions $\pyun$ and $\pxun$ are parametrized by DNNs. 
+%This gives rise to the Deep-PMC (DPMC) and the Deep-SPMC (DSPMC) models.
+%In the deep models, $\pyun$ and $\pxun$ are parametrized by (deep) neural networks with rectified linear activation functions for intermediate hidden layers and linear or square function for the output layer; and the gradient of $Q(\theta,\theta^{(j)})$ w.r.t.~$\theta$ is deduced from  those of $\pyun$ and $\pxun$, which are computable with the backpropagation algorithm~\citep{rumelhart1986learning}. Thus,  the update rule given by \eqref{update-GEM} is performed.\\
+
+%In practice, a random initialization of the parameters would lead to convergence problems in the optimization of $Q(\theta,\theta^{(j)})$ and $\lab_t$ is no longer interpretable because we do not ensure that the learned latent random variable $\lab_t$ coincides with the  original class associated to the observation $\obs_t$. In the next section, a two-step solution (output layer constraint - pretraining) is proposed to deal with this problem. \\
+
+\subsubsection{Constrained output layer}
+\label{sec:constrained_archi}
+%From now on, we will denote $\theta_{\fr}$ (resp. $\theta_{\ufr}$)
+%the set of frozen (resp. unfrozen) parameters. $\theta_{\fr}$ coincides
+%with the parameters associated to the output of the DNN while 
+%$\theta_{\ufr}$ describes the parameters of the hidden layer.
+The main idea of our constrained training step is to make coincide a subset of $\theta$ %$\theta_{\ufr}$ 
+with the parameters of an elementary linear (equivalently a non-deep) PMC model 
+\eqref{param-1_bis}-\eqref{param-2_bis}
+which is assumed to provide
+an interpretable classification.
+In other words, we first estimate an elementary linear PMC model with Algorithm~\ref{algo:algo_theta_pmc}, 
+and we denote the set of 
+associated parameters $\theta_{\fr}$, in the sense that these parameters are next \emph{frozen} and will not be further 
+updated. We next consider this linear layer as the output layer of a DNN where
+the other parameters are denoted $\theta_{\ufr}$, which
+are \emph{unfrozen} in the sense that they have not been estimated yet. 
+
+
+\begin{figure}[H]
+  \begin{minipage}[c]{\textwidth}
+    \centering
+    {
+      \includegraphics[width=0.75\textwidth]{Figures/Graphical_models/frozen_un.pdf}
+    }
+    \end{minipage}%
+    \vspace{.3cm}
+    % \begin{minipage}[c]{\textwidth}
+    % {
+    %   $\Sigma=\pyun(\lab_{t-1},\obs_{t-1},\lab_{t-1}\obs_{t-1})
+    %   ={\rm sigm} (\textcolor{black}{\gamma_1}
+    %   l^3_1+ \textcolor{black}{\gamma_2}l^3_2+ 
+    %   \textcolor{black}{\gamma_3}l^3_3+ \textcolor{black}{\kappa})$,
+    %   where the last layer parameters $ \{\gamma_1,\gamma_2,\gamma_3,\kappa\}$ are frozen to
+    %   $\gamma_1=b_{\omega_2}-b_{\omega_1},
+    %   \gamma_2=a_{\omega_2}-a_{\omega_1},
+    %   \gamma_3=a_{\omega_1}$ and $\kappa=b_{\omega_1}$.      
+    % }
+    % \end{minipage}
+  % \includegraphics[width=0.75\textwidth]{Figures/Graphical_models/frozen_un.pdf}
+  % \caption{Graphical representation of the frozen PMC model.}
+  \caption{DNN architecture with constrained output layer for $\pyun$ with two hidden layers.
+  $\Sigma=\pyun(\lab_{t-1},\obs_{t-1},\lab_{t-1}\obs_{t-1}) ={\rm sigm}
+  (\textcolor{black}{\gamma_1} l^3_1+ \textcolor{black}{\gamma_2}l^3_2+
+  \textcolor{black}{\gamma_3}l^3_3+ \textcolor{black}{\kappa})$, where the last
+  layer parameters $ \{\gamma_1,\gamma_2,\gamma_3,\kappa\}$ are frozen to
+  $\gamma_1=b_{\omega_2}-b_{\omega_1}, \gamma_2=a_{\omega_2}-a_{\omega_1},
+  \gamma_3=a_{\omega_1}$ and $\kappa=b_{\omega_1}$.\\
+  The parameters $\theta_{\fr}$ are related to the output layer which 
+  computes the function $\pyun$ of the linear PMC model \eqref{param-1_bis}.
+  Due to the one-hot encoding of the discrete r.v. $\lab_{t-1}$
+  ($\lab_{t-1}=\omega_1 \leftrightarrow \lab_{t-1}=0$ and $\lab_{t-1}=\omega_2 \leftrightarrow \lab_{t-1}=1$),
+  this parameterization 
+  is equivalent to that of \eqref{param-1_bis}
+  up to the  given
+  correspondence between $\theta_{\fr}=(\gamma_1, \gamma_2, \gamma_3,\kappa)$
+  and $(a_{\omega_1},a_{\omega_2},b_{\omega_1},b_{\omega_2})$. \textcolor{black}{When the number 
+  of classes $C$ increases, the size of the first
+  and last layer increases due to the one-hot encoding of $\lab_{t-1}$.}
+  %The residual connections between the inputs and the last hidden and frozen layer are emphasized.
+  Linear activation functions are used in the last hidden layer in red.
+  %Note that the non-linear ReLU activations following the white hidden layer nodes are not represented for clarity.}
+  %Example of the output-layer constraint for a DNN $f_{\pmb{\theta}}$: the parameters of the output linear  $\theta_{\fr}$ have been estimated from the related non-deep model parameters (Eq.~\ref{pmc-theta-1}) and are then frozen.}
+  }
+  \label{fig:constrained_archi}
+\end{figure}
+Figure~\ref{fig:constrained_archi} describes an example 
+of a constrained DNN architecture for the function $\pyun$
+when $\Omega=\{\omega_1,\omega_2\}$ and $\mathbb{R}^{d_{\obs}} = \mathbb{R}$,
+without loss of generality. 
+
+% The output layer of the DNN computes the function $\pyun$ 
+% of the linear PMC model \eqref{param-1_bis} and is given by
+% \begin{align*}
+%   \Sigma=\pyun(\lab_{t-1},\obs_{t-1},\lab_{t-1}\obs_{t-1})
+%   ={\rm sigm} (\textcolor{black}{\gamma_1}
+%   l^3_1+ \textcolor{black}{\gamma_2}l^3_2+ 
+%   \textcolor{black}{\gamma_3}l^3_3+ \textcolor{black}{\kappa}),
+% \end{align*}
+% where the last layer parameters $ \{\gamma_1,\gamma_2,\gamma_3,\kappa\}$ are frozen to
+% $\gamma_1=b_{\omega_2}-b_{\omega_1},
+% \gamma_2=a_{\omega_2}-a_{\omega_1},
+% \gamma_3=a_{\omega_1}\text{ and }
+% \kappa=b_{\omega_1}.$
+
+
+
+
+
+\subsubsection{Pretraining by backpropagation}
+\label{sec:pretraining_backprop}
+It remains to estimate 
+the parameters $\theta_{\ufr}$ of the intermediate hidden
+layers. The idea 
+is to initialize them in a such way
+that the initial DPMC coincides with
+the elementary one; in other words, and
+due to the previous step,
+the output of the newly added hidden layers aims at coinciding with the 
+identity function after the pretraining.
+After initializing randomly $\theta_{\ufr}$,
+our pretraining step aims at minimizing
+cost functions $C_{\pyun}$ and $C_{\pxun}$ which involve the pre-classification $\hat{\lab}_{0:T}^{\pre}$. 
+Typically, 
+the cost function $C_{\pyun}$ is the
+averaged overtime cross-entropy
+between the output of the DNN $\pyun$
+and $\hat{\lab}_{t}^{\pre}$ and $C_{\pxun}$ is
+the mean square error between the output
+of $\pxun$ and the parameters of the elementary
+linear models associated to $\hat{\lab}_{t-1:t}^{\pre}$
+(see Equation~\eqref{param-2_bis}). The minimization of
+these cost functions w.r.t.~$\theta_{\rm ufr}$ is done with the backpropagation algorithm.
+%Before computing the ML estimate of 
+%these parameters, we initialize them by running a supervised (pre)training which relies on a classification $\hat{\h}_{0:T}^{\pre}$ obtained
+%from the elementary linear model which aims
+%at ensuring that the r.v. $\lab_t$ are interpretable. To that end, 
+%based on the backpropagation algorithm. This procedure makes use of the classification $\hat{\lab_{0:T}}_{\pre}$ obtained
+%with the elementary model and of a given cost function in order to ensure that the final r.v. $\lab_t$ are interpretable. This backpropagation procedure starts by making sure that the newly added hidden layers implement the identity function using a residual learning idea. Indeed, at the beginning of the backpropagation $\theta_{\ufr}$ is randomly initialized around the null vector and residual connections between the inputs and the last hidden and frozen layer are set.
+%The cost function $\mathcal{C}_f$ for the
+%pretraining of $\pyun$ is typically the cross-entropy between
+%the first classification $\hat{\lab_{0:T}}_{\pre}$ and the output
+%$\pyun$\hugo{ while that for}{. The cost function for the} pretraining of $\pxun$, $\mathcal{C}_g$,
+%coincides with the mean square error
+%etween the observations $\obs_t$ and the output of $\pxun$.
+Finally, once $\theta_{\ufr}$ has been properly initialized, it is fine-tuned with  Algorithm~\ref{algo:algo_theta_pmc} which approximates the ML estimate of $\theta$. 
+Algorithm~\ref{algo:algo_train_dpmc} summarizes the two estimation steps specific to the DNN parameterization.
+
+\begin{remark}
+In order to estimate the parameters 
+of our deep PMC, we have used a reverse approach w.r.t. the pretraining approaches proposed at the beginning of 2010s to help
+supervised learning in DNN~\citep{erhan2010does}.
+Indeed, due to the large number of parameters in these architectures,~\citep{Mohamed-DBN, Glorot, deep-SPM} 
+have suggested to first pretrain in an unsupervised way a DNN from a generative probabilistic model which shares common parameters with the original DNN
+(\eg~a Deep Belief Network). The backpropagation algorithm for supervised estimation is 
+next initialized with the
+(approximated) ML estimate of this probabilistic model.
+Here, we have started to pretrain our architecture in a supervised
+way with a pre-classification and
+next embedded it in our original probabilistic model in which we compute an approximation
+of the ML estimate. 
+\end{remark}
+
+
+\begin{algorithm}[htbp!]
+  \caption{A general estimation algorithm for deep parameterization of PMC models.}
+  \label{algo:algo_train_dpmc}
+  \begin{algorithmic}[1]
+  \Require{$\obs_{0:T}$, the observation}
+  \Ensure{$\hat{{\lab}_{0:T}}$, the final classification}
+  \Statex{\textbf{Linear model: initialization of the output layer of $\pyun$ and $\pxun$  ($\S$ \ref{sec:constrained_archi})}}
+  \\Initialize randomly $\theta_{\fr}^{(0)}$  \label{line:nondeep1} \\
+  Estimate $\theta_{\fr}^*$ using Algorithm~\ref{algo:algo_theta_pmc} with $\theta_{\fr}^{(0)}$\\
+  Estimate $\hat{\lab}_{0:T}^{\pre}$ using Algorithm~\ref{algo:algo_hk_pmc} with $\theta_{\fr}^*$ \label{line:nondeep3}
+  \Statex{\textbf{Pretraining of $\theta_{\ufr}$ ($\S$ \ref{sec:pretraining_backprop})}}
+  \\ Compute $\theta_{\ufr}^{*}$
+  using Algorithm~\ref{algo:algo_theta_pmc} with $\theta^{(0)}=(\theta_{\fr}^*, \theta_{\ufr}^{(0)})$  ($\theta_{\fr}^*$ is not updated)\\
+  Compute $\hat{\lab}_{0:T}$ using Algorithm~\ref{algo:algo_hk_pmc} with $\theta^{*}=(\theta_{\fr}^*, \theta_{\ufr}^{*})$
+  \Statex{\textbf{Complete deep model: fine-tuning}}
+  \\ Compute $\theta_{\ufr}^{*}$
+    using Algorithm~\ref{algo:algo_theta_pmc} with $\theta^{(0)}=(\theta_{\fr}^*, \theta_{\ufr}^{(0)})$  ($\theta_{\fr}^*$ is not updated)\\
+  Compute $\hat{\lab}_{0:T}$ using Algorithm~\ref{algo:algo_hk_pmc} with $\theta^{*}=(\theta_{\fr}^*, \theta_{\ufr}^{*})$
+  \end{algorithmic}
+  % \vspace*{0.2cm}
+\end{algorithm}
+
+
+\subsection{Simulations}
+\label{sec:pmc}
+We illustrate the performance of our models with the same 
+binary image segmentation problem as in Chapter~\ref{chap:semi_supervised_pmc_tmc}.
+% We illustrate the gain of our general parameterization w.r.t. an elementary
+% HMC-IN by considering a problem of unsupervised binary image segmentation 
+% ($\Omega=\{\omega_1,\omega_2\}$) from noisy observations.
+% Similarly to Subsection~\ref{subsec:data_generation}
+% and 
+In order to highlight our unsupervised approach,
+we consider the cattle-type images of the Binary Shape Database. %
+% \footnote{\url{http://vision.lems.brown.edu/content/available-software-and-databases}}. 
+The images are transformed into a $1$-D signal $\obs_{0:T}$ with a Hilbert-Peano
+filling curve~\citep{sagan2012space}.
+%Throughout the article, the contributions of the new models are illustrated, after they have been formally introduced,
+%by considering simulations in which we perform unsupervised 
+%binary image segmentation ($\Omega=\{\omega_1,\omega_2\}$)
+%using 
+They are  blurred with a noise which exhibits non-linearities 
+to highlight the ability of the generalized PMC models to 
+learn such a signal corruption
+% \footnote{The code to reproduce the experiments is available at \url{https://github.com/HGangloff/deep_hidden_markov_models/}}. More precisely, we generate an artificial noise by
+generating $\obs_t$ according to~\eqref{eq:noise_eq1}, with
+$a_{\omega_1}=0$, $\sigma^2=0.25$ and $a_{\omega_2}$ is a varying parameter 
+(see Subsection~\ref{subsec:data_generation}). 
+% \begin{equation}
+%     \label{eq:noise_eq11}
+%     \obs_t| \lab_{t},\obs_{t-1} \sim \mathcal{N}\Big(\sin(a_{\lab_t}+\obs_{t-1});
+%     \sigma^2\Big),
+% \end{equation}
+ %sigma=0.5
+
+%The parameters introduced in the all following examples on synthetic data are considered unknown to meet the case of unsupervised segmentation.
+We next focus on two kinds of parameterizations of distributions $\vartheta$ and
+$\zeta$ which coincide with \eqref{param-32}-\eqref{param-4}. Each
+parameterization is applied to the SPMC and PMC models (see Figure~\ref{fig:pmc_graphs}). 
+First, we consider a linear parameterization (SPMC and PMC) based
+on \eqref{param-32}-\eqref{param-2_bis}. The second parameterization is a deep
+one (DSPMC and DPMC) and relies on one (unfrozen) hidden layer with $100$
+neurons and the ReLU activation function. For this architecture, we apply the
+training constraints discussed in Paragraph \ref{sec:deeppmc}.
+
+%\hugo{}{ Second} a deep \hugo{one}{parameterization} (\hugo{}{case of} DSMPCs and DPMCs) \hugo{still 
+%based on ?-?}{with probability distributions based on}  \hugo{for the nature
+%of distributions but on one (unfrozen) hidden layer 
+%with  $100$ neurons and an ouput layer whose size coincides with 
+%that of the input of the neural network 
+%according to the constraint discussed in
+%paragraph ? for the parameterization
+%of these distributions}{ and a DNN parameterized with one (unfrozen) hidden layer 
+%with $100$ neurons and ReLU activation function. The input and output layers of the DNN have the same size. }
+%Moreover, our neural networks consist of one unfrozen
+%hidden layer with $100$ neurons and one frozen
+%hidden layer 
+
+%\begin{scenario}[Non-linear correlated noise] The hidden image $\lab_{0:T}$ is the \emph{cattle}-type image of
+%the Binary Shape Database. Each observation is simulated as
+%\begin{equation}
+%    X_t \sim \mathcal{N}\Big(\sin(a_{\lab_t}+\obs_{t-1});
+%    \sigma^2\Big).
+%    \label{eq:noise_eq11}
+%\end{equation}
+%where $a_{\omega_2}$ is a varying parameter and we set $a_{\omega_1}=0$ $\sigma^2=0.25$. %sigma=0.5
+%\label{sce:pmc1}
+%\end{scenario}
+
+In Figure~\ref{fig:nonlin_corr_pmc_sce1_a}, we display the averaged error rates
+for each model over all the selected images as a function of $a_{\omega_2}$.
+Figure~\ref{fig:nonlin_corr_pmc_sce1_b} displays the results of the
+classifications for a particular image of the database. As it can be observed,
+although the same Gaussian distribution $\zeta$ is used both models, the general
+PMC framework that we introduced leads to a great improvement of the elementary
+HMC model. Next, the deep parameterized models (DPMC and DSPMC) are the most
+accurate models and are able to capture the complexity by improving the results
+of their non-deep counterpart. More importantly, note that the gain obtained
+with our DPMC and DSPMC models does not require any further modeling effort in
+the sense that they are a particular parameterization in our general framework.
+
+%the experiment of Scenario~\ref{sce:pmc1} which consists in unsupervised segmentations with varying highly non-linear noise levels.
+%It is clear, from Figure~\ref{fig:nonlin_corr_pmc_sce1} that the  models seem the most accurate models, able to capture the noise complexity. Each of the model improves the result of their non-deep counterpart.
+%Importantly, as this defines one of the main motivations behind our work; 
+
+\input{Figures/nonlin_corr_pmc_sce1}
+
+%%%%%%%From now on, we will consider two classes of PMC models, in the first one we consider the linear and Gaussian PMC and SPMC models described above. The second one is the class of the Deep-PMC (DPMC) and the Deep-SPMC (DSPMC) models.
+
+
+
+
+
+
+% \section{Triplet Markov Chain for unsupervised learning}
+
+% Our previous PMC models rely on a general parameterization of the two distributions $\vartheta$ and $\zeta$. 
+% However, the choice of these distributions  is not obvious in practice and has 
+% an impact on the performance of the classification. 
+% The goal of this section is to consider a third latent and continuous process  $\latent_{0:T}$ which
+% aims at complexifying the distribution
+% $\p(\lab_{0:T},\obs_{0:T})$.
+
+
+% The rationale behind this auxiliary process is that even if $\p(\latent_{0:T})$ and 
+% $\p(\obs_{0:T}|\latent_{0:T})$ are two elementary distributions, the resulting
+% distribution $\p(\obs_{0:T})=\int \p(\latent_{0:T})\p(\obs_{0:T}|\latent_{0:T}) {\rm d} \latent_{0:T}$ 
+% can be complex \citep{bayer2015learning}. 
+% So in our context, the third latent process can be 
+% used to implicitly estimate the nature of 
+% the distributions $\vartheta$ and $\zeta$ of our PMC or
+% to model and learn the continuous non-stationarity of  the process $(\lab_{0:T}, \obs_{0:T})$ 
+% since $\p(\lab_{0:T},\obs_{0:T})=\int \p(\latent_{0:T})\p(\lab_{0:T},\obs_{0:T}|\latent_{0:T}) {\rm d}\latent_{0:T}$.
+
+
+
+% \begin{eqnarray}
+%     \label{tmc-theta-1}
+%     \p(\latent_t|\triplet_{t-1}) &=& \eta \left(\latent_t; pz(\triplet_{t-1})\right) \text{,}\\
+%     \label{tmc-theta-2}
+%     \p(\lab_t| \latent_{t}, \triplet_{t-1})&=&\vartheta \left(\lab_t;ph(\latent_{t}, \triplet_{t-1})\right) \text{, } \\
+%     \label{tmc-theta-3}
+%     \p(\obs_t|\lab_t, \latent_{t},\triplet_{t-1})&=&\zeta\left(\obs_t;px(\lab_t, \latent_{t},\triplet_{t-1})\right) \text{.}
+% \end{eqnarray}
+% Remark that if  $pz$ does not depend on $\triplet_{t-1}$,
+% and if $ph$ and $px$ are independent of $\latent_{t-1:k}$,
+% the distribution $\p(\lab_T,\obs_T)$ coincides with that of a PMC built from \eqref{pmc-theta-1}-\eqref{pmc-theta-2}.
+
+
+\section{TMCs for unsupervised classification}
+\label{sec-tmc}
+%-------------------------------
+% Triplet Markov Chains
+%-------------------------------
+% \katy{
+% * estimation problem is a particular case of Chap 3 where we have all the observations. So a part of the optimal variational distribution is computable (q(y|z,x))
+% * but we introduce a modified ELBO to take into account the difference between z and y which are both unobserved.
+% * pretraining step for TMC
+% }
+
+% \yohan{the interesting topics of this part : the ELBO is a particular case of
+% the semi-supervsied case; a part of the optimal variational distribution can be
+% computed exactly; the ELBO is modified in order to take into account the
+% difference between z and y. We can approach it as we did before; we can adapt
+% the pretraining procedure.}
+
+% = 
+% \int \p(\latent_{0:T})\p(\obs_{0:T}|\latent_{0:T}) {\rm d} \latent_{0:T}$.
+% The rationale behind this auxiliary process
+% is that even if $\p(\latent_{0:T})$ and 
+% $\p(\obs_{0:T}|\latent_{0:T})$ are two elementary distributions, the resulting
+% distribution $\p(\obs_{0:T})=\int \p(\latent_{0:T})\p(\obs_{0:T}|\latent_{0:T}) {\rm d} \latent_{0:T}$ 
+% can be complex~\citep{bayer2015learning}. 
+
+In this section, we extend the integration of a third latent process into our
+PMC model. This third continuous latent process $\latent_{0:T}$ can be used to implicitly estimate 
+the nature of the distributions $\vartheta$ and $\zeta$ of our PMC or to model and learn the
+continuous non-stationarity of the process $(\lab_{0:T}, \obs_{0:T})$ since
+$\p(\lab_{0:T},\obs_{0:T})=\int \p(\latent_{0:T}) \p(\lab_{0:T},\obs_{0:
+T}|\latent_{0:T}) {\rm d}\latent_{0:T}$. 
+However, this integration poses computational challenges 
+because a direct computation of the integrals w.r.t.~$\latent_t$ in~\eqref{eq:alpha}
+ and~\eqref{eq:beta} is intractable.
+Consequently, the likelihood and posterior distributions, 
+$\p(\obs_{0:T})$ and $\p(\lab_t|\obs_{0:T})$ are no longer exactly computable in
+general. 
+Here, we derive a new estimation algorithm based on 
+VI (see Section~\ref{subsec:vbi}), 
+where the ELBO is a particular case of the semi-supervised case presented in
+Chapter~\ref{chap:semi_supervised_pmc_tmc}.
+Moreover, a part of the variational distribution $\q$ can be computed
+explicitly, which allows adjustments to be made in the model
+learning phase. We also propose a modified version of the ELBO, 
+which improves the interpretability of the labels by distinguishing them 
+from the latent variables.
+
+
+
+
+
+% A third latent process can be 
+% used to implicitly estimate the nature of 
+% the distributions $\vartheta$ and $\zeta$ of our PMC or
+% to model and learn the continuous non-stationarity of  
+% the process $(\lab_{0:T}, \obs_{0:T})$  since 
+% $\p(\lab_{0:T},\obs_{0:T})=\int \p(\latent_{0:T})
+% \p(\lab_{0:T},\obs_{0:T}|\latent_{0:T}) {\rm d}\latent_{0:T}$. 
+% %implicitly estimate these distributions in addition to their parameters
+% %by the introduction of a third latent
+% %auxiliary process $\latent_{0:T}$ which aims 
+% %at complexifying the distribution
+% %$\p(\lab_{0:T},\obs_{0:T})$. 
+% %Indeed, the rationale behind this auxiliary process is
+% %the following~\citep{bayer2015learning}.
+% %Assume that a r.v. $x \in \mathbb{R}$ follows an unknown distribution $p(\obs)$ while $z \in \mathbb{R}$
+% %follows an elementary one $p(z)$ (\eg~ the Gaussian distribution).
+% %Denoting 
+% %$Q_X$ (resp. $Q_Z$) the cumulative density function of $\obs$ (resp. of $\latent$) and observing that the r.v. $Q_X(\obs)$ and $Q_Z(z)$ both follow the uniform distribution on the unit interval,
+% %then the r.v. $Q_X^{-1}(Q_Z(z))$ admits $p(\obs)$ as pdf.
+% %In other words, whatever the distribution of $\latent$, it is possible to model
+% %an unknown distribution $p(\obs)$
+% %via an auxiliary r.v. $\latent$ and a joint distribution
+% %$p(x,z)=p(z)p(x|z)$, provided
+% %$p(x|z)$ is well chosen and close
+% %to $\delta_{Q_X^{-1}(Q_Z(z))}(\obs)$.
+% %\textcolor{red}{Alors à la fin, pourquoi a-t-on astucieusement ajouté de la complexité ?!}
+% %\textcolor{}{A second interpretation of this continuous $\latent_{0:T}$ process is that is offers a way to model and learn the continuous non-stationarity of the $(\lab_{0:T}, \obs_{0:T})$. Indeed, $\p(\lab_{0:T},\obs_{0:T},\latent_{0:T})=\p(\latent_{0:T})\p(\lab_{0:T},\obs_{0:T}|\latent_{0:T})$ and, if $\latent_{0:T}$ is continuous, the stationarity of $(\lab_{0:T},\obs_{0:T})$ can vary continuously.}
+% However, the introduction of a continuous latent process $\latent_{0:T}$ is
+% interesting from a modeling point of view but makes 
+% Algorithm~\ref{algo:algo_theta_pmc}
+% and \ref{algo:algo_hk_pmc} uncomputable. Indeed, a direct
+% application would involve the computation of intractable integrals 
+% in~\eqref{eq:alpha} and~\eqref{eq:beta} 
+% w.r.t.~$\latent_t$. 
+% Consequently, the likelihood and posterior distributions, 
+% $\p(\obs_{0:T})$ and $\p(\lab_t|\obs_{0:T})$ are no longer exactly computable in
+% general. In order to estimate $\theta$ and $\lab_t$, we derive a new estimation
+% algorithm based on VI (see Section~\ref{subsec:vbi})
+% % variational Bayesian inference
+% which consists in maximizing a lower bound of the likelihood $\p(\obs_{0:T})$.
+% % After reviewing the principle of variational inference and introducing its
+% % extension to TMCs, 
+% We propose a parameterization TMC models
+% %(similarly to the general parameterization of PMCs \ref{sec:generalParam})
+% as well as a parameter estimation algorithm. Our algorithm relies on the
+% optimization of an objective function deduced from the VI
+% framework, but it also enforces the interpretability of $\lab_{0:T}$ by modifying
+% the classical lower bound used in VI.
+
+
+% %In this section we reconsider the continuous
+% %latent process $\latent_{0:T}$ associated to the TMC model \eqref{tmc}.
+% %Note that when the r.v. $\latent_t$ are discrete, we obtain a particular
+% %case the models described in \eqref{sec-pmc} where the hidden r.v. 
+% %$(\lab_t,\latent_t)$ belong to an augmented discrete space. However, due
+% %to the continuous nature of $\latent_t$,
+
+
+
+% %In the previous section we parameterized the distributions we chose to characterize the joint distribution $p(\obs_{0:T}, \lab_{0:T})$. In this section, we want to incorporate a third continuous process $\latent_t$ and learn the distributions that characterize  the joint distribution $p(\obs_{0:T}, \lab_{0:T}) = \int p(\obs_{0:T}, \lab_{0:T}, \latent_{0:T}) \d \latent$. The Triplet Markov Chains (TMCs) allow us to incorporate this third process and generalize  the HMCs and the PMCs models. The TMCs offer similar advantages and superior modeling capabilities since  the assumptions  that $\lab_{0:T}$ or  $(\obs_{0:T}, \lab_{0:T})$ are Markov chains are not required. 
+
+% %Let $\lab_{0:T}$ and $\obs_{0:T}$ be defined as before and let us introduce a sequence of auxiliary latent random variables $\latent_{0:T} = (\latent_1,\cdots,\latent_t)$, where $\latent_t \in \mathbb{R}^d$ for all $t$, $1 \leq t \leq T$. In the TMC model, $(\latent_{0:T},\lab_{0:T},\obs_{0:T})$ is a Markov chain thus
+% %\begin{equation}
+% %    p(\latent_{0:T},\lab_{0:T},\obs_{0:T})=p(\lab_1,\latent_1,\obs_1)\prod_{t=2}^Tp(\lab_t,\latent_t,\obs_t|\lab_{t-1},\latent_{t-1},\obs_{t-1}).
+% %    \label{eq:tmc_general}
+% %\end{equation}
+% %where
+% %\begin{align}
+% %\label{eq:tmc_gen2}
+% %p(\lab_t,\latent_t,\obs_t|\lab_{t-1},\latent_{t-1},\obs_{t-1}) =
+% %p(\lab_t| \latent_{t}, \lab_{t-1},\obs_{t-1},\latent_{t-1} )p(\obs_t|\lab_t, \latent_{t},\lab_{t-1},\obs_{t-1},\latent_{t-1}) p(\latent_t|\lab_{t-1},\obs_{t-1}, \latent_{t-1}) \text{.}
+% %\end{align}
+
+
+
+\subsection{Variational Inference for general TMCs}
+\label{sec:inference_tmc}
+
+% \yohan{here we have a connection with the semi-supervised case where all the
+% labels are unobserved. So you can already refer to the previous elbo and
+% explaining that it as a simpler form and that the optimal variational
+% distribution q(y|x,z) is computable}
+
+In Chapter~\ref{chap:semi_supervised_pmc_tmc}, 
+we have introduced a VI framework for the case where the labels are partially observed.
+In this section, we consider the unsupervised case where all the labels are unobserved.
+Thus, the ELBO is simpler than in the semi-supervised case~\eqref{eq:elbo_seq}, 
+and a  part of the optimal variational distribution can be computed 
+exactly (Proposition~\ref{prop:prop1}).
+
+Let us recall the notation  $\triplet_t=(\lab_t,\latent_t,\obs_t)$  
+for the triplet.
+The TMC~\eqref{eq:tmc_intro}
+%\eqref{tmc-theta-1}-\eqref{tmc-theta-3}
+can be seen as a PMC~\eqref{pmc-theta-1}-\eqref{pmc-theta-2}
+in augmented dimension,
+\ie~a PMC where $(\latent_{0:T},\lab_{0:T})$ plays 
+the role of the hidden process. 
+If $\latent_{0:T}$ were a discrete process, it would be possible to apply 
+directly the Bayesian
+inference framework developed in Section 
+\ref{sec:inference_pmc}.
+However, the continuous nature of $\latent_t$ involves intractable 
+integrals to compute sequentially the 
+equivalent of~\eqref{eq:alpha},
+% , \emph{i.e.},
+% \begin{equation*}
+% \p(\lab_t,\latent_t,\obs_t)=\int \sum_{\lab_{t-1}} \p(\triplet_t|\triplet_{t-1}) \p(\lab_{t-1},\latent_{t-1},\obs_{t-1}) {\rm d}\latent_{t-1} \text{,}
+% \end{equation*}
+and therefore $\p(\obs_{0:T})$.
+To overcome this issue, we introduce a variational distribution 
+$\q(\latent_{0:T},\lab_{0:T}|\obs_{0:T})$, 
+% %  % ---- begin YOHAN
+% %  Let $\q(\latent_{0:T},\lab_{0:T}|\obs_{0:T})$ be a \emph{variational} distribution  
+% parameterized by a set of parameters $\phi$. Observing that the Kullback-Leibler Divergence (KLD)
+%  between $\q(\latent_{0:T},\lab_{0:T}|\obs_{0:T})$ and $\p(\latent_{0:T},\lab_{0:T}|\obs_{0:T})$ is positive,
+%  \begin{align*}
+%  &\dkl\left(\q(\lab_{0:T}, \latent_{0:T}|\obs_{0:T}) || \p(\latent_{0:T},\lab_{0:T}|\obs_{0:T})\right)\nonumber \\
+%  & \quad \quad \quad \quad =\sum_{\lab_{0:T}} \int \q(\latent_{0:T},\lab_{0:T}|\obs_{0:T}) \log\left(\frac{\q(\latent_{0:T},\lab_{0:T}|\obs_{0:T})}{\p(\latent_{0:T},\lab_{0:T}|\obs_{0:T})}\right)\ {\rm d}  \latent_{0:T} \geq 0 \text{,}
+%  \end{align*}
+ and  deduce the \gls*{elbo} of the TMC model for the unsupervised case:
+ \begin{align*}
+ \log \p(\obs_{0:T}) & \geq \sum_{\lab_{0:T}} 
+ \int \q(\latent_{0:T},\lab_{0:T}|\obs_{0:T})  
+ \log\left(\frac{\p(\latent_{0:T},\lab_{0:T},\obs_{0:T}) }
+ {\q(\latent_{0:T},\lab_{0:T}|\obs_{0:T})}\right)  {\rm d}\latent_{0:T} 
+%\\ &=  \E_{q_{\phi}(\latent_{0:T},\lab_{0:T}|\obs_{0:T})}\big[\log p_{\theta}(\obs_{0:T}|\latent_{0:T},\lab_{0:T})\big] - \dkl(q_{\phi}(\latent_{0:T},\lab_{0:T}|\obs_{0:T})||p_{\theta}(\latent_{0:T},\lab_{0:T})) 
+\\ & \; \; = \Qunsup(\theta,\phi) \text{.} 
+ \end{align*}
+
+%  \yohan{Next paragraph already said in previous chapters check if it is necessary
+%  }
+% Equality holds if $\q(\latent_{0:T},\lab_{0:T}|\obs_{0:T})=\p(\lab_{0:T},
+% \latent_{0:T}|\obs_{0:T})$. When the posterior distribution $\p(\lab_{0:T},
+% \latent_{0:T}|\obs_{0:T})$ is computable, the alternating maximization w.r.t.
+% $\theta$ and $\q$ of the ELBO
+% $\Qunsup(\theta,\phi)$, coincides with the EM
+% algorithm~\citep{variational-EM}. However, here, the posterior distribution
+%  is not computable in general because the latent variables $\latent_{0:T}$ are
+% continuous. Thus, we maximize $\Qunsup(\theta,\phi)$ w.r.t.~$\theta$ and $\phi$
+%  for a given class of
+% distributions $\q$. The choice of the variational distribution $\q(\lab_{0:T},
+% \latent_{0:T}|\obs_{0:T})$ is critical as we stated in Sections~\ref{subsec:vbi}
+% and~\ref{sub:pmc_parameter_estimation}.
+% % The variational distribution $\q$ should be close to $\p$ 
+% % but should also be chosen in a such way that the associated ELBO can be exactly computed or
+% easily approximated while remaining differentiable w.r.t.~$(\theta,\phi)$. 
+In the context of TMCs with a discrete and continuous latent process, 
+Proposition~\ref{prop:prop1} exploits the observation that
+
+\begin{equation}
+\label{backward-decomposition}
+\p(\lab_{0:T}|\latent_{0:T},\obs_{0:T})=\p(\lab_{T}|\latent_{0:T},\obs_{0:T})
+ \prod_{t=1}^T \p(\lab_{t-1}|\lab_t,\latent_{0:T},\obs_{0:T})
+\end{equation}
+is computable (see Appendix~\ref{app:prop1}) and 
+shows that it is optimal
+(in the sense of the value of the ELBO) to
+restrict the choice of $\q(\latent_{0:T},\lab_{0:T}|\obs_{0:T})$ 
+to that of $\q(\latent_{0:T}|\obs_{0:T})$. 
+% In the case where $\lab_{0:T}$ is discrete, Proposition \ref{prop:prop1} shows
+% that a part of the variational distribution can be optimized exactly.
+%can be computed
+%from a direct adaptation of \eqref{eq:pair_post_margin}.
+
+%The resulting ELBO is then optimal.
+% ---- end YOHAN
+%The idea of VI is to compute a variational distribution $\q(\latent_{0:T},\lab_{0:T}|\obs_{0:T})$
+%as close as possible of $\p(\latent_{0:T},\lab_{0:T}|\obs_{0:T})$ . 
+%To that end, a measure of dissimilarity between distributions  $\q(\latent_{0:T},\lab_{0:T}|\obs_{0:T})$  and  $\p(\latent_{0:T},\lab_{0:T}|\obs_{0:T})$ called Kullback-Leibler  divergence ($\dkl$) which is defined as 
+%\begin{equation}
+%\dkl(\q(\latent_{0:T}, \lab_{0:T}|\obs_{0:T}) || %\p(\latent_{0:T},\lab_{0:T}|\obs_{0:T}))=\sum_{\lab_{0:T}} \int %q(\latent_{0:T},\lab_{0:T}|\obs_{0:T}) %\log\left(\frac{\q(\latent_{0:T},\lab_{0:T}|\obs_{0:T})}{\p(\%z,\lab_{0:T}|\obs_{0:T})}\right)\ {\rm d}  \latent_{0:T} %\geq 0 
+%\text{,}
+%\end{equation}
+%where $\dkl(\q(\latent_{0:T}, \lab_{0:T}|\obs_{0:T}) || \p(\latent_{0:T},\lab_{0:T}|\obs_{0:T})) = 0$ if and only if $\q(\latent_{0:T},\lab_{0:T}|\obs_{0:T})=\p(\latent_{0:T},\lab_{0:T}|\obs_{0:T})$, otherwise it is positive.  Then, we try to minimize the $\dkl$ with respect to  $\q(\latent_{0:T},\lab_{0:T}|\obs_{0:T})$, for a given family of distributions $\q(\latent_{0:T},\lab_{0:T}|\obs_{0:T})$. This dissimilarity can be rewritten as
+%\begin{align*}
+%\dkl(\q(\latent_{0:T}, \lab_{0:T}|\obs_{0:T}) || \p(\latent_{0:T},\lab_{0:T}|\obs_{0:T})) &= - \sum_{\lab_{0:T}} \int q(\latent_{0:T},\lab_{0:T}|\obs_{0:T}) \log\left(\frac{\p(\latent_{0:T},\lab_{0:T},\obs_{0:T})}{\q(\latent_{0:T},\lab_{0:T}|\obs_{0:T})}\right) {\rm d}  \latent_{0:T} + \log \p(\obs_{0:T})\\
+%&=  - \Qunsup(\theta,\varphi) + \log \p(\obs_{0:T}) \text{,}
+%\end{align*}
+%where $\Qunsup(\theta,\varphi)$ is called the Evidence Lower Bound (ELBO) and it also satisfies $\log \p(\obs_{0:T}) \geq \Qunsup(\theta,\varphi)$.   This optimization problem requires $\p(\obs_{0:T})$ which is intractable, however, it is independent of $\log \p(\obs_{0:T})$ which means that minimization of the $\dkl$ and maximization of the ELBO are equivalent from an optimization perspective. On other words,  this approach  aims at maximizing $\Qunsup(\theta,\varphi)$ w.r.t.~$(\theta,\varphi)$ for a given parametric family of distributions $\q(\latent_{0:T},\lab_{0:T}|\obs_{0:T})$~\citep{blei2017variational} [Variational EM].
+
+
+\begin{proposition}
+\label{prop:prop1}
+
+Let us denote $\Qunsup(\theta,\phi)$ and $\Qunsup^{\rm opt}(\theta,\phi)$,
+the ELBOs associated to the variational 
+distributions
+$$\q(\latent_{0:T},\lab_{0:T}|\obs_{0:T})=\q(\latent_{0:T}|\obs_{0:T})\q(\lab_{0:T}|\latent_{0:T},\obs_{0:T})$$
+and 
+$$\q^{\rm opt}(\latent_{0:T},\lab_{0:T}|\obs_{0:T})=\q(\latent_{0:T}|\obs_{0:T})\p(\lab_{0:T}|\latent_{0:T},\obs_{0:T})\text{,}$$
+respectively. \\
+Then, for any $(\theta,\phi)$, we have 
+\begin{equation}
+\label{prop1_ineq}
+\log \p(\obs_{0:T}) \geq \Qunsup^{\rm opt}(\theta,\phi) \geq \Qunsup(\theta,\phi),
+\end{equation}
+where
+\begin{align}
+\label{elbo-opt}
+\Qunsup^{\rm opt}(\theta,\phi)=Q_0^{\rm opt}(\theta,\phi)+\sum_{t=1}^T Q_{t-1,t}^{\rm opt}(\theta,\phi)+Q_{0:T}^{\rm opt}(\theta,\phi) \text{,}
+\end{align}
+and where
+\begin{align}
+\label{elbo-1}
+Q_0^{\rm opt}(\theta,\phi)&=\int  \sum_{\lab_{0}}\q(\latent_{0:T}|\obs_{0:T})p_{\theta}(\lab_0|\latent_{0:T},\obs_{0:T}) \log\p(\triplet_0) {\rm d}  \latent_{0:T} \text{,} \\
+%Q_{t-1,t}^{\rm opt}(\theta,\phi)\!\!&=\!\!\!\!
+%\int\!\!\!\! \sum_{\lab_{t-1:t}}\!\!\!\log\left(\frac{\eta(\latent_t; \pz(\triplet_{t-1})) \vartheta(\lab_t;\pyun(\latent_{t},\triplet_{t-1}))  \zeta(\obs_t;\pxun(\lab_t, \latent_{t},\triplet_{t-1}))  }{p_{\theta}(\lab_{t-1}|\lab_{t}, \latent_{0:T}, \obs_{0:T}) \q(\latent_{0:T}|\obs_{0:T})\hugo{}{\text{here or}}}\right)\! p_{\theta}(\lab_{t-1:t}|\latent_{0:T},\obs_{0:T}) \q(\latent_{0:T}|\obs_{0:T}){\rm d}  \latent_{0:T} \text{,} \\
+Q_{t-1,t}^{\rm opt}(\theta,\phi)&=
+\int  \sum_{\lab_{t-1:t}}\q(\latent_{0:T}|\obs_{0:T})p_{\theta}(\lab_{t-1:t}|\latent_{0:T},\obs_{0:T}) \times \nonumber \\
+ & \quad \log\left(\frac{\p(\triplet_t|\triplet_{t-1})}{p_{\theta}(\lab_{t-1}|\lab_{t}, \latent_{0:T}, \obs_{0:T}) \q(\latent_{0:T}|\obs_{0:T})}\right) {\rm d}  \latent_{0:T} \text{,} \\
+\label{elbo-3}
+Q_{0:T}^{\rm opt}(\theta,\phi)&= - \int
+    \sum_{\lab_{T}}\q(\latent_{0:T}|\obs_{0:T}) \p(\lab_{T}|\latent_{0:T},\obs_{0:T}) \log\p(\lab_{T}|\latent_{0:T},\obs_t){\rm d}  \latent_{0:T}.
+\end{align}
+%\begin{align}
+%\label{elbo-opt}
+%    \Qunsup^{\rm opt}(\theta,\phi) = & \sum_{t=1}^T \int \sum_{\lab_{t-1},\lab_t}p_{\theta}(\lab_t,\lab_{t-1}|\latent_{0:T},\obs_{0:T}) \q(\latent_{0:T}|\obs_{0:T})\log(\zetat(\obs_t)) {\rm d}  \latent_{0:T} \nonumber \\ 
+%    &- \sum_{t=1}^T \int \sum_{\lab_{t-1},\lab_t}p_{\theta}(\lab_t,\lab_{t-1}|\latent_{0:T},\obs_{0:T}) \q(\latent_{0:T}|\obs_{0:T})\log\left(\frac{\varthetat(\lab_t)\etat(\latent_t)}{p_{\theta}(\lab_{t-1}|\lab_{t}, \latent_{0:T}, \obs_{0:T})\q(\latent_{0:T}|\obs_{0:T})}\right) {\rm d}  \latent_{0:T} \text{;}
+%\end{align}
+%and $\varthetat(\lab_t)$, $\etat(\latent_t)$, $\zetat(\obs_t)$ are short abbreviations of the functions  given in   \eqref{tmc-theta-1}-\eqref{tmc-theta-3}.
+% \begin{align}
+% \label{elbo-opt-1}
+% \E_{\q^{\rm opt}(\latent_{0:T},\lab_{0:T}|\obs_{0:T})}\big[\log p_{\theta}(\obs_{0:T}|\latent_{0:T},\lab_{0:T}) \big] & = XXXX    \text{,} \\
+% \label{elbo-opt-2}
+% \dkl(\q^{\rm opt}(\latent_{0:T},\lab_{0:T}|\obs_{0:T})||p_{\theta}(\latent_{0:T},\lab_{0:T})) &  = XXXX
+% \end{align}
+\end{proposition}
+A proof of Proposition~\ref{prop:prop1} is given in Appendix~\ref{app:prop1}. 
+%Note that all the terms 
+%in the integrals are computable
+%(see Appendix \ref{app:prop1} for the
+%computation of $\p(\lab_{t-1:t}|\obs_{0:T},\latent_{0:T})$
+%and so of $\p(\lab_{t-1}|\lab_t,\obs_{0:T},\latent_{0:T})$).
+%and relies on the backward decomposition 
+%\begin{equation}
+%\label{backward-decomposition}
+%\p(\lab_{0:T}|\obs_{0:T},\latent_{0:T})=\p(\lab_{T}|\obs_{0:T},\latent_{0:T})
+% \prod_{t=1}^T \p(\lab_{t-1}|\lab_t,\obs_{0:T},\latent_{0:T}),
+%\end{equation}
+%where each term $\p(\lab_{t-1}|\lab_t,\obs_{0:T},\latent_{0:T})$
+%is computable. 
+The practical computation of these integrals
+will be described later with the modified objective function.
+%Note that all the terms in \eqref{elbo-1}-\eqref{elbo-3} are known\hugo{but the practical computation of the integrals
+%will be described later}{, we will describe later the practical computations of the integrals}.
+
+
+
+\subsection{Estimation algorithm for TMCs}
+Following the approach that we have developed for PMC models, 
+we extend our parameterization framework to the 
+distributions of TMC models. 
+As a direct extension of Section~\ref{sec:generalParam}, functions $\pyun$ and
+$\pxun$ can now depend on $\latent_{t-1:t}$. 
+We present a particular parameterization of TMCs models derived from the general one
+introduced in Section~\ref{sec:general_param_tmc}.
+The transition distribution is factorized as follows:
+\begin{equation}
+  \label{tmc-trans}
+  %\p(\latent_t,\lab_t,\obs_t|\latent_{t-1},\lab_{t-1},\obs_{t-1})=\p(\latent_t|\latent_{t-1},\lab_{t-1},\obs_{t-1})\p(\lab_t|\latent_t,\latent_{t-1},\lab_{t-1},\obs_{t-1})\p(\obs_t|\lab_t,\latent_t,\latent_{t-1},\lab_{t-1},\obs_{t-1}) 
+    \p(\triplet_t|\triplet_{t-1})=\p(\latent_t|\triplet_{t-1})\p(\lab_t|\latent_t,\triplet_{t-1})\p(\obs_t|\lab_t,\latent_t,\triplet_{t-1})
+    \text{.}
+\end{equation} 
+Thus, the parameterization of the TMC model
+given by Equations~\eqref{eq:general_model_tmc}-\eqref{eq:py}
+is now given by
+\begin{eqnarray}
+  \label{tmc-theta-1}
+  \p(\latent_t|\triplet_{t-1}) &=& \eta \left(\latent_t; \pz(\triplet_{t-1})\right) \text{,}\\
+  \label{tmc-theta-2}
+  \p(\lab_t| \latent_{t},\triplet_{t-1})&=&\vartheta \left(\lab_t;\pyun(\latent_{t},\triplet_{t-1})\right) \text{, } \\
+  \label{tmc-theta-3}
+  \p(\obs_t|\lab_t, \latent_{t},\triplet_{t-1})&=&\zeta\left(\obs_t;\pxun(\lab_t, \latent_{t},\triplet_{t-1})\right) \text{.}
+\end{eqnarray}
+%Again, no stationary assumption needs to be made in the framework we derive \cite{}
+% We next propose a general estimation method 
+% based on a variational distribution 
+% $\q(\latent_{0:T}|\obs_{0:T})$, for estimating $\theta$ and $\p(\lab_t|\obs_{0:T})$, for all $t$, which takes into account the interpretability constraint.
+% %'Yohan'
+% %we first introduce a general parameterization of our TMC models; next we derive a variational Bayesian inference algorithm for the estimation of their parameters and for the estimation of $\lab_t$ from $\obs_{0:T}$.
+% %'Yohan'
+% %Our aim is to present a  general parameterization of TMCs models as we did for PMCs models (Section \ref{sec:generalParam}). Similar to PMCs,  we consider the functions $\pyun(\cdot)$, $\pxun(\cdot)$ and $\pz(\cdot)$ which depend on $\theta$ and are differentiable w.r.t.~$\theta$. Thus, the transition distribution of the TMC is parameterized through $\pyun$, $\pxun$ and $\pz$ as follows:
+% \subsubsection{General Parameterization of TMCs}
+%
+\begin{remark}
+  If  $\pz$ does not depend on $\triplet_{t-1}$,
+  and if $\pyun$ and $\pxun$ are independent of $\latent_{t-1:t}$,
+  the distribution $\p(\lab_{0:T},\obs_{0:T})$ coincides with that of a 
+  PMC built from~\eqref{pmc-theta-1}-~\eqref{pmc-theta-2}.
+\end{remark}
+
+%where $\zeta(\obs;v')$ and $\eta(z;\hat{v})$ (resp. $\vartheta(\lab;v)$) are given classes of  probability density functions on $\mathbb{R}$ (resp. a probability distribution on $\Omega$) and differentiable w.r.t.~$v$ and $\hat{v}$ (resp. $v'$).
+
+
+
+%Let $f_{\theta,h}(\lab_{t-1},\obs_{t-1})$ and $f_{\theta,x}(\lab_t,\lab_{t-1},\obs_{t-1})$ be functions parameterized by an unknown parameter  $\theta$. We assume that these functions are differentiable w.r.t.~$\theta$.  [...]
+
+%, a generalization from the literature on TMCs where only discrete auxiliary processes have been considered, see for example~\cite{lanchantin2011unsupervised}. For comparison, in Section~\ref{sec:tmc_models}, we will consider TMCs with discrete random variables. In such case, we will have $\latent_t\in\Lambda=\{\vartheta_1,\cdots,\vartheta_L\},\forall k.$ \\
+
+%\begin{remark}[Why being interested by continuous auxiliary random variables ?]
+%A note not to forget to say how it generalizes. Do we talk about some kind of implicit distribution set up ? (see for example https://arxiv.org/pdf/1702.08235.pdf or https://arxiv.org/pdf/1805.11183.pdf)
+%\end{remark}
+
+
+
+
+
+
+
+
+
+% \textbf{Remark:} Note that another more straightforward approach for inference could be used. Using the estimated variational distribution we are able to estimate an approximate posterior marginal $q(\lab_t|\obs_{0:T}),\forall k,$ with
+% \begin{align}
+%     q(\lab_t|\obs_{0:T})&=\int_{\latent_{0:T}}\d\latent_{0:T} p_{\theta}(\lab_t|\latent_{0:T},\obs_{0:T})q_{\phi}(\latent_{0:T}|\obs_{0:T}),\\
+%     &\approx\frac{1}{N}\sum_{m=1}^M
+%     p(\lab_t|\latent_{0:T}^n,\obs_{0:T}),
+% \end{align}
+% where we sample N i.i.d trajectories $z^n\sim q_{\phi}(\latent_{0:T}|\obs_{0:T}),\forall n\in\{1,\dots,N\}$.
+
+
+%------------------------
+% Volver a leer para poner en un lugar correcto
+%Note that, to the best of our knowledge, only the di-MTMC model (\emph{\emph{i.e.}} when $\latent_{0:T}$ is a discrete auxiliary random variable) described below has already been introduced in the literature under slightly different forms. 
+%One can cite for example~\cite{lanchantin2004unsupervised}, \cite{lapuyadelahorgue2010unsupervised} or \cite{boudaren2017unsupervised}. In these studies, the models offer the possibility to introduce non-stationarities in the parameters of the hidden and observed processes when $\latent_{0:T}$ is discrete. In our article, we generalize this case by allowing $\latent_{0:T}$ to be a continuous random variable and by allowing transition functions to be parameterized by neural networks.
+%indeed, $\p(\lab_{t-1:t}|\latent_{0:T},\obs_{0:T})$ can be computed from 
+%a direct adaptation of \eqref{eq:pair_post_margin}
+%while the other terms coincide to the model or the variational distribution. The practical computation 
+%of these integrals will described later.
+
+
+%\textcolor{orange}{Écriture de $\Qunsup^{\rm opt}$ sous forme d'une XEnt et DKL qui généralise les VAEs de manière séquentielle et les beta-VAEs quand on aura rajouté les Beta dès le paragraphe suivant}
+%\begin{align}
+%    \Qunsup^{\rm opt}(\theta,\phi) = & \sum_{\lab_{0:T}} \int \p(\lab_{0:T}|\latent_{0:T},\obs_{0:T})\q(\latent_{0:T}|\obs_{0:T})\log(\prod_{t=1}^T\zetat(\obs_t)) {\rm d}  \latent_{0:T} \nonumber \\ 
+%    &- \sum_{\lab_{0:T}} \int \p(\lab_{0:T}|\latent_{0:T},\obs_{0:T})\q(\latent_{0:T}|\obs_{0:T})\log\left(\frac{\prod_{t=1}^T\varthetat(\lab_t)\etat(\latent_t)}{\q(\latent_{0:T},\lab_{0:T}|\obs_{0:T})}\right) {\rm d}  \latent_{0:T}, \\
+%    &= \mathrm{XEnt}(\p(\lab_{0:T}|\latent_{0:T},\obs_{0:T})\q(\latent_{0:T}|\obs_{0:T}),\prod_{t=1}^T \p(\obs_t|\obs_{t-1},\latent_{0:T},\lab_{0:T})) \\
+%    &- \mathrm{DKL}(\p(\lab_{0:T}|\latent_{0:T},\obs_{0:T})\q(\latent_{0:T}|\obs_{0:T}) || \prod_{t=1}^T \p(\lab_t,\latent_t|\lab_{t-1},\latent_{t-1},\obs_{0:T})),\nonumber\\
+%    &= \mathrm{XEnt}(\p(\lab_{0:T}|\latent_{0:T},\obs_{0:T})\q(\latent_{0:T}|\obs_{0:T}); \p(\obs_{0:T}|\latent_{0:T},\lab_{0:T})) - \mathrm{DKL}(\p(\lab_{0:T}|\latent_{0:T},\obs_{0:T})\q(\latent_{0:T}|\obs_{0:T}) || \p(\latent_{0:T},\lab_{0:T}|\obs_{0:T})).
+%\end{align}
+%\textcolor{orange}{
+%Peut-être que les trois lignes au dessus sont à ajouter à la démo en Appendixe et la dernière forme est la forme à mettre dans la proposition 1 ?}\\
+
+%\textcolor{orange}{
+%Si on introduit $\tilde{p}(\latent_{0:T},\lab_{0:T}|\obs_{0:T})=\p(\lab_{0:T}|\latent_{0:T},\obs_{0:T})\q(\latent_{0:T}|\obs_{0:T})$ on a, dans $\Qunsup^{\rm opt}$ de l'équation au dessus, une expression totalement symmétrique en $\lab$ et $\z$ ce qui pourrait bien justifier l'introduction des $\beta$ qui suit juste après, pour l'interprétabilité.
+%On pourrait également garder la forme séquentielle qui a peut-être plus de sens ?! :
+%}
+%\begin{align}
+%    \Qunsup^{\rm opt}(\theta,\phi)
+%    &= \mathrm{XEnt}(\prod_{t=1}^T\tilde{\p}(\lab_t,\latent_t|\lab_{t-1},\latent_{t-1},\obs_{0:T}),\prod_{t=1}^T \p(\obs_t|\obs_{t-1},\latent_{0:T},\lab_{0:T})) \\
+%    &- \mathrm{DKL}(\prod_{t=1}^T\tilde{\p}(\lab_t,\latent_t|\lab_{t-1},\latent_{t-1},\obs_{0:T}) || \prod_{t=1}^T \p(\lab_t,\latent_t|\lab_{t-1},\latent_{t-1},\obs_{0:T})),\nonumber.
+%\end{align}
+
+
+%In the variational inference framework, we use a lower bound of the log model evidence  ($\log \p(\obs_{0:T}) $), which is called \emph{Evidence Lower Bound} (ELBO)~\citep{blei2017variational} and is denoted  as $\Qunsup(\theta,\varphi)$,%, and  whatever $\q$, we deduce that 
+%\begin{align}
+%\log \p(\obs_{0:T}) &\geq  \Qunsup(\theta,\varphi) \\
+%&= \sum_{\lab_{0:T}} \int \q(\latent_{0:T},\lab_{0:T}|\obs_{0:T})  \log\left(\frac{\p(\latent_{0:T},\lab_{0:T},\obs_{0:T}) }{\q(\latent_{0:T},\lab_{0:T}|\obs_{0:T})}\right)  {\rm d}\latent_{0:T} \\
+%&=  \E_{\latent_{0:T},\lab_{0:T}\sim q_{\phi}(\latent_{0:T},\lab_{0:T}|\obs_{0:T})}[
+%    \log p_{\theta}(\obs_{0:T}|\latent_{0:T},\lab_{0:T})] 
+%    - \dkl(q_{\phi}(\latent_{0:T},\lab_{0:T}|\obs_{0:T})||p_{\theta}(\latent_{0:T},\lab_{0:T}))\text{.} 
+%\end{align}
+\subsubsection{Joint estimation of $\theta$ and $\phi$}
+\label{sec:joint_estimation}
+Classical variational inference algorithms
+aim at maximizing the ELBO~\eqref{elbo-opt}
+when the objective is to estimate the parameters of a generative model, 
+\ie~a model in which we do not focus on the interpretability of the hidden r.v. 
+but rather on the modeling power of the distribution $\p(\obs_{0:T})$.
+% ~\ref{sec:variational_autoencoder})
+Consequently, in our case,  a direct maximization of \eqref{elbo-opt}
+does not guarantee the
+interpretability of the r.v. $\lab_{0:T}$. 
+The problem is all the more critical that our hidden process is split
+into an interpretable one, $\lab_{0:T}$, and an
+auxiliary one, $\latent_{0:T}$.
+To that end, we propose an adaptation and an interpretation to the sequential case of two 
+techniques introduced in the machine learning 
+community~\citep{higgins2017beta, kingma2014semi}. The first one relies on a reinterpretation of the ELBO \eqref{elbo-opt} as the sum of a 
+reconstruction and a KLD terms; this last one is next penalized. 
+The second technique consists in adding a penalizing term to the resulting ELBO which aims at
+strengthening the distinct role of $\lab_{0:T}$ and of $\latent_{0:T}$ and exploiting the result of previous classifications obtained with an available
+model.
+%such that o discussed in Section \ref{sec-pmc}\hugo{}{[ça pourrait être n'importe quel autre modèle qui fournit une presegmentation ?]}.
+
+%In this subsection, we present a parameter estimation procedure which solves the interpretability issue of $\lab_t$. Thus,  we will optimize a modified and generalized   version of the ELBO
+%$\Qunsup^{\rm opt}(\theta,\phi)$ based on introducing $\beta_1 \geq 0$ and $\beta_2 \geq 0$,
+
+%2Algorithm~\ref{algo:tmc_elbo_opt} proposes an approach based on a gradient ascent method of the MC approximation of
+
+
+
+% \begin{align}
+%     \mathcal{L}(\theta,\phi)
+%     &=\E_{q^{\rm opt}_{\phi}(\latent_{0:T},\lab_{0:T}|\obs_{0:T})}[
+%     \log p_{\theta}(\obs_{0:T}|\latent_{0:T},\lab_{0:T})]
+%     - \beta_1 {\dkl(q^{\rm opt}_{\phi}(\latent_{0:T},\lab_{0:T}|\obs_{0:T})||p_{\theta}(\latent_{0:T},\lab_{0:T}))}.
+%     \label{eq:beta_elbo}
+% \end{align}
+
+% %The idea of variational methods is to cast inference as an optimization problem, then, we maximize the loss function of Equation~\eqref{eq:beta_elbo} w.r.t $\theta$ and $\phi$.
+% %In practice, the expectations of the loss function are approximated with a Sequential Monte Carlo method~\citep{doucet2009tutorial}. 
+% %We can write $q_{\phi}(\latent_{0:T},\lab_{0:T}|\obs_{0:T}) = q_{\phi}(\latent_{0:T}|\obs_{0:T}) q_{\phi}(\lab_{0:T}|\latent_{0:T},\obs_{0:T})$ and thus we can sample $(\latent_{0:T},\lab_{0:T})\sim q_{\phi}(\latent_{0:T},\lab_{0:T}|\obs_{0:T})$ in two steps. First, we sample  $\latent_{0:T} \sim q_{\phi}(\latent_{0:T}|\obs_{0:T})$,  followed by $\lab_{0:T}\sim q_{\phi}(\lab_{0:T}|\latent_{0:T},\obs_{0:T})$.
+% %If we  set $q_{\phi}(\lab_{0:T}|\latent_{0:T},\obs_{0:T})=p_{\theta}(\lab_{0:T}|\latent_{0:T},\obs_{0:T})$, this distribution is analytically computed from parameters upon which we optimize with the Forward-Backward algorithm (Section~\ref{sec:inference_tmc}).
+% %This procedure can be seen as a generalized EM algorithm where the Expectation (E) step is not performed exactly~\citep{neal1998view} and the maximization (M) step is performed using gradients~\citep{balakrishnan2017statistical}.
+% %Algorithm~\ref{algo:tmc_elbo_opt} sketches the procedure for the ELBO maximization with the Gradient EM algorithm.% Note that the derivative of the loss function is computed with the autodifferentiation tool JAX~\citep{jax2018github}.
+% %\begin{remark}Because of the particular model structure, the exact (E) step could be performed for $\theta$, \emph{\emph{ie}} setting $q_{\phi}(\lab_{0:T}|\latent_{0:T},\obs_{0:T})=p_{\theta^{{j}}}(\lab_{0:T}|\latent_{0:T},\obs_{0:T})$ is possible. However the latter choice did not give good convergence results in practice.
+% %We hypothesize that such performance issues are due to alternating exact (E) step for some parameters and approximate (E) step for others. \end{remark}
+% \subsection{Training procedures for the Deep TMC models}
+% \label{sec:deeptmc}
+% Just like the PMC models, the TMC models can be extended with DNNs to relax the parameterization assumption of the probabilistic distributions: $\pyun$ and $\pxun$ are parameterized with DNNs to form Deep TMCs (DTMCs). Moreover, 
+% since a variational approximation is considered in general TMCs, a DNN is also used to model the parameters of the distribution $\q$. % It is in this framework that this section details the specific training procedures and constraints to solve the training and interpretability issue in the DTMC models. This section is then the counterpart of Section~\ref{sec:deeppmc} which deals with the same related issues in Deep PMCs.
+%\subsubsection{Penalizing the loss function}
+
+
+\subsubsection{The $\beta$-ELBO}
+We first start with an alternative decomposition of the ELBO~\eqref{elbo-opt}.
+
+\begin{corollary}
+\label{corollary1}
+Let us factorize 
+$$\p(\latent_{0:T},\lab_{0:T},\obs_{0:T})=\overline{p}_{\theta}(\latent_{0:T},\lab_{0:T}|\obs_{0:T})\tilde{p}_{\theta}(\obs_{0:T}|\latent_{0:T},\lab_{0:T})$$
+with
+\begin{align}
+\label{tilde-p}
+\tilde{p}_{\theta}(\obs_{0:T}|\latent_{0:T},\lab_{0:T})&=\p(\obs_0|\lab_{0},\latent_0)\prod_{t=1}^T \zeta \left(\obs_t;\pxun(\lab_t, \latent_{t},\triplet_{t-1})\right) \text{,} \\
+\label{barre-p}
+\overline{p}_{\theta}(\latent_{0:T},\lab_{0:T}|\obs_{0:T})&=\p(\lab_0,\latent_0)\prod_{t=1}^T 
+\eta\left(\latent_t; \pz(\triplet_{t-1})\right) \vartheta \left(\lab_t;\pyun(\latent_{t},\triplet_{t-1})\right).
+\end{align}
+
+Then 
+\begin{equation}
+\label{elbo-opt-2}
+    \Qunsup^{\rm opt}(\theta,\phi) = \mathcal{L}_1(\theta,\phi) +  \mathcal{L}_2(\theta,\phi) \text{,}
+\end{equation}    
+where 
+\begin{align}
+\label{L-1}
+\mathcal{L}_1(\theta,\phi) &={\E}_{\q^{\rm opt}(\latent_{0:T},\lab_{0:T}|\obs_{0:T})}\left( \log \tilde{p}_{\theta}(\obs_{0:T}|\latent_{0:T},\lab_{0:T})\right)\text{,} \\
+\label{L-2}
+ \mathcal{L}_2(\theta,\phi) &= - \dkl \left(\q^{\rm opt}(\latent_{0:T},\lab_{0:T}|\obs_{0:T})|| \overline{p}_{\theta}(\latent_{0:T},\lab_{0:T}|\obs_{0:T})\right)  \text{.}
+\end{align}
+\end{corollary}
+
+This decomposition can be seen as
+a generalization to the sequential case of the decomposition proposed
+for the $\beta$-VAE in~\citep{higgins2017beta}. Indeed, $\Qunsup^{\rm opt}$ involves
+the sum of $(i)$ a reconstruction term $\mathcal{L}_1$ between 
+$\q^{\rm opt}$ and $\tilde{p}_{\theta}$ 
+which measures the ability 
+to reconstruct observations $\obs_{0:T}$
+according to the conditional likelihood
+$\tilde{p}_{\theta}$
+from the latent r.v. $(\latent_{0:T},\lab_{0:T})$ 
+distributed according to $\q^{\rm opt}$;
+$(ii)$ a KLD term $\mathcal{L}_2$
+between the variational distribution and the conditional
+prior $\overline{p}_{\theta}$.
+However, contrary to the static
+case, our decomposition involves 
+$\tilde{p}_{\theta}(\obs_{0:T}|\latent_{0:T},\lab_{0:T})$ 
+and $\overline{p}_{\theta}(\latent_{0:T},\lab_{0:T}|\obs_{0:T})$
+rather than $\p(\obs_{0:T}|\latent_{0:T},\lab_{0:T})$  
+and $\p(\latent_{0:T},\lab_{0:T})$, respectively. 
+Indeed, except if $T=0$, the latter two distributions are no longer computable, 
+which makes the classical ELBO decomposition impractical.
+%in which case the distributions coincide.
+
+The idea underlying our $\beta$-ELBO is to penalize the KLD term $\mathcal{L}_2(\theta,\phi)$. To understand why, let us detail 
+the expression of $\mathcal{L}_1(\theta,\phi)$ and of $\mathcal{L}_2(\theta,\phi)$. First,
+using \eqref{tilde-p} and \eqref{tmc-theta-3},
+$\mathcal{L}_1(\theta,\phi)$ reads 
+\begin{align}
+\label{L-1_decomposed}
+\mathcal{L}_1(\theta,\phi)=& {\E}_{\q^{\rm opt}(\lab_0,\latent_0|\obs_{0:T})}\left(\log \p(\obs_t|\lab_0, \latent_0) \right) +
+\nonumber\\ & \quad  
+\sum_{t=1}^T {\E}_{\q^{\rm opt}(\lab_t,\latent_t|\lab_{t-1},\latent_{0:t-1},\obs_{0:T})}\left(\log
+%\underbrace{\zeta(\obs_t;\pxun(\lab_t, \latent_{t},\triplet_{t-1}))}_
+{\p(\obs_t|\lab_t,\latent_t,\triplet_{t-1})}
+\right).
+\end{align}
+Following this decomposition, it can be seen that at each time step $t$,
+the maximization of \eqref{L-1_decomposed} encourages the model to interpret
+the latent r.v. $(\lab_t,\latent_t)$ as those which explain the best the observation
+$\obs_t$ given the past.
+%From Eq.~\eqref{L-1}, it can be seen that this term encourages latent r.v. which explains the best the observed r.v., $\obs_{0:T}$. Now, with the decomposition of Eq.~\eqref{L-1_decomposed}, we see that the latent r.v. are in fact chosen so that, at each time step $t$, they explain the best $\obs_t$, while also taking into account the previous time steps.
+On the other hand, using \eqref{barre-p} and
+\eqref{tmc-theta-1}-\eqref{tmc-theta-2},
+the maximization of  %$\mathcal{L}_2(\theta,\phi)$ reads
+\begin{align}
+\label{L-2_decomposed}
+\mathcal{L}_2(\theta,\phi)=-&
+\dkl \left(\q^{\rm opt}(\lab_0,\latent_0|\obs_{0:T})|| \p(\latent_0,\lab_0) %\p(\lab_t|\latent_{0})
+\right)
+- 
+\nonumber\\& \quad 
+\sum_{t=1}^T \dkl \left(\q^{\rm opt}(\lab_t,\latent_t|\lab_{t-1},\latent_{0:t-1},\obs_{0:T})|| 
+\p(\lab_t,\latent_t|\triplet_{t-1})
+%\eta(\latent_t; \pz(\triplet_{t-1})) \vartheta(\lab_t;\pyun(\latent_{t},\triplet_{t-1}))
+\right)
+\end{align}
+tends to push the posterior variational distribution at each time step
+to be close to the conditional prior distribution $\p(\lab_t,\latent_t|\triplet_{t-1})$.
+%Similarly, Eq.~\eqref{L-2} can be interpreted as forcing the variational distribution on the latent to be close to a prior distribution. Then, from Eq.~\eqref{L-2_decomposed}, it is clear that such an constraint to match a prior is made sequentially: for each time step $t$, the variational distribution is forced to match a prior, taking into account all the preceding r.v.
+As in~\citep{higgins2017beta}, we penalize $\mathcal{L}_2(\theta,\phi)$ via the introduction of a scalar $\beta_1$. Since a part of the latent r.v. has
+to be interpretable, and that the interpretability of hidden r.v.
+is not conditioned by the observations, the interest of this term is to
+force the posterior distribution $\q^{\rm opt}$ to take into account the prior term at each time step.
+In other words, this penalization term
+aims at limiting the impact of the observations 
+on the interpretability of the hidden r.v.,
+particularly in problems where $\obs_t$ is a very noisy version of $\lab_t$.
+
+%Such a weight in the ELBO has been introduced in~ and is now widely used, giving rise to the $\beta$-ELBO. It enables to tune how much the variational distribution should stick to its prior. Enforcing a stronger prior can a valuable asset in context where the noise is high. Indeed, with a high $\beta_1$, we encourages latent r.v. to match incorporate prior knowledge and we give less importance to latent r.v. explaining well the observations, which might lead to poor results at high noise levels. 
+
+\subsubsection{Cross-entropy penalization}
+%It remains to distinguish the role $\latent_t$ and $\lab_{0:T}$
+%The previous step adapted from the $\beta$-VAE aims at 
+%pushing the interpretability of the latent r.v. However, in our case, only $\lab_t$ needs to be interpretable.
+We finally complete our objective function 
+to guide the estimation process
+into distinguishing the role of $\lab_{0:T}$ and of $\latent_{0:T}$ 
+in order to obtain better interpretable estimations of $\lab_t$.
+We assume that we have at our disposal
+a pre-classification $\lab_{0:T}^{\pre}$. 
+%obtained
+%from one of the models described in Section \ref{sec-pmc}\hugo{}{[à nouveau pourquoi seulement les modèles là pourraient fournir une presegmentation ?]}.
+Next, introduce
+the KLD between the empirical distribution 
+deduced from this pre-classification,
+$p^{\rm emp}(\lab_{0:T})=\delta_{\lab_{0:T}^{\rm pre}}(\lab_{0:T})$, 
+and the marginal variational distribution 
+$$\q(\lab_{0:T}|\obs_{0:T})=\int \q^{\rm opt}(\latent_{0:T},\lab_{0:T}|\obs_{0:T}){\rm d}\latent_{0:T},$$
+which aims itself at approximating the true posterior distribution $\p(\lab_{0:T}|\obs_{0:T})$. Thus, the objective is to push the variational distribution $\q$ to take into account the interpretable labels obtained from an already interpretable pre-classification through the negative cross-entropy 
+\begin{equation}
+\label{L-3}
+ \mathcal{L}_3(\theta,\phi) = \E_{p ^{\rm emp}(\lab_{0:T})} \left(\log \q(\lab_{0:T}|\obs_{0:T}) \right)=\log\q(\lab^{\rm pre}_{0:T}|\obs_{0:T}),
+\end{equation}
+%${\rm E}_{p(\hat{\lab}_{0:T})}(\log(\q(\lab_{0:T}|\obs_{0:T})))$  
+see for example~\citep{kingma2014semi,klys2018learning,kumar2021learning}. This additional term
+is next penalized by a scalar $\beta_2$ which controls the proximity 
+of the pre-classification with the variational posterior distribution.
+
+%we define another term that will be part of the final loss function.
+%It consists of a penalizing cross-entropy term between the empirical distribution of available labelled data (for example presegmentated data), $p(\hat{\lab_{0:T}})$, and the posterior distribution of $\lab_{0:T}$, $p_{\theta}({\lab_{0:T}}|\obs_{0:T})$, which is defined as $\mathcal{H}(p(\hat{\lab_{0:T}});p_{\theta}(\lab_{0:T}|\obs_{0:T}))= -\E_{p(\hat{\lab_{0:T}})}\Big[\log p_{\theta}(\lab_{0:T}|\obs_{0:T}) \Big]$. Intuitively, the control of this term aims at XXXXX à justifier
+%A scalar $\beta_2$ is also introduced to control how much we need to stick to the empirical distribution. It is a hyperparameter that we manually adjust.
+%Adding such terms in the loss function can be found in several works related to self-supervised learning or disentanglement learning
+
+Finally, we obtain a new objective function 
+%Summarizing the two previous constraints, the
+%generalized version of the ELBO $\Qunsup^{\rm opt}(\theta,\phi)$ reads [A REECRIRE, \textcolor{orange}{dépend de la forme choisie pour Fopt}]
+%modified loss function for the TMC models in the rest of the article is defined by
+\begin{align}
+\label{eq:beta_elbo_xent}
+    \mathcal{L}(\theta,\phi)
+    &= \mathcal{L}_1(\theta,\phi) + \beta_1 \mathcal{L}_2(\theta,\phi) + \beta_2 \mathcal{L}_3(\theta,\phi) \text{,}
+    \end{align}
+where  
+$\mathcal{L}_1(\theta,\phi)$, $\mathcal{L}_2(\theta,\phi)$ and
+$\mathcal{L}_3(\theta,\phi)$
+are defined in \eqref{L-1}, \eqref{L-2}
+and \eqref{L-3}, respectively.
+%\begin{align}  
+%\label{L-1}
+%\mathcal{L}_1(\theta,\phi) &= \E_{\p(\lab_{0:T}|\latent_{0:T},\obs_{0:T})\q(\latent_{0:T}|\obs_{0:T})}(
+%    \log \tilde{p}_{\theta}(\obs_{0:T}|\latent_{0:T},\lab_{0:T}))\text{,} \\
+%\mathcal{L}_2(\theta,\phi)& = - {\dkl(\p(\lab_{0:T}|\latent_{0:T},\obs_{0:T})\q(\latent_{0:T}|\obs_{0:T})||\overline{p}_{\theta}(\latent_{0:T},\lab_{0:T}|\obs_{0:T}))} \text{,} \\
+%\label{L-3}
+% \mathcal{L}_3(\theta,\phi) &= \E_{p ^{\rm emp}(\lab_{0:T})} %(\log(\q(\lab_{0:T}|\obs_{0:T})))=\log(\q(\h^{\rm pre}_{0:T}|\obs_{0:T})) \text{.}
+%\end{align}
+If we set $\beta_1=1$ and $\beta_2=0$, then
+$\mathcal{L}(\theta,\phi)$ coincides with
+the ELBO $\Qunsup^{\rm opt}(\theta,\phi)$ in \eqref{elbo-opt-2}.
+
+\subsubsection{Monte Carlo approximation}
+It remains to compute and optimize~\eqref{eq:beta_elbo_xent} in practice.
+$\mathcal{L}_1(\theta,\phi)$
+and $\mathcal{L}_2(\theta,\phi)$ coincide
+with mathematical expectations according to  $\q^{\rm opt}(\latent_{0:T},\lab_{0:T}|\obs_{0:T})=\q(\latent_{0:T}|\obs_{0:T})\p(\lab_{0:T}|\latent_{0:T},\obs_{0:T})$.
+Using  expressions \eqref{L-1_decomposed}-\eqref{L-2_decomposed},
+expectations according to $\p(\lab_{0:T}|\obs_{0:T},\latent_{0:T})$
+are exactly computable.
+Thus, $\mathcal{L}_1(\theta,\phi)$ and $\mathcal{L}_2(\theta,\phi)$
+rely on the approximate computation of expectations according to $\q(\latent_{0:T}|\obs_{0:T})$. 
+It can be also noted that $$\q(\lab_{0:T}|\obs_{0:T})
+%=\E_{\q(\latent_{0:T}|\obs_{0:T})}(\q(\lab_{0:T}|\obs_{0:T},\latent_{0:T}))
+=\E_{\q(\latent_{0:T}|\obs_{0:T})}(\p(\lab_{0:T}|\latent_{0:T},\obs_{0:T})),$$  
+then  $\mathcal{L}_3(\theta,\phi)$ 
+also relies on an expectation according to 
+same distribution $\q(\latent_{0:T}|\obs_{0:T})$ as $\mathcal{L}_1(\theta,\phi)$ and $\mathcal{L}_2(\theta,\phi)$.
+Consequently, Monte Carlo estimates based on \iid samples 
+$\latent_{0:T}^{(m)} \sim \q(\latent_{0:T}|\obs_{0:T})$ are  estimates 
+of $\mathcal{L}_1(\theta,\phi)$, $\mathcal{L}_2(\theta,\phi)$
+and $\mathcal{L}_3(\theta,\phi)$.
+The choice of the variational distribution is given by the following
+factorization  $\q(\latent_{0:T}|\obs_{0:T})=\q(\latent_0|\obs_{0:T})\prod_{t=1}^T \q(\latent_t|\latent_{0:t-1},\obs_{0:T})$. 
+% First, we set conditional distributions $\q(\latent_t|\latent_{0:t-1},\obs_{0:T})$ in
+% order to obtain samples according to $\q(\latent_{0:T}|\obs_{0:T})$ sequentially.
+Next, $\q(\latent_t|\latent_{0:t-1},\obs_{0:T})$ is chosen such that it is
+possible to use the reparameterization trick to have a final sample 
+$\latent_{0:T}^{(m)}$, which as a
+differentiable function of $\phi$.
+(see Subsection~\ref{subsec:reparameterization_trick}).
+% . More precisely, the final sample $\latent_{0:T}^{(m)}$
+% can be written as
+% As we previously mentioned in ,
+% \begin{equation}
+% \label{reparameterization}
+% \latent_{0:T}^{(m)} =\pi \left(\phi, {\pmb \epsilon}_{T}^{(m)}\right) \text{,}
+% \end{equation}
+% where $\pmb{\epsilon}_{T}^{(m)}$
+% is a sequence of random samples which does not depend
+% on $\phi$ and $\pi$ is a differentiable function w.r.t.~$\phi$.
+% As an illustrative example, a sample $z^{(m)}$ according to Gaussian distribution with mean $\phi_1$ and standard deviation $\phi_2$
+% can be reparameterized as a differentiable
+% function of $(\phi_1,\phi_2)$ via $z^{(m)}=\phi_1+\phi_2 {\epsilon}^{(m)}$,
+% where ${\epsilon}^{(m)} \sim \mathcal{N}(0,1)$. This sampling technique is
+% referred to as the \emph{reparameterization trick}~\citep{kingma2014}.
+Finally, we obtain the following estimate
+of $\mathcal{L}(\theta,\phi)$ in \eqref{eq:beta_elbo_xent} 
+given by
+\begin{equation}
+\label{L-approx}
+\widehat{\mathcal{L}}(\theta,\phi)=\widehat{\mathcal{L}}_1(\theta,\phi)+\widehat{\mathcal{L}}_2(\theta,\phi)+\widehat{\mathcal{L}}_3(\theta,\phi) \text{,}
+\end{equation}
+where
+%$\mathcal{L}_1(\theta,\phi)$, $\mathcal{L}_2(\theta,\phi)$ and
+%$\mathcal{L}_3(\theta,\phi)$ in
+%\eqref{L-1}-\eqref{L-3},
+\begin{align}
+\label{L-1-approx}
+\widehat{\mathcal{L}}_1(\theta,\phi)&=\frac{1}{N} \sum_{m=1}^M {\E}_{\p(\lab_{0:T}|\latent_{0:T}^{(m)},\obs_{0:T})} \left( \log \tilde{p}_{\theta}(\obs_{0:T}|\latent_{0:T},\lab_{0:T}^{(m)}) \right) \text{,} \\ 
+\label{L-2-approx}
+\widehat{\mathcal{L}}_2(\theta,\phi)&=\frac{1}{N} \sum_{m=1}^M {\E}_{\p(\lab_{0:T}|\latent_{0:T}^{(m)},\obs_{0:T})} \left(\log\left( \frac{\overline{p}_{\theta}(\latent_{0:T},\lab_{0:T}^{(m)}|\obs_{0:T})}{\p(\lab_{0:T}|\latent_{0:T}^{(m)},\obs_{0:T})\q(\latent_{0:T}^{(m)}|\obs_{0:T})} \right) \right)  \text{,} \\
+\label{L-3-approx}
+\widehat{\mathcal{L}}_3(\theta,\phi)&= 
+\log \left(\frac{1}{N} \sum_{m=1}^M \p(h^{\rm pre}_{0:T}|\latent_{0:T}^{(m)},\obs_{0:T}) \prod_{t=1}^T \p(\lab_{t-1}^{\rm pre}|\lab_t^{\rm pre},\latent_{0:T}^{(m)},\obs_{0:T})\right) \text{,}
+%\frac{1}{ K} 
+%    \sum_{t=1}^T \sum_{c=1}^C \delta_{\hat{\lab}_t}^{\omega_c}\log q_{\phi}(\lab_t=\omega_c|\x).
+\end{align}
+where the remaining expectations are
+computed from 
+\eqref{backward-decomposition} and from \eqref{tilde-p}-\eqref{barre-p}
+and where samples $\latent_{0:T}^{(m)}$ satisfy the reparameterization concept.
+The complete estimation algorithm 
+is described in Algorithm~\ref{algo:tmc_elbo_opt}.
+
+
+\begin{algorithm}[htbp!]
+  \caption{Parameter estimation  in general  TMCs.}
+  \label{algo:tmc_elbo_opt}
+\begin{algorithmic}[1]
+  \Require{$\obs_{0:T}$, the data; $\epsilon$, the learning rate; $M$ the number of samples}
+  \Ensure{$(\theta^*, \phi^*)$, sets of estimated parameters}
+  \State Initialize the parameters $\theta^0$ and $\phi^0$
+  \State $j\leftarrow 0$\label{line:start_dtmc}
+  \While{\text{convergence is not attained}}
+    \State Sample $\latent_0^{(m)}\sim q_{\phi^{{j}}}(\latent_0|\obs_{0:T})$,  for all  $1 \leq m \leq M$ 
+    \State Sample $\latent_t^{(m)}\sim q_{\phi^{{j}}}(\latent_t|\latent_{0:t-1}^{(m)},\obs_{0:T})$,   for all  $1 \leq m \leq M$, for all $1 \leq t \leq T$ 
+    \State{Compute $p_{\theta}(\lab_{t-1}|\lab_t,\latent_{0:T}^{(m)},\obs_{0:T})$, for all $\lab_{t-1:t} \in \Omega \times \Omega$,  for all  $1 \leq m \leq M$, for all $1 \leq t \leq T$}
+    \State Evaluate the loss $\widehat{\mathcal{L}}(\theta^{{j}},\phi^{{j}})$ from \eqref{L-approx}-\eqref{L-3-approx}
+    \State{Compute the derivative of the loss function $\nabla_{(\theta, \phi)} \widehat{\mathcal{L}}(\theta,\phi)$  from \eqref{L-approx}-\eqref{L-3-approx} }
+    \State Update the parameters with gradient ascent
+  \begin{equation}
+  \begin{pmatrix}\theta^{(j+1)}\\\phi^{(j+1)}\end{pmatrix}=
+  \begin{pmatrix}\theta^{{j}}\\\phi^{{j}}\end{pmatrix}
+  + \epsilon {\nabla_{(\theta, \phi)} \widehat{\mathcal{L}}(\theta,\phi)}\Big|_{(\theta^{{j}},\phi^{{j}})}
+  \label{eq:elbo_grad}
+  \end{equation}
+  \State  $j\leftarrow j+1$
+  \EndWhile
+  \State  $\theta^{*} \leftarrow \theta^{{j}}$
+  \State  $\phi^{*} \leftarrow \phi^{{j}}$
+  \label{line:end_dtmc}
+\end{algorithmic}
+  % \vspace*{0.2cm}
+\end{algorithm}
+
+
+\subsubsection{Estimation of $\lab_t$}
+\label{estimation-h-tmc}
+%In this part we consider that $\theta^*$ and $\varphi^*$ are known,  \emph{ie} they are estimated or given. Then  it remains to compute the following expression, 
+% Once an estimate of  $(\theta^*,\varphi^*)$ has
+% been computed, it remains to compute
+Once we have obtained an estimate ${\theta^*}$
+of $\theta$, we focus on the computation
+of $p_{\theta^*}(\lab_t|\obs_{0:T})$, 
+\begin{equation}
+\label{posterior-tmc}
+p_{\theta^* }(\lab_t|\obs_{0:T})=\int_{\latent_{0:T}} p_{\theta^*}(\lab_t|\latent_{0:T},\obs_{0:T})p_{\theta^*}(\latent_{0:T}|\obs_{0:T}) \d\latent_{0:T} \text{,}
+\end{equation}
+where $p_{\theta^*}(\lab_t|\latent_{0:T},\obs_{0:T})$ 
+is computable from a direct extension 
+of \eqref{eq:alpha} and \eqref{eq:beta}-\eqref{eq:post_margin}
+(see the proof of Proposition~\ref{prop:prop1}).
+%by replacing the products $\vartheta(\lab_t;\pyun) \times \zeta(\obs_t;\pxun)$ by $\vartheta(\lab_t;\pyun) \times \zeta(\obs_t;\pxun) \times \eta( \latent_t; \pz)$.
+Since \eqref{posterior-tmc} is intractable, we propose an MC estimate $\hat{p}_{\theta }(\lab_t|\obs_{0:T})$ deduced from the sequential importance resampling mechanism~\citep{livredoucetshort}
+and based on the observation
+that $p_{\theta^*}(\latent_{0:T}|\obs_{0:T}) \propto
+p_{\theta^*}(\obs_{0:T},\latent_{0:T})$ is
+known up to a constant. Indeed, $p_{\theta^*}(\obs_{0:T},\latent_{0:T})$ 
+can also be computed from a direct extension of \eqref{likelihood-pmc}-\eqref{eq:alpha}.
+We thus introduce the estimated variational distribution
+$$\qs(\latent_{0:T}|\obs_{0:T})=
+\qs(\latent_0|\obs_{0:T})\prod_{t=1}^T \qs(\latent_t|\latent_{0:t-1},\obs_{0:T})$$
+as importance distribution due to its proximity with $\p(\latent_{0:T}|\obs_{0:T})$.
+Finally, rewriting \eqref{posterior-tmc} as 
+\begin{equation}
+p_{\theta^*}(\lab_t|\obs_{0:T})=\frac{\E_{q_{\phi^*}(\latent_{0:T}|\obs_{0:T})}\left(
+    \frac{p_{\theta^*}(\lab_t|\latent_{0:T},\obs_{0:T})p_{\theta^*}(\latent_{0:T},\obs_{0:T})}{q_{\phi^*}(\latent_{0:T}|\obs_{0:T})}\right)}{\E_{q_{\phi^*}(\latent_{0:T}|\obs_{0:T})}\left(\frac{p_{\theta^*}(\obs_{0:T})}{q_{\phi^*}(\latent_{0:T}|\obs_{0:T})}\right)} \text{,}
+\end{equation}
+%Note that $\p(\lab_t,\lab_{t-1}|\latent_{0:T},\obs_{0:T})$ %in \eqref{}-\eqref{} 
+%can be computed from a direct extension of \eqref{eq:alpha}-\eqref{eq:beta} in which the products 
+%$\vartheta \times \zeta $ are replaced 
+%by $\vartheta \times \zeta \times \eta$, given in \eqref{tmc-theta-1}-\eqref{tmc-theta-3}. From this expression we deduce $\p(\lab_t|\latent_{0:T},\obs_{0:T})=\sum_{\lab_{t-1}} \p(\lab_{t-1},\lab_t|\latent_{0:T},\obs_{0:T})$.  
+we compute the sequential MC sampler~\citep{doucet2009tutorial} presented
+in Algorithm~\ref{algo:tmc_inf} consisting of the sequential application of three elementary steps (sampling, weighting and resampling). Note that any improvement of this sequential MC algorithm can be used~\citep{Fearnhead-smoothing}.
+%[Doucet].
+
+%the distribution $p_{\theta}(\lab_{0:T}|\latent_{0:T},\obs_{0:T})$ is analytically computable using the Forward-Backward algorithm, as in the PMCs, where $(\latent_{0:T},\obs_{0:T})$ is treated as the observations. Indeed, we similarly set  $\alpha_{\theta,t}(\lab_t)=\p(\latent_1,\obs_1, ,\cdots,\latent_t,\obs_t,\lab_t)$ 
+%and ~$\beta_{\theta,t}(\lab_t)= \p(\latent_{k+1},\obs_{k+1},\cdots,\latent_{T},\obs_{0:T}|\lab_t,\latent_t,\obs_t)$, for all $t$, $1 \leq t \leq T$. Based on the distribution \eqref{tmc-trans} and on the parameterization \eqref{tmc-theta-1}- \eqref{tmc-theta-3}, the coefficients $\alpha_{\theta,t}(\lab_t)$ and $\beta_{\theta,t}(\lab_t)$  can be computed recursively as in the PMCs,
+%\begin{align}
+%\alpha_{\theta,t}(\lab_t)= \sum_{\lab_{t-1}} & \alpha_{\theta,t-1}(\lab_{t-1}) \eta( \latent_t; \pz(\lab_{t-1},\obs_{t-1}, \latent_{t-1})) \vartheta(\lab_t;\pyun(\latent_{t}, \lab_{t-1},\obs_{t-1},\latent_{t-1})) \nonumber\\ & \times\zeta(\obs_t;\pxun(\lab_t, \latent_{t},\lab_{t-1},\obs_{t-1},\latent_{t-1}))
+%\label{eq:alpha_triplet}\\
+%\beta_{\theta,t-1}(\lab_{t-1})=  \sum_{\lab_{t}} & \beta_{\theta,t}(\lab_{t})\eta( \latent_t; \pz(\lab_{t-1},\obs_{t-1}, \latent_{t-1})) \vartheta(\lab_t;\pyun(\latent_{t}, \lab_{t-1},\obs_{t-1},\latent_{t-1}))\nonumber\\ & \times \zeta(\obs_t;\pxun(\lab_t, \latent_{t},\lab_{t-1},\obs_{t-1},\latent_{t-1}))
+%\label{eq:beta_triplet}
+%\end{align}
+%and we finally deduce
+%\begin{align}
+%\p(\lab_{t-1},\lab_t|\latent_{0:T},\obs_{0:T}) \propto &
+%\; \alpha_{\theta,t-1}(\lab_{t-1})  \beta_{\theta,t}(\lab_t)  \eta( \latent_t; \pz(\lab_{t-1},\obs_{t-1}, \latent_{t-1})) \vartheta(\lab_t;\pyun(\latent_{t}, \lab_{t-1},\obs_{t-1},\latent_{t-1})) \nonumber\\ & \times\zeta(\obs_t;\pxun(\lab_t, \latent_{t},\lab_{t-1},\obs_{t-1},\latent_{t-1})) \text{,}
+%\label{eq:pair_marginal_\lab_triplet}\\
+%\p(\lab_t|\latent_{0:T},\obs_{0:T})= &\sum_{\lab_{t-1}} \p(\lab_{t-1},\lab_t|\latent_{0:T},\obs_{0:T})
+%\label{eq:marginal_\lab_triplet}\text{.}
+%\end{align}
+
+%The distribution $p_{\theta}(\lab_t|\obs_{0:T})$ can be computed from $p_{\theta}(\lab_t|\obs_{0:T})=\int_{\latent_{0:T}} p_{\theta}(\lab_t|\latent_{0:T},\obs_{0:T})p_{\theta}(\latent_{0:T}|\obs_{0:T}) \d\latent_{0:T}$. However, an estimate of $p_{\theta}(\latent_{0:T}|\obs_{0:T})$ is required. For this purpose we introduce a variational distribution $q_{\phi}(\latent_{0:T}|\obs_{0:T})$, then $p_{\theta}(\lab_t|\obs_{0:T})$ reads
+
+%\begin{align}
+ %   p_{\theta}(\lab_t|\obs_{0:T})&=\int_{\latent_{0:T}} p_{\theta}(\lab_t|\latent_{0:T},\obs_{0:T})p_{\theta}(\latent_{0:T}|\obs_{0:T}) \d\latent_{0:T}, \nonumber\\
+  %  &=\frac{\E_{\latent_{0:T}\sim q_{\phi}(\latent_{0:T}|\obs_{0:T})}\left[
+ %   \frac{p_{\theta}(\lab_t|\latent_{0:T},\obs_{0:T})p_{\theta}(\latent_{0:T},\obs_{0:T})}{q_{\phi}(\latent_{0:T}|\obs_{0:T})}\right]}{\E_{\latent_{0:T}\sim q_{\phi}(\latent_{0:T}|\obs_{0:T})}\left[
+ %   \frac{p_{\theta}(\obs_{0:T})}{q_{\phi}(\latent_{0:T}|\obs_{0:T})}\right]}\nonumber
+    %\\
+    %&\propto  \E_{\latent_{0:T}\sim q_{\phi}(\latent_{0:T}|\obs_{0:T})}\left[ \frac{p_{\theta}(\lab_t|\latent_{0:T},\obs_{0:T})p_{\theta}(\latent_{0:T},\obs_{0:T})}{q_{\phi}(\latent_{0:T}|\obs_{0:T})}\right]
+%\end{align}
+
+%We will use a  SMC approach to sample $z^{(i)}$ from  $q_{\phi}(\latent_{0:T}|\obs_{0:T})$. Thus, we can define the associated  weights $w^{(i)}\propto\frac{p_{\theta}(\latent_{0:T}^{(i)},\obs_{0:T})}{q_{\phi}(\latent_{0:T}^{(i)}|\obs_{0:T})}$.    Note that $p_{\theta}(\lab_t|\latent_{0:T},\obs_{0:T})$ can be computed using the Equation~\eqref{eq:marginal_\lab_triplet}.  We  can have the following expression 
+
+%\begin{align}
+%\label{eq:p\lab_\obs_tmc}
+%    p_{\theta}(\lab_t|\obs_{0:T})&\approx\sum_{i=1}^M p_{\theta}(\lab_t|\latent_{0:T}^{(i)},\obs_{0:T})w^{(i)}.
+% \end{align}
+
+%In particular, we assume that the variational distribution factorizes as $q_{\phi}(\latent_{0:T}|\obs_{0:T}) = q_{\phi}(\latent_1| \obs_{0:T})  \prod_{t=2}^T q_{\phi}(\latent_t|\latent_{1:t-1} \obs_{0:T})$.  The associated weights can be calculated sequentially, for all $k\in\{1,\dots,T\}$ and $i\in\{1,\dots,N\}$, according  to
+
+%\begin{align}
+ %   w^{(i)}_t&\propto\frac{p_{\theta}(\latent_{1:t}^{(i)},\obs_{1:t})}{q_{\phi}(\latent_{1:t}|\obs_{0:T})},\nonumber\\
+ %   &\propto w^{(i)}_{t-1}\frac{p_{\theta}(\latent_t^{(i)},\obs_t|\latent_{1:t-1}^{(i)},\obs_{1:t-1})}
+ %   {q_{\phi}(\latent_t^{(i)}|\latent_{1:t-1}^{(i)},\obs_{0:T})},\nonumber\\
+ %   &\propto w^{(i)}_{t-1}\frac{p_{\theta}(\latent_{1:t}^{(i)},\obs_{1:t})}
+ %   {p_{\theta}(\latent_{1:t-1}^{(i)},\obs_{1:t-1})q_{\phi}(\latent_t^{(i)}|\latent_{1:t-1}^{(i)},\obs_{0:T})}.
+ %   \label{eq:weight_tpm}
+%\end{align}
+
+%Then, we draw $M$ samples $\latent_t^{(i)}$ from the variational distribution $q_{\phi}(\latent_t|\latent_{1:t-1} \obs_{0:T})$, for all $t$,  by using  the reparameterization trick~\citep{kingma2013auto}.
+%Additionally, in the last equation the likelihood with augmented states appears  which is  exactly computable by using Equation~\eqref{eq:alpha_triplet}, we have  $p_{\theta}(\latent_{1:t}^{(i)},\obs_{1:t})=\sum_{\lab_t}\alpha_{\theta,t}(\lab_t)$, for all $t$. Thus we can estimate $p_{\theta}(\lab_t|\obs_{0:T})$ given in Equation \eqref{eq:p\lab_\obs_tmc}, for all $t$.\\
+
+
+\begin{algorithm}[htbp!]
+  \caption{A Sequential Monte Carlo algorithm for Bayesian classification in general TMC.}
+  \label{algo:tmc_inf}
+\begin{algorithmic}[1]
+  \Require{$\obs_{0:T}$, the observation; a set of parameters $(\theta^*, \phi^*)$; $M$, the number of samples}
+  \Ensure{$\widehat{{\lab}_{0:T}}$ the final classification}
+  \State  Sample $\latent_0^{(m)}\sim q_{\phi^*}(\latent_0|\obs_{0:T})$, 
+  \State Compute $w_0^{(m)} = \frac{p_{\theta^*}(\latent_0^{(m)}, \obs_0)}{q_{\phi^*}(\latent_0|\obs_{0:T})}$ 
+  $W_0^{(m)} = w_0^{(m)} / \sum_{m=1}^M w_0^{(m)} $, for all $1 \leq m \leq M$
+  \For{$t \gets 1$ to $T$}
+  \State Sample $\latent_t^{(m)}\sim q_{\phi^*}(\latent_{0:t}|\latent_{0:t-1},\obs_{0:T})$, for all  $1 \leq m \leq M$ 
+  \State Compute
+  \begin{equation*}
+    w_t^{(m)}=w_{t-1}^{(m)} \frac{p_{\theta^*}(\latent_{t}^{(m)},\obs_{0:t})}
+    {p_{\theta^*}(\latent_{0:t-1}^{(m)},\obs_{t-1})q_{\phi^*}(\latent_t^{(m)}|\latent_{0:t-1}^{(m)},\obs_{0:T})}\text{, for all}  1 \leq m \leq M  
+  \end{equation*}
+  \State Compute $W_t^{(m)}=w_{t}^{(m)}/ \sum_{m=1}^M w_{t}^{(m)}$, for all  $1 \leq m \leq M$ 
+    \If{Resampling}
+      \State Sample $l^{(m)} \sim p(l=j)=W_t^{(j)}$, for all  $1 \leq m \leq M$ 
+      \State Set $\latent_{0:t}^{(m)}=\latent_{0:t}^{(l^{(m)})}$ and $W_t^{(m)}=1/M$  for all  $1 \leq m \leq M$
+    \EndIf
+    \EndFor
+  \State Compute $p_{\theta^*}(\lab_{t-1:t}|\latent_{0:T}^{(m)},\obs_{0:T})$, for all $\lab_{t-1:t} \in \Omega \times \Omega$, for all $1\leq t \leq T$, using the extension of  \eqref{eq:pair_post_margin}
+    %Compute $p_{\theta^*}(\lab_t|\latent_{0:T}^{(m)},\obs_{0:T})=\sum_{\lab_{t-1}} p_{\theta^*}(\lab_{t-1},\lab_t|\latent_{0:T}^{(m)},\obs_{0:T})$, $\forall i$
+  \State Compute $\hat{p}_{\theta^*}(\lab_t|\obs_{0:T}) =\sum_{m=1}^M W_t^{(m)} p_{\theta^*}(\lab_t|\latent_{0:T}^{(m)},\obs_{0:T})$, for all $\lab_t \in \Omega$, for all $1\leq t \leq T$
+  \State $\hat{\lab}_t= \argmax \hat{p}_{\theta^*}(\lab_t|\obs_{0:T})$,  for all $1\leq t \leq T$
+\end{algorithmic}
+  % \vspace*{0.2cm}
+\end{algorithm}
+
+
+\subsection{Deep TMCs for unsupervised classification}
+\label{sec-deep-tmc}
+Let us now focus on Deep TMCs for unsupervised classification.
+We adapt the two-step procedure described in Section \ref{sec:deeppmc}. The main
+difference with Section \ref{sec:deeppmc} is that the input of our DNN can now depend on the latent r.v. $\latent_t$; in addition, 
+due to the VI framework that we have proposed in the previous section, we also consider that the conditional variational distribution $\q(\latent_t|\latent_{0:t-1},\obs_{0:T})$ at the
+core of our estimation algorithm is parameterized by a DNN.
+
+
+\subsubsection{Constrained ouput layer}
+\label{constraint-tmc}
+The first step is a direct adaptation of Section \ref{sec:constrained_archi} and relies on the preliminary estimation of a non-deep TMC model.
+More precisely,  Algorithm~\ref{algo:tmc_inf}
+is applied to estimate the parameter of a linear TMC model
+(\ie~a TMC which is a direct extension of \eqref{param-1_bis}-\eqref{param-2_bis} or equivalently a deep TMC model with no hidden layer). Note that since $\latent_{0:T}$ does not need to 
+be interpretable, $\q(\latent_t|\latent_{0:t-1},\obs_{0:T})$ are
+already parameterized by a DNN in the linear TMC models. Next, the DNNs, which parameterize
+$\pz$, $\pyun$ and $\pxun$, are built according to the same scheme of Figure~\ref{fig:constrained_archi}, except that the input and the hidden layer before the output also consists of $\latent_{t-1}$ or of $\latent_{t-1:t}$.
+We thus obtain a set of frozen and unfrozen parameters.
+
+\subsubsection{Pretraining of the unfrozen parameters}
+\label{tmc-unfrozen}
+The next step consists in pretraining
+the unfrozen parameters of the intermediate hidden layers in order to mimic the
+estimated linear TMC.
+%and those
+%of the variational distribution $\q$.
+We use the same approach as the one developed in Section
+\ref{sec:pretraining_backprop}
+which relies on a pre-classification $\hat{\lab}_{0:T}^{\rm pre}$, but we now take into account the fact
+that $\latent_t$ is not observed.
+Since the objective of the r.v. $\latent_t$ is 
+to encode the corresponding observation $\obs_t$ through the DNN related to $\q$,
+we first sample $\latent_{0:T}$ according to the 
+previously estimated variational distribution
+$\q(\latent_{0:T}|\obs_{0:T})$;
+%with the reparameterization trick of Section \ref{sec:joint_estimation}; 
+we next use the components $\latent_{t-1:t}$ or $\latent_t$ 
+%(which are functions of $\phi$)
+as inputs of the DNNs $\pz$, $\pyun$ and $\pxun$.
+Finally, as in Paragraph \ref{sec:pretraining_backprop}, we apply 
+the backpropagation algorithm in order
+to minimize an adapted cost function w.r.t.
+%$(\theta_{\rm ufr},\phi)$
+$\theta_{\rm ufr}$
+which depends on $\hat{\lab}_{0:T}^{\rm pre}$.
+%Foolowing our approach for Deep PMCs, we propose to embed DNNs in the TMC models to define the Deep TMC models. In the Deep TMC architectures, $\pyun$ and $\pxun$ are parameterized by a DNN. Since the latter can theoretically approximate any function, we use them in order to approximate any parameterization of $\pyun$ and $\pxun$, which would be automatically learnt, thus increasing the modeling power of the models. Note that, in the Deep TMC models that we propose, $\pzun$ will not parameterized by a DNN.
+%In Section~\ref{sec:deeppmc}, we presented a step-by-step training strategy for preserve the interpretability of the results in Deep PMCs. Of course, this problem still occurs in Deep TMCs
+%and we still rely on the same training strategy, which is nevertheless extended to take into account the auxiliary latent process $\latent_{0:T}$.
+%First, the last layer constraint introduced in Section \ref{sec:constrained_archi} is also used to estimate the parameters of the last layer of $\pyun$ ad $\pxun$ from the related TMC model with linear $\pyun$ and $\pxun$, this concerns the set of parameters $\theta_{\fr}$ which we introduced earlier. Once $\theta_{\fr}$ have been initialized, it is frozen and the rest of the parameters $\theta_{\ufr}$ concerning $\pyun$ and $\pxun$ are then pretrained
+%with backpropagation.
+%For this step, the classification $\hat{\lab}_{0:T}^{\pre}$, obtained
+%with the non-deep TMC model is used. The observations $\obs_{0:T}$ are used in entry of both backpropagation procedures since the latter goes through $\q$ to generate, with reparameterization trick, a realization of $\latent_{0:T}$ (needed as inputs for $\pyun$ and $\pxun$). Then, as before for Deep PMCs, in the backpropagation procedure which goes through $\pyun$, 
+%the cost function, $\mathcal{C}_f$, is the cross-entropy between
+%the classification $\hat{\lab}_{0:T}^{\pre}$ and the output of
+%$\pyun$. In the backpropagation procedure which goes through $\pxun$, the cost function, $\mathcal{C}_{g}$, is the mean square error, computed between the observations $\obs_t$ and the output of $\pxun$.
+%Finally, the unfrozen  parameters of $\pyun$, $\pxun$, $\pzun$ and $\q$ will be fine-tuned with an ELBO maximization process, leading to the final estimates $\theta_{\ufr}^*$ and $\phi^*$.
+%Algorithm \ref{algo:algo_train_dmtmc} summarizes the procedure and Figure \ref{fig:pretrain_dmtmc} provides a graphical representation of the deep parameterization of $\pyun$ within DTMC models.
+%\begin{remark}
+%If we mentally discard the sequential case, the pretraining procedure we propose in order to obtain a first estimate of the parameters 
+%of Deep TMCs coincides with the training via backpropagation of deterministic Conditional Autoencoders~\citep{han2021universal}. This happens because our pretraining with backpropagation discards the probabilistic formulation. Then, refering to Figure \ref{fig:pretrain_dmtmc}, we can interpret $\q$ has  an encoder network and $\pyun$ as a decoder network, the latent space is composed of the $\latent_t$ variable, the conditioning labels is the $\lab_t$ variable. Note that if we discard only the sequential case, it is also clear that Deep TMCs can be seen as conditional Variational Autoencoders~\citep{sohn2015learning}, in this case, with a stochastic encoder and a stochastic decoder. However training via backpropagation with the proposed loss functions is not a common approach with such models.
+%\end{remark}
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=0.9\textwidth]{Figures/Graphical_models/pretra_unf.pdf}
+  \caption{Graphical and condensed representation of the parameterization of $\pyun$ in the DTMC models. \emph{r.t.} stands for reparameterization trick. 
+  The dashed arrows represent the fact that some variables are copied. For clarity, we do not represent the block $\pyun$ which is similar
+  to Figure~\ref{fig:constrained_archi}, up 
+  to the introduction of $\latent_{t-1:t}$.
+  %entries of $\pyun$ which consists of products of $\lab_{t-1}$, $\latent_{t-1:t}$ or $\obs_{t-1}$, due to the output layer constraint. Residual connections between the $\pyun$ layer inputs and the last hidden layer of $\pyun$ are also omitted. See Figure~\ref{fig:constrained_archi} for details.
+  }
+  \label{fig:pretrain_dmtmc}
+\end{figure}
+Figure~\ref{fig:pretrain_dmtmc}
+ summarizes our pretraining procedure for function $\pyun$ and 
+ the final estimation procedure is described in Algorithm~\ref{algo:algo_train_dmtmc}.
+
+
+
+\begin{algorithm}[htbp!]
+  \caption{A general estimation algorithm for deep parameterizations of TMC models}
+  \label{algo:algo_train_dmtmc}
+  \begin{algorithmic}[1]
+    \Require{$\obs_{0:T}$, the observation; $\q$ a class of variational distribution}
+    \Ensure{$\widehat{{\lab}}_{0:T}$ the final classification}
+  \Statex{\textbf{Initialization of the output layer of $\pzun$, $\pyun$
+  and $\pxun$}}
+  \State Estimate $(\theta_{\fr}^*,\tilde{\phi})$ and $\hat{\lab}_{0:T}^{\pre}$ with Algorithm~\ref{algo:tmc_elbo_opt}-\ref{algo:tmc_inf}, using the related non-deep TMC model 
+  \Statex \textbf{Pretraining of $\theta_{\ufr}$}  
+  \State $\theta_{\ufr}^{(0)} \leftarrow$ ${\rm Backprop}(\hat{\lab}_{0:T}^{\pre},\obs_{0:T},\theta_{\fr}^*,\tilde{\phi},\mathcal{C}_{\pzun}, \mathcal{C}_{\f}, \mathcal{C}_{\g})$
+  \Statex \textbf{Fine-tuning of the complete model} 
+  \State Compute $(\theta_{\ufr}^{*}, \phi^{*})$ with Lines \ref{line:start_dtmc}-\ref{line:end_dtmc} of Algorithm~\ref{algo:tmc_elbo_opt}
+  \State Compute $\widehat{\lab}_{0:T}$ with Algorithm~\ref{algo:tmc_inf}
+  \end{algorithmic}
+\end{algorithm}
+
+
+\subsection{Simulations}
+We continue to illustrate 
+the performance of our models with the same 
+binary image segmentation problem as
+Section \ref{sec:pmc}.
+% Since Section \ref{sec:pmc} was devoted to 
+% the evaluation of deep parameterizations,
+We focus our experiments on the relevance
+of the latent process $\latent_{0:T}$. 
+To that end, we focus on a particular TMC model in which the role of the latent process 
+$\latent_{0:T}$ is to complexify the conditional distribution $\zeta$ of the noise but not $\vartheta$.
+We first present the particular model and next the results. 
+$\beta_1$ and $\beta_2$ are tuned manually
+by taking into account the characteristics 
+of the studied models.
+
+%We present simulations to highlight the interest of the deep and continuous TMC parameterization. The generalization offered by the TMC framework enables a wide variety of models and very few of them have been explored in the TMC literature. We start this section by defining a specific TMC model and its variants that we will use in the experiments. The models will be presented for the case of the binary segmentation that we treat in the experiment sections, \emph{\emph{i.e.}}, $\Omega=\{\omega_1,\omega_2\}$. Additionally, we will also consider $\vartheta=\{\vartheta_1,\vartheta_2\}$ when the auxiliary random process $\latent_{0:T}$ is discrete. 
+
+\subsubsection{The minimal TMCs}
+\label{sec:tmc_models}
+% \katy{Put this subsection in chp 3}
+In order to highlight the role of $\latent_{0:T}$ 
+w.r.t. the other characteristics of our models,
+we introduce the Minimal TMC (MTMC) model which exhibits a reduced number of direct dependencies.
+In this model, $\latent_{0:T}$ is an independent process
+and given $\latent_{0:T}$, $(\lab_{0:T},\obs_{0:T})$ is a HMC where only the observations depend on $\latent_t$; 
+in other words, $\pzun$ in \eqref{tmc-theta-1} does not
+depend on $\triplet_{t-1}$, $\pyun$ in \eqref{tmc-theta-2} only depends
+on $(\lab_{t-1})$ and  $\pxun$ in \eqref{tmc-theta-3}
+only depends on $(\latent_t,\lab_{t})$. 
+The joint distribution of $\triplet_{0:T}$ can be rewritten as 
+\begin{equation}
+\label{joint-tmmc}
+\p(\triplet_{0:T})=\underbrace{\prod_{t=0}^T 
+\eta(\latent_t; \pz)}_{\p(\latent_{0:T})} \underbrace{\p(\lab_0) \prod_{t=1}^T \vartheta(\lab_t;\pyun(\lab_{t-1}))}_{\p(\lab_{0:T}|\latent_{0:T})=\p(\lab_{0:T})} 
+\underbrace{\prod_{t=0}^T \zeta(\obs_t;\pxun(\latent_t,\lab_{t}))\text{,}}_{\p(\obs_{0:T}|\latent_{0:T},\lab_{0:T})}
+\end{equation}
+With this model, the latent process  $\latent_{0:T}$
+affects the conditional distribution of the observations.
+
+We next consider three instances of MTMCs. The first one is the continuous linear MTMC in which $\latent_t \in \mathbb{R}$ are distributed according to standard normal distribution (so $\eta$ is the Gaussian distribution and $\pz=[0;1]$), $\pyun$, $\pxun$, $\vartheta$ and $\zeta$ coincide with our first illustrative example in Section \ref{sec:generalParam}, see \eqref{param-1}-\eqref{param-2}, up to the dependency in $\latent_t$. We also consider a deep version of the MTMC (DMTMC) in which  $\pxun$ is
+parameterized by a DNN (with one hidden layer of $100$ neurons and ReLU activation function). For both continuous versions of the MTMC, we use the variational distribution 
+\begin{equation}
+    q_{\phi}(\latent_{0:T}|\obs_{0:T})=\prod_{t=1}^Tq_{\phi}(\latent_t|\latent_{t-1},\obs_t)=\prod_{t=1}^T
+    \mathcal{N}(\latent_t;\nu_{\phi}(\latent_{t-1},\obs_t)).
+    \label{eq:tmc_simple_q}
+\end{equation}
+where $\nu_{\phi}(\latent_{t-1},\obs_t)$ is parameterized by a DNN with one hidden layer of $100$ neurons and a ReLU activation function.
+
+The motivation underlying this choice of variational distribution 
+is that $\latent_{0:T}$
+is an independent process and that $\obs_t$ only depends
+on $(\lab_t,\latent_t)$ given the past; consequently, it is
+reasonable to assume that the posterior distribution
+of $\latent_t$ only depends on $\latent_{t-1}$ and $\obs_t$. In addition, more complex variational distributions tend to be more difficult to estimate. And indeed, it has been observed that the choice of the variational distribution does not impact the results in the case
+of Scenario \eqref{joint-tmmc}, see Appendix~\ref{app:var_distrib}.
+Finally, we also consider
+a discrete version of the MTMC (di-MTMC)
+in which $\latent_t \in \{\nu_1,\nu_2\}$ is 
+discrete~\citep{gorynin2018assessing, li2019adaptive, chen2020modeling}. 
+For this model, Algorithm~\ref{algo:algo_theta_pmc}
+and  \ref{algo:algo_hk_pmc}
+ can be directly applied in the augmented 
+ space $\{\omega_1,\omega_2\} \times \{\upsilon_1,\upsilon_2\}$.
+
+%In this section we focus on a particular TMC model, which we call the Minimal Triplet Markov Chain (MTMC). Despite the fact that it exhibits a reduced number of direct dependencies, it still offers interesting generalization properties. The graphical representation is given in Figure~\ref{fig:tmc_graphs}. 
+%More particularly, we study three versions of the MTMC model: the continuous Minimal Triplet Markov Chain (MTMC), the Deep Minimal Triplet Markov Chain (DMTMC) and the discrete Minimal Triplet Markov Chain (di-MTMC).
+
+%\begin{figure}[h!]
+%\centering
+%\begin{subfigure}{0.3\textwidth}
+%\centering
+%\input{tikz/mtmc.tex}
+%\caption{Graphical representation of the MTMC family of models. The light gray hexagons represent the auxiliary random variable which is continuous in the MTMC and discrete in the di-MTMC.  The other graphical elements follow the convention from Figure~\ref{fig:pmc_graphs}.
+%}
+%\label{fig:tmc_graphs}
+%\end{figure}
+
+%\paragraph{The continuous Minimal Triplet Markov Chain - } 
+%\label{sec:mtmc}
+%We introduce the continuous Minimal Triplet Markov Chain (MTMC) model in the continuous case. Let us consider the following particular factorization of Equation~\eqref{eq:tmc_general},
+%\begin{equation}
+%    p_{\theta}(\latent_{0:T},\lab_{0:T},\obs_{0:T})=p_{\theta}(\lab_1)p_{\theta}(\latent_1)p_{\theta}(\obs_1|\lab_1,\latent_1)\prod_{t=2}^Tp_{\theta}(\lab_t|\lab_{t-1})p_{\theta}(\latent_t)p_{\theta}(\obs_t|\lab_{t},\latent_{t})\text{.}
+%    \label{eq:mtmc}
+%\end{equation}
+
+%In this case, the transitions between the hidden states of $\lab_{0:T}$ are parameterized by a discrete transition matrix,  $\eta$ is a standard Gaussian distribution $\mathcal{N}(\latent_t;0,I_d)$ and  $\zeta$ is a Gaussian one $\mathcal{N}(\obs_t;v_1, v_2^2)$, where $\pxun(\lab_t,\latent_{t}) =  \begin{bmatrix} v_1, v_2^2 \end{bmatrix} = \begin{bmatrix} a_{\lab_t}\latent_{t}+ b_{\lab_t},\
+%\sigma_{\lab_t}\end{bmatrix}$. 
+%We will also consider the following variational distribution to approximate $p_{\theta}(\latent_{0:T}|\obs_{0:T})$:
+%\begin{equation}
+%    q_{\phi}(\latent_{0:T}|\obs_{0:T})=\prod_{t=1}^Tq_{\phi}(\latent_t|\obs_t)=\prod_{t=1}^T
+%    \mathcal{N}(\latent_t;f_{\phi}(\obs_t)).
+%   \label{eq:tmc_simple_q}
+%\end{equation}
+
+%The latter choice for $q_{\phi}$ corresponds to the commonly called \emph{mean-field} assumption and $\latent_{0:T}$ samples are drawn with reparameterization trick. 
+
+% \textbf{\textcolor{orange}{Le reste du paragraphe The continuous Minimal Triplet Markov Chain a été supprimé car ces approximations sont données de manière plus générale dans Monte Carlo approximation}}
+% Let us now explicit all the terms of $\mathcal{L}(\theta,\phi)$ (Equation~\ref{eq:beta_elbo_xent}) in the MTMC case, up to the initial term discarded for brevity. With $\latent_{0:T}^1,\dots,\latent_{0:T}^M$, \iid samples from $q_{\phi}(\latent_{0:T}|\obs_{0:T})$ we have:
+% \begin{align}
+%     \E_{\latent_{0:T},\lab_{0:T}\sim \p(\lab_{0:T}|\latent_{0:T},\obs_{0:T})\q(\latent_{0:T}|\obs_{0:T})}[
+%     \log p_{\theta}(\obs_{0:T}|\latent_{0:T},\lab_{0:T})] &\approx \frac{1}{N}\sum_{m=1}^M\sum_{t=2}^T\sum_{\lab_t}p_{\theta}(\lab_t|\latent_{0:T}^n,\obs_{0:T})\log p_{\theta}(\obs_t|\lab_t,z^n_t),\\
+%     \KL(\p(\lab_{0:T}|\latent_{0:T},\obs_{0:T})\q(\latent_{0:T}|\obs_{0:T})||p_{\theta}(\latent_{0:T},\lab_{0:T}|\obs_{0:T})) &\approx \frac{1}{N}\sum_{m=1}^M\sum_{t=2}^T\sum_{\lab_{t-1},\lab_t}p_{\theta}(\lab_t,\lab_{t-1}|\latent_{0:T}^n,\obs_{0:T})\log\frac{q_{\phi}(\latent_t^n|\obs_t)p_{\theta}(\lab_t|\lab_{t-1},\latent_{0:T}^n\obs_{0:T})}{p_{\theta}(\lab_t|\lab_{t-1})p_{\theta}(\latent_t^n)},\\
+%     \mathcal{H}(p(\hat{\lab_{0:T}});p_{\theta}(\lab_{0:T}|\obs_{0:T})) &\approx -\frac{1}{ K} 
+%     \sum_{t=1}^T\left( \delta_{\hat{\lab}_t}^{\omega_1}\log q_{\phi}(\lab_t=\omega_1|\obs_{0:T})+
+%     \delta_{\hat{\lab}_t}^{\omega_2}\log q_{\phi}(\lab_t=\omega_2|\obs_{0:T})\right).
+% \end{align}
+% In the last equation, $\delta$ denotes the Kronecker delta function. Once those quantities are computed, the steps for the parameter estimation procedure for MTMCs are given in Algorithm~\ref{algo:tmc_elbo_opt}.\\
+
+%\paragraph{The Deep Minimal Triplet Markov Chain - }
+%Similarly to Section~\ref{sec:deeppmc}, we wish to increase the modeling capabilities of the TMCs by introducing a parameterization involving a DNN. This way, within the MTMC model, we can chose that the parameters of the Gaussian distribution $\p(\obs_t|\lab_t,\latent_t)$ are the outputs of $\pxun$ which becomes a DNN. We thus define a new model that we call the Deep Minimal Triplet Markov Chain (DMTMC). Such a deep parameterization is motivated by the results obtained with DPMC models.
+
+%\begin{remark}
+%Unlike DPMCs, we do not propose to parameterize $\pyun$ with a DNN in the DMTMC model. We found out that such parameterization led to failing parameter estimation procedures. This might be linked with the interpretability issue in general TMCs that motivates many development in this work.
+%\end{remark}
+
+%\paragraph{The discrete Minimal Triplet Markov Chain - }
+%Finally, let us define the discrete MTMC (di-MTMC) model as follows: in the MTMC model we choose $\latent_{0:T}$ to be a discrete random variable. The model joint distribution of di-MTMC is then:
+%\begin{equation}
+%    p_{\theta}(\latent_{0:T},\lab_{0:T},\obs_{0:T})=p_{\theta}(\lab_1|\latent_1)p_{\theta}(\latent_1)p_{\theta}(\obs_1|\lab_1,\latent_1)\prod_{t=2}^Tp_{\theta}(\lab_t|\lab_{t-1},\latent_t)
+%    p_{\theta}(\latent_t)p_{\theta}(\obs_t|\lab_{t},\latent_{t})\text{.}
+%    \label{eq:dimtmc}
+%\end{equation}
+%In this model we set  $\eta$ as a Bernoulli distribution $\mathcal{B}\rm{er}(\latent_t;s)$,  $\zeta$ as a Gaussian distribution $\mathcal{N}(\obs_t;v_1,v_2^2)$ where $\pxun(\lab_t, \latent_t) = \big[ v_1, v_2^2  \big]= \big[ a_{\lab_t,\latent_t}, \sigma_{\lab_t}\big]$ and $s = 0.5$. A transition matrix is used to parameterize the transitions between the extended hidden process $\pmb{v}=(\latent_{0:T},\lab_{0:T})$.
+%In di-MTMCs, $p_{\theta}(\pmb{v}|\obs_{0:T})$ is exactly computable and we do not need to resort to a variational approximation. Indeed, it then suffices to apply the Algorithm~\ref{algo:algo_1} with $\pmb{v}$ as the hidden r.v.
+%The original and auxiliary posterior distributions can then be recovered by marginalization $p_{\theta}(\lab_{0:T}|\obs_{0:T})=\sum_{\latent_{0:T}}p_{\theta}(\latent_{0:T},\lab_{0:T}|x)$ and $p_{\theta}(\latent_{0:T}|\obs_{0:T})=\sum_{\lab_{0:T}}p_{\theta}(\latent_{0:T},\lab_{0:T}|x)$. Therefore, the developments of Section~\ref{sec:deeptmc} does not concern the di-MTMC model.
+
+%\begin{remark}
+%\label{rq:discrete_tmc}
+%Interestingly, there is no specific constraints needed to ensure the interpretability in the inference for di-MTMCs. The constraint of a discrete $\latent_{0:T}$ seems strong enough to ensure interpretable results.
+%\end{remark}
+% \subsection{The Minimal TMCs}
+% \label{sec:mtmc_models}
+% We start with the 
+% where the choice of parameters describes the transition:
+% \begin{align}
+%     \label{eq:mTMC}
+%     \p(v_t|v_{t-1}) \!\overset{\rm mTMC}{=} \!\p(\lab_t|\lab_{t-1}) \p(\latent_t|\latent_{t-1}) \p(\obs_t|\lab_t,\latent_t) \text{.}
+% \end{align}
+% So this model assumes a Markovian distribution 
+% for the labels and the latent variables aim at 
+% learning the distribution of the noise given the label and 
+% the latent variable.
+% In order to capture temporal dependencies in the input data and to have an efficient computation of the variational distribution for the d-mTMC model, we use a deterministic function to generate $\tilde{h}_t$ which  
+% takes as input $(\obs_t, \lab_t, \latent_t, \tilde{h}_{t-1})$. 
+% Then the variational distribution $\q(\latent_{0:T}, \labu|$ $ \obs_{0:T}, \labl)$ satisfies the factorization \eqref{eq:fact-2}
+% with $\q(\latent_t|\obs_t, \lab_t,\tilde{h}_{t-1} )$ and $\q(\lab_t|\obs_t, \tilde{h}_{t-1})$. 
+
+% In order to highlight the role of $\latent_{0:T}$ 
+% w.r.t. the other characteristics of our models,
+% we introduce the MTMC model which exhibits a 
+% reduced number of direct dependencies.
+
+% The MTMC model is defined by the following factorization of the 
+% joint distribution of $(\obs_{0:T},\latent_{0:T},\lab_{0:T})$:
+% \begin{equation}
+%     % \label{joint-tmmc}
+%     \p(\triplet_{0:T})\overset{\rm mTMC}{=} \underbrace{\prod_{t=0}^T 
+%     \eta(\latent_t;\pzun)}_{\p(\latent_{0:T})} 
+%     \underbrace{\p(\lab_0) \prod_{t=1}^T \vartheta(\lab_t;\pyun(\lab_{t-1}))}_{\p(\lab_{0:T}|\latent_{0:T})=\p(\lab_{0:T})} 
+%     \underbrace{\prod_{t=0}^T 
+%     \zeta(\obs_t;\pxun(\latent_t,\lab_{t}))\text{,}}_{\p(\obs_{0:T}|\latent_{0:T},\lab_{0:T})}
+% \end{equation}
+% where  $\latent_{0:T}$ is an independent process
+% and given $\latent_{0:T}$, $(\lab_{0:T},\obs_{0:T})$ is an HMC 
+% where only the observations depend on $\latent_t$.
+% In other words,   $\pxun$ in \eqref{eq:px}
+% only depends on $(\latent_t,\lab_{t})$,  
+% $\pzun$ in \eqref{eq:pz} does not
+% depend on $(\triplet_{t-1}, \lab_t, \obs_t)$, 
+% and $\pyun$ in \eqref{eq:py} only depends
+% on $(\lab_{t-1})$.
+% With this model, the latent process  $\latent_{0:T}$
+% affects the conditional distribution of the observations.
+
+
+%In this section we focus on a particular TMC model, which we call the Minimal Triplet Markov Chain (MTMC). Despite the fact that it exhibits a reduced number of direct dependencies, it still offers interesting generalization properties. The graphical representation is given in Figure~\ref{fig:tmc_graphs}. 
+%More particularly, we study three versions of the MTMC model: the continuous Minimal Triplet Markov Chain (MTMC), the Deep Minimal Triplet Markov Chain (DMTMC) and the discrete Minimal Triplet Markov Chain (di-MTMC).
+
+%\begin{figure}[h!]
+%\centering
+%\begin{subfigure}{0.3\textwidth}
+%\centering
+%\input{tikz/mtmc.tex}
+%\caption{Graphical representation of the MTMC family of models. The light gray hexagons represent the auxiliary random variable which is continuous in the MTMC and discrete in the di-MTMC.  The other graphical elements follow the convention from Figure~\ref{fig:pmc_graphs}.
+%}
+%\label{fig:tmc_graphs}
+%\end{figure}
+
+%\paragraph{The continuous Minimal Triplet Markov Chain - } 
+%\label{sec:mtmc}
+%We introduce the continuous Minimal Triplet Markov Chain (MTMC) model in the continuous case. Let us consider the following particular factorization of Equation~\eqref{eq:tmc_general},
+%\begin{equation}
+%    p_{\theta}(\latent_{0:T},\lab_{0:T},\obs_{0:T})=p_{\theta}(\lab_1)p_{\theta}(\latent_1)p_{\theta}(\obs_1|\lab_1,\latent_1)\prod_{t=2}^Tp_{\theta}(\lab_t|\lab_{t-1})p_{\theta}(\latent_t)p_{\theta}(\obs_t|\lab_{t},\latent_{t})\text{.}
+%    \label{eq:mtmc}
+%\end{equation}
+
+%In this case, the transitions between the hidden states of $\lab_{0:T}$ are parameterized by a discrete transition matrix,  $\eta$ is a standard Gaussian distribution $\mathcal{N}(\latent_t;0,I_d)$ and  $\zeta$ is a Gaussian one $\mathcal{N}(\obs_t;v_1, v_2^2)$, where $\pxun(\lab_t,\latent_{t}) =  \begin{bmatrix} v_1, v_2^2 \end{bmatrix} = \begin{bmatrix} a_{\lab_t}\latent_{t}+ b_{\lab_t},\
+%\sigma_{\lab_t}\end{bmatrix}$. 
+%We will also consider the following variational distribution to approximate $p_{\theta}(\latent_{0:T}|\obs_{0:T})$:
+%\begin{equation}
+%    q_{\phi}(\latent_{0:T}|\obs_{0:T})=\prod_{t=1}^Tq_{\phi}(\latent_t|\obs_t)=\prod_{t=1}^T
+%    \mathcal{N}(\latent_t;f_{\phi}(\obs_t)).
+%   \label{eq:tmc_simple_q}
+%\end{equation}
+
+%The latter choice for $q_{\phi}$ corresponds to the commonly called \emph{mean-field} assumption and $\latent_{0:T}$ samples are drawn with reparameterization trick. 
+
+% \textbf{\textcolor{orange}{Le reste du paragraphe The continuous Minimal Triplet Markov Chain a été supprimé car ces approximations sont données de manière plus générale dans Monte Carlo approximation}}
+% Let us now explicit all the terms of $\mathcal{L}(\theta,\phi)$ (Equation~\ref{eq:beta_elbo_xent}) in the MTMC case, up to the initial term discarded for brevity. With $\latent_{0:T}^1,\dots,\latent_{0:T}^M$, \iid samples from $q_{\phi}(\latent_{0:T}|\obs_{0:T})$ we have:
+% \begin{align}
+%     \E_{\latent_{0:T},\lab_{0:T}\sim \p(\lab_{0:T}|\latent_{0:T},\obs_{0:T})\q(\latent_{0:T}|\obs_{0:T})}[
+%     \log p_{\theta}(\obs_{0:T}|\latent_{0:T},\lab_{0:T})] &\approx \frac{1}{N}\sum_{m=1}^M\sum_{t=2}^T\sum_{\lab_t}p_{\theta}(\lab_t|\latent_{0:T}^n,\obs_{0:T})\log p_{\theta}(\obs_t|\lab_t,z^n_t),\\
+%     \KL(\p(\lab_{0:T}|\latent_{0:T},\obs_{0:T})\q(\latent_{0:T}|\obs_{0:T})||p_{\theta}(\latent_{0:T},\lab_{0:T}|\obs_{0:T})) &\approx \frac{1}{N}\sum_{m=1}^M\sum_{t=2}^T\sum_{\lab_{t-1},\lab_t}p_{\theta}(\lab_t,\lab_{t-1}|\latent_{0:T}^n,\obs_{0:T})\log\frac{q_{\phi}(\latent_t^n|\obs_t)p_{\theta}(\lab_t|\lab_{t-1},\latent_{0:T}^n\obs_{0:T})}{p_{\theta}(\lab_t|\lab_{t-1})p_{\theta}(\latent_t^n)},\\
+%     \mathcal{H}(p(\hat{\lab_{0:T}});p_{\theta}(\lab_{0:T}|\obs_{0:T})) &\approx -\frac{1}{ K} 
+%     \sum_{t=1}^T\left( \delta_{\hat{\lab}_t}^{\omega_1}\log q_{\phi}(\lab_t=\omega_1|\obs_{0:T})+
+%     \delta_{\hat{\lab}_t}^{\omega_2}\log q_{\phi}(\lab_t=\omega_2|\obs_{0:T})\right).
+% \end{align}
+% In the last equation, $\delta$ denotes the Kronecker delta function. Once those quantities are computed, the steps for the parameter estimation procedure for MTMCs are given in Algorithm~\ref{algo:tmc_elbo_opt}.\\
+
+%\paragraph{The Deep Minimal Triplet Markov Chain - }
+%Similarly to Section~\ref{sec:deeppmc}, we wish to increase the modeling capabilities of the TMCs by introducing a parameterization involving a DNN. This way, within the MTMC model, we can chose that the parameters of the Gaussian distribution $\p(\obs_t|\lab_t,\latent_t)$ are the outputs of $\pxun$ which becomes a DNN. We thus define a new model that we call the Deep Minimal Triplet Markov Chain (DMTMC). Such a deep parameterization is motivated by the results obtained with DPMC models.
+
+%\begin{remark}
+%Unlike DPMCs, we do not propose to parameterize $\pyun$ with a DNN in the DMTMC model. We found out that such parameterization led to failing parameter estimation procedures. This might be linked with the interpretability issue in general TMCs that motivates many development in this work.
+%\end{remark}
+
+%\paragraph{The discrete Minimal Triplet Markov Chain - }
+%Finally, let us define the discrete MTMC (di-MTMC) model as follows: in the MTMC model we choose $\latent_{0:T}$ to be a discrete random variable. The model joint distribution of di-MTMC is then:
+%\begin{equation}
+%    p_{\theta}(\latent_{0:T},\lab_{0:T},\obs_{0:T})=p_{\theta}(\lab_1|\latent_1)p_{\theta}(\latent_1)p_{\theta}(\obs_1|\lab_1,\latent_1)\prod_{t=2}^Tp_{\theta}(\lab_t|\lab_{t-1},\latent_t)
+%    p_{\theta}(\latent_t)p_{\theta}(\obs_t|\lab_{t},\latent_{t})\text{.}
+%    \label{eq:dimtmc}
+%\end{equation}
+%In this model we set  $\eta$ as a Bernoulli distribution $\mathcal{B}\rm{er}(\latent_t;s)$,  $\zeta$ as a Gaussian distribution $\mathcal{N}(\obs_t;v_1,v_2^2)$ where $\pxun(\lab_t, \latent_t) = \big[ v_1, v_2^2  \big]= \big[ a_{\lab_t,\latent_t}, \sigma_{\lab_t}\big]$ and $s = 0.5$. A transition matrix is used to parameterize the transitions between the extended hidden process $\pmb{v}=(\latent_{0:T},\lab_{0:T})$.
+%In di-MTMCs, $p_{\theta}(\pmb{v}|\obs_{0:T})$ is exactly computable and we do not need to resort to a variational approximation. Indeed, it then suffices to apply the Algorithm~\ref{algo:algo_1} with $\pmb{v}$ as the hidden r.v.
+%The original and auxiliary posterior distributions can then be recovered by marginalization $p_{\theta}(\lab_{0:T}|\obs_{0:T})=\sum_{\latent_{0:T}}p_{\theta}(\latent_{0:T},\lab_{0:T}|x)$ and $p_{\theta}(\latent_{0:T}|\obs_{0:T})=\sum_{\lab_{0:T}}p_{\theta}(\latent_{0:T},\lab_{0:T}|x)$. Therefore, the developments of Section~\ref{sec:deeptmc} does not concern the di-MTMC model.
+
+%\begin{remark}
+%\label{rq:discrete_tmc}
+%Interestingly, there is no specific constraints needed to ensure the interpretability in the inference for di-MTMCs. The constraint of a discrete $\latent_{0:T}$ seems strong enough to ensure interpretable results.
+%\end{remark}
+
+
+\subsubsection{Experiments and results}
+\label{sec:exp_res_tmc}
+We now consider two scenarios
+in which binary images are corrupted 
+with non elementary noises. 
+In the first scenario,
+the hidden images $\lab_{0:T}$ are the \emph{camel}-type images of the Binary Shape Database and are corrupted
+with the stationary multiplicative noise 
+given in~\eqref{eq:noise_eq2} in Section~\ref{subsec:data_generation},
+%\begin{scenario}[Stationary multiplicative noise] a noise
+% \begin{equation}
+% \label{scenario-1-tmc}
+%     \obs_t|\lab_t,\latent_t \sim\mathcal{N}\left(a_{\lab_t};b_{\lab_t}^2\right) * \latent_t,
+% \end{equation}
+where $\latent_t\sim\mathcal{N}(0, 1)$, $a_{\omega_1}=0, a_{\omega_2}$ is a 
+varying parameter and $b_{\omega_1}=b_{\omega_2}=0.2$.
+Figure~\ref{fig:mult_noise_graph_a} displays
+the results for the setting
+$\beta_1=5,\beta_2=1$ in our variational approach. Scalar $\beta_1$ can be interpreted as enforcing the standardized Gaussian prior on the learnt latent variables, which is seemingly favorable on this example because of the way $\latent_{0:T}$ is generated. $\beta_2$ is also needed and seems to guide the optimization so that the estimated $\hat{{\lab}}_{0:T}$ corresponds to the desired segmentation. 
+%\label{sce:mult_noise}
+%\end{scenario}
+%In the case of Scenario~\ref{sce:mult_noise},
+%Importantly, no result could be obtained without modifying the ELBO with the $\beta$ scalars (and using the proposed variational gradient EM algorithm), hence the novelty of our training strategy compared to the existing literature on the studied Markov models. 
+%Indeed, while discrete TMCs have already been introduced, to the best of our knowledge, such results have never been reported. 
+\input{Figures/mult_noise_graph}
+A particular classification 
+is also displayed in Figure~\ref{fig:mult_noise_graph_b}.
+As we see, our MTMC models improve the performance (up to a $7\%$-point
+improvement) of the HMC-IN. This comparison illustrates the interest of the third
+latent process $\latent_{0:T}$. A slight advantage goes to the models with continuous
+$\latent_{0:T}$ (MTMC and DMTMC) over the di-MTMC which still performs better than the
+HMC-IN model.
+Note that in the case where we optimize directly the 
+ELBO (\ie~$\beta_1=1$ and $\beta_2=0$), it 
+has been observed that the classification
+obtained is not interpretable. 
+This observation validates
+experimentally our strategy 
+to adapt the objective function.
+ 
+In the second scenario,
+%\begin{scenario}[Non-stationary general noise] 
+the hidden images $\lab_{0:T}$ are the \emph{dog}-type images
+of the Binary Shape Database. They are corrupted by
+a non-stationary general noise,
+\begin{equation}
+\label{scenario-2-tmc}
+    \begin{cases}
+    \begin{aligned}
+    &\obs_t|\lab_t \sim\mathcal{N}\left(a_{\lab_t};\sigma^2\right), \text{ if } k\in\left\{1,\dots,\left\lfloor\frac{T}{2}\right\rfloor\right\},\\
+    &\obs_t|\lab_t\sim a_{\lab_t} + \mathcal{E}\left(\vartheta\right), \text{ if } k\in\left\{\left\lfloor\frac{T}{2}\right\rfloor + 1, \dots, K\right\},\\
+    \end{aligned}
+    \end{cases}
+\end{equation}
+where $\mathcal{E}(\vartheta)$ is the exponential probability distribution of parameter $\vartheta$, $a_{\omega_1}=0, a_{\omega_2}$ is a varying parameter, $\sigma=0.2$ and 
+$\vartheta=1.4$.
+%\label{sce:non_statio}
+%\end{scenario}
+The main difficulty of this scenario is that the images are 
+corrupted by two different noises with a relatively low level for 
+both areas and have to be fitted in a unique model. 
+For this scenario, we set $\beta_1=0.1$ and $\beta_2=0$. 
+A small value of $\beta_1$ can be interpreted as a way to better fit the observations. 
+Indeed, more flexibility seems to be needed to learn such a complex non-stationary noise. 
+%$\forall a_{\omega_2}$; it seems that the presegmentation deduced from this model
+%does not guide well the TMC models at all.
+
+\input{Figures/nonstatio_gen_noise_graph}
+
+\newpage
+The reason why $\beta_2$ is set to $0$
+is that the pre-classification obtained 
+with the HMC-IN is poor and should not be used to learn the parameters in the MTMC. It has been observed
+that other values deteriorate the 
+final classification obtained with MTMC models.
+The results are displayed in Figure~\ref{fig:nonstatio_noise_a} and
+Figure~\ref{fig:nonstatio_noise_c} displays 
+a particular classification.
+It is clear that the TMC models with a continuous auxiliary latent r.v. (MTMC and DMTMC) offer a greater flexibility and are able to learn this complex multi-stationary noise. On the other hand the average classification provided by the di-MTMC or the HMC-IN models are irrelevant as soon as $a_{\omega_2}<2$.
+This experiment illustrates the interest of a continuous auxiliary latent r.v. over discrete auxiliary latent r.v.; the latter being the only option that has been considered in the literature so far~\citep{gorynin2018assessing, li2019adaptive,chen2020modeling}.
+These experiments show the interesting capabilities of the generalized models to provide results in presence of very general noises. Coupled to the deep parameterization,
+a continuous third latent process
+enables our models to bypass the need of an explicit expression of the conditional distribution of the noise.
+
+
+
+
+% \section{Partially Pairwise Markov Chains}
+% \label{sec-rnn}
+% In this section, we propose a particular class of TMC which aims at extending the PMC model proposed in Section 
+% \ref{sec-pmc}. The main motivation
+% underlying this particular model is
+% to introduce an explicit
+% dependency on 
+% the past observations $\obs_{t-1}$ of the 
+% pair $(\lab_t,\obs_t)$, for all $t$. This
+% dependency is introduced through
+% the continuous latent process $\latent_{0:T}$
+% and enables us to build an 
+% explicit joint 
+% distribution $\p(\lab_{0:T},\obs_{0:T})$
+% which does 
+% not satisfy the Markovian property of
+% the PMC \eqref{eq:pmc_intro_uns}. The main difference
+% with Section \ref{sec-tmc} is that 
+% $\latent_{0:T}$ is now a conditional deterministic 
+% latent process.
+% The resulting model is called a Partially PMC (PPMC).
+% As we will see, this particular
+% construction enables us to use directly the Bayesian inference framework developed in Section~\ref{sec-pmc}.
+% Finally, since PMCs appears
+% as particular TMCs, the pretraining of
+% deep parameterized PPMCs is a direct adaptation of 
+% Section \ref{sec-deep-tmc}.
+% %In this section we propose the Partially Pairwise Markov Chains (PPMC)
+% % ~\citep{pieczynski2005restoring, lapuyade2010unsupervised} 
+% % combined with Recurrent Neural Networks (RNN)~\citep{mikolov2014learning}. 
+% % In the PPMC models, the Markovian property of $(\obs_{0:T}, \lab_{0:T})$ 
+% % does not hold anymore and the conditioning depends on all the previous 
+% % realizations of the observed r.v. However, $\lab_{0:T}$ given a realization 
+% % of $\obs_{0:T}$ remains Markovian. On the other hand, a  
+% % RNN is type of a neural networks which uses sequential data and depends on 
+% % the previous elements within the sequence. 
+
+% \subsection{Deterministic TMCs}
+% \label{sec:def-ppmc}
+% Let us focus on a particular case 
+% of the TMC \eqref{tmc-trans}-\eqref{tmc-theta-3}. 
+% From now on, 
+% we consider that the conditional distribution $\eta$
+% coincides with the Dirac distribution $\delta$, 
+% and that function $\pzun$ only depends on $(\latent_{t-1},\obs_{t-1})$.
+% Thus, $\latent_t$ becomes deterministic given $(\latent_{t-1},\obs_{t-1})$,
+% \begin{equation}
+% \label{z-ptmc}
+% \latent_t=\pzun(\latent_{t-1},\obs_{t-1}) \text{.}
+% \end{equation}
+% Each variable $\latent_t$ can be interpreted
+% as a summary of all the past observations $\obs_{t-1}$. Consequently, it is easy to see
+% that 
+% \eqref{tmc-theta-2} and \eqref{tmc-theta-3} now coincide with 
+% $\p(\lab_t|\lab_{t-1},\obs_{t-1})$ and $\p(\obs_t|\lab_{t-1:t},\obs_{t-1})$, 
+% respectively, and marginalizing \eqref{eq:tmc_intro} w.r.t.~$\latent_{0:T}$
+% gives the explicit distribution of
+% $(\lab_{0:T},\obs_{0:T})$,
+% \begin{align}
+%  \label{eq:ppmc_general}
+%     \p(\lab_{0:T},\obs_{0:T})=\p(\lab_0,\obs_0)
+%     \prod_{t=1}^T   & \underbrace{\vartheta(\lab_t;\pyun(\latent{t-1:t},\lab_{t-1},\obs_{t-1}))}_{\p(\lab_t|\lab_{t-1},\obs_{t-1})} \times \nonumber \\
+%     & \quad \underbrace{\zeta(\obs_t;\pxun(\latent{t-1:t},\lab_{t-1:t},\obs_{t-1}))}
+% _{p(\obs_t|\lab_{t-1:t},\obs_{t-1})} \text{,}
+% \end{align}
+% where $\latent_t$ satisfies \eqref{z-ptmc}.
+% It can noted that $(\lab_{0:T},\obs_{0:T})$ is no longer
+% Markovian. Remark that this property
+% is also satisfied by the general TMC \eqref{eq:tmc_intro}. However,
+% $\p(\lab_{0:T},\obs_{0:T})$ is now available in a closed-form 
+% expression and the relationship between the 
+% pair $(\lab_t,\obs_t)$ and the past observations is
+% fully characterized by the function $\pzun$.
+
+
+% This kind of parameterization has an advantage in 
+% terms of Bayesian inference. Since $\latent_t$ is
+% a deterministic function of $(\latent_{t-1},\obs_{t-1})$ (and so of $\obs_{t-1}$, by induction),
+% the conditional
+% posterior distribution $\p(\latent_t|\latent_{t-1},\obs_{0:T})$ reduces 
+% to $\delta_{\pzun(\latent_{t-1},\obs_{t-1})}$.
+% Consequently, Algorithm~\ref{algo:algo_theta_pmc} and
+% Algorithm~\ref{algo:algo_hk_pmc} can be directly applied to estimate $\theta$ and $\lab_t$, for all $t$, by introducing the dependency in $\latent_{t-1:t}$ in functions $\pyun$
+% and $\pxun$ of Section \ref{sec:inference_pmc}.
+% An alternative point of view is that
+% when $\latent_t$ is deterministic,
+% Algorithm~\ref{algo:tmc_elbo_opt} can be seen as a particular instance of Algorithm~\ref{algo:algo_theta_pmc} 
+% in which we have set $\q(\latent_{0:T}|\obs_{0:T})=\p(\latent_{0:T}|\obs_{0:T})$,
+% $\beta_1=1$ and $\beta_2=0$. Indeed, for this particular setting the objective function
+% \eqref{L-approx} coincides with the ELBO but also with the log-likelihood $\p(\obs_{0:T})$. 
+
+
+% \subsection{Deep PPMCs} 
+% \label{sec:dppmc}
+% As previous models, we consider the case where
+% PPMCs \eqref{eq:ppmc_general} are parameterized with DNNs. Such models will be
+% referred to as DPPMCs. In the 
+% particular case of PPMCs, 
+% %$\pzun(\latent_{t-1},\obs_{t-1})$ is parameterized 
+% %by a DNN. Since the objective is to model
+% %long term dependency in the past observations, 
+% $\pzun$ can be seen as a RNN, \ie~a neural network
+% which admits the output of the network at previous
+% time $t-1$ as input at time $t$~\citep{LSTM}.
+% It is thus possible to directly combine our models
+% with powerful RNN architectures such as 
+% Long Short Term Memory (LSTM) RNNs or
+% Gated Recurrent Unit (GRU) RNNs which have
+% been developed to introduce
+% emphasize sequential dependencies.
+% Note that the gradient of $\pzun$ w.r.t.~$\theta$
+% can also be computed with a version of the backpropagation algorithm adapted to
+% RNNs~\citep{LSTM, GRU}.
+
+% The pretraining of this deep architecture
+% is direct. The constrained output layer step
+% is an application of Paragraph \ref{constraint-tmc}
+% with $\q(\latent_{0:T}|\obs_{0:T})=\p(\latent_{0:T}|\obs_{0:T})$, $\beta_1=1$ and $\beta_2=0$; so it can be seen as the step
+% described for PMCs in Paragraph \ref{sec:constrained_archi} up
+% to the additional input $\latent_{t-1:t}$.
+
+% The second step of our pretraining procedure of Paragraph \ref{tmc-unfrozen} can also be simplified. Since in this particular case we have implicitly computed  the optimal conditional variational distribution $\q^{\rm opt}(\latent_t|\latent_{0:t-1},\obs_{0:T})=\delta_{\pzun(\latent_{t-1},\obs_{t-1})}(\latent_t)$, the reparameterized sample $\latent_{t-1:t}$ of Figure~\ref{fig:pretrain_dmtmc}  is now deterministic and coincides directly with the output of $\pzun$, as shown in  Figure~\ref{fig:pretrain_dppmc}. Note that the parameters of $\pzun$ are unfrozen.
+% The training process is summarized in Algorithm~\ref{algo:algo_train_dppmc}.
+% %Also, following Remark~\ref{rk:multiclass}, the prodecure can be extended to the multi-class and multi-channel case.
+
+
+% %Now we  propose a new and practical way to take advantage of all the modeling possibilities that are introduced using a deep parameterization. More precisely, we propose to embed a RNN, denoted as $r_{\theta}$, in the model and we call it the Deep-PPMC (DPPMC). The auxiliary latent r.v. $\latent_{0:T}$ takes a new meaning within the DPPMC context: $\latent_t$ is now the deterministic hidden states of $r_{\theta}$, with values in $\mathbb{R}^{d_z}$. These new deterministic r.v. summarize the information contained in the previous observations.
+% %In this case, the DPPMC model is defined by the equations:
+% %\begin{eqnarray}
+% %\label{eq:rnn}
+% %\latent_t &=& r_{\theta}(\obs_{t-1},\latent_{t-1}) \text{, }\\
+% %\label{ppmc-theta-1}
+% %\p(\lab_t|\lab_{t-1},\obs_{1:t-1})&=&\vartheta(\lab_t;\pyun(\lab_{t-1},\latent_{t-1})) \text{, } \\
+% %\label{ppmc-theta-2}
+% %\p(\obs_t|\lab_t,\lab_{t-1},\obs_{1:t-1})&=&\zeta(\obs_t;\pxun(\lab_t,\lab_{t-1},\latent_{t-1})) \text{, }
+% %\end{eqnarray}
+% %where the two last equations can be related to Equations~\eqref{pmc-theta-1} and~\eqref{pmc-theta-2}.\\
+
+
+% %On the other hand, we can similarly define the Deep-Partially Semi Pairwise Markov Chain (DPSPMC) where $\obs_t$ no longer depends on $\lab_{t-1}$  and the factorization reads
+% %\begin{eqnarray}
+% %\latent_t &=& r_{\theta}(\obs_{t-1},\latent_{t-1}) \text{, }\\
+% %\label{sppmc-theta-1}
+% %\p (\lab_t|\lab_{t-1},\obs_{1:t-1})&=&\vartheta(\lab_t;\pyun(\lab_{t-1},\latent_{t-1})) \text{, } \\
+% %\label{sppmc-theta-2}
+% %\p(\obs_t|\lab_t,\obs_{1:t-1})&=&\zeta(\obs_t;\pxun(\lab_t,\latent_{t-1})).
+% %\end{eqnarray}
+% %The DPSPMC model will be used in our experiments because of difficulties in the parameter estimation for the DPPMC model (also seen for the DPMC model) which requires further investigation out of the scope of this article. 
+% %The graphical representations of the PPMC model and the PSPMC model are given in Figure~\ref{fig:ppmc_graphs}.
+
+
+% %\begin{remark}
+% %An intermediate linear layer is introduced in the model transforming the output of the RNN layer $\latent_t\in\mathbb{R}^{d_z}$ in a vector of $\mathbb{R}^{d_{\obs}}$ which can be fed into the subsequent parts of the network. This layer does not appear explicitly in the previous equations not to overload the expressions but will be mentionned in the technical details that follow.
+% %Thanks to this linear layer, we ensure that we are able to work with arbitrary dimensions for the RNN internal states, while keeping conssitency with respect to the DPMC model to derive our pretraining procedure that is described next.
+% %\end{remark}
+
+
+% %\begin{figure}[h!]
+% %\centering
+% %\begin{subfigure}{0.3\textwidth}
+% %\centering
+% %\input{tikz/ppmc}
+% %\caption{PPMC}
+% %\label{fig:ppmc_graph}
+% %\end{subfigure}
+% %\begin{subfigure}{0.3\textwidth}
+% %\centering
+% %\input{tikz/pspmc}
+% %\caption{PSPMC}
+% %\label{fig:pspmc_graph}
+% %\end{subfigure}
+% %\caption{Graphical representations of the PPMC and the PSPMC. The light gray hexagons represent the deterministic variable $\latent_t$. The other graphical elements follow the convention from Figure~\ref{fig:pmc_graphs}.
+% %}
+% %\label{fig:ppmc_graphs}
+% %\end{figure}
+
+
+
+% \begin{figure}[htb]
+%   \centering
+%   \includegraphics[width=0.8\textwidth]{Figures/Graphical_models/d-ppmc.pdf}
+%   \caption{Graphical and condensed representation of the parameterization of
+%   $\pyun$ in the DPPMC model. 
+%   %Note the residual connections between the inputs and the ouput of $\pzun$.
+%   The dashed arrows represent the fact that some variables are copied. 
+%   %For clarity, we do not represent the entries of $\pyun$ consisting of products of $\lab_{t-1}$, $\latent_{t-1:t}$ or $\obs_{t-1}$, due to the output layer constraint. %Residual connections between the $\pyun$ layer inputs and the last hidden layer of $\pyun$ are also omitted.
+%   }
+%   \label{fig:pretrain_dppmc}
+% \end{figure}
+
+
+% \begin{algorithm}[htbp!]
+%   \caption{A general estimation algorithm for deep parameterizations of PPMC models.}
+%   \label{algo:algo_train_dppmc}
+%   \begin{algorithmic}[1]
+%     \Require{$\obs_{0:T}$, the observation}
+%     \Ensure{$\hat{{\lab}_{0:T}}$, the final classification}
+%     \Statex{\textbf{Initialization of the output layer of $\pyun$ and $\pxun$}}
+%     \State Estimate $\theta_{\fr}^*$ and $\hat{\lab}_{0:T}^{\pre}$ with Lines \eqref{line:nondeep1}-\eqref{line:nondeep3} of Algorithm~\ref{algo:algo_train_dpmc}
+%     \Statex{\textbf{Pretraining of $\theta_{\ufr}$}}
+%     \State   $\theta_{\ufr}^{(0)} \leftarrow$ ${\rm Backprop}(\hat{\lab}_{0:T}^{\pre},\obs_{0:T},\theta_{\fr}^*, \mathcal{C}_{\f}, \mathcal{C}_{\g})$
+%     \Statex{\textbf{Fine-tuning of the complete model}}
+%     \State Update all the models parameters (except $\theta_{\fr}$) with Algorithm~\ref{algo:algo_theta_pmc}
+%     \State Compute $\hat{\lab}_{0:T}$ with Algorithm~\ref{algo:algo_hk_pmc} 
+%   \end{algorithmic}
+% \end{algorithm}
+
+
+
+% \subsection{Simulations}
+% We start again with the same experiments 
+% as those in Section \ref{sec:pmc}, but we use 
+% an alternative noise which aims
+% at introducing longer dependencies on the observations. We now set
+% \begin{equation}
+%     \label{eq:longer_noise_eq1}
+%     \obs_t| \lab_{t},\obs_{t-2:t-1} \sim \mathcal{N}\Big(\sin(a_{\lab_t}+0.2(\obs_{t-1}+\obs_{t-2}));
+%     \sigma^2\Big).
+% \end{equation}
+% where $a_{\omega_1}=0$, $\sigma^2=0.25$ 
+% and $a_{\omega_2}$ is a varying parameter.
+% We compare the deep models of Section \ref{sec-pmc} (DSMPC and DPMC) with their natural extensions
+% developed in this section (DPSPMC and DPPMC).
+ 
+% Figure~\ref{fig:nonlin_corr_ppmc_sce1_a} illustrates the results involving the models we have just introduced. For $\pzun$ we use two independent standard RNNs with ReLU activation function, i.e. $\latent_t=[\latent_t^1,\latent_t^2]=[{\pzun}^1(\latent_{t-1}^1,\obs_{t-1}),
+% {\pzun}^2(\latent_{t-1}^2,\obs_{t-1})]$; $\pyun$ (resp. $\pxun$) depends on $\latent_{t-1:t}^1$ (resp. $\latent_{t-1:t}^2$). %their output replaces the observation input of $\pyun$ and $\pxun$, respectively.
+% In this setting, we found that the models worked the best when the dimensions of $\latent_t^1$ and of $\latent_t^2$  is $5$.
+% %\ie~there are $5$ hidden neurons in each RNN. Graphical illustrations are provided in Figure~\ref{fig:nonlin_corr_ppmc_sce1_b}.
+% We can see that the more general parameterizations embedded in   DPSPMC and DPPMC lead to an improvement of the DPMC models; each DPPMC model leading to a better accuracy than its DPMC counterpart. The ability to model long term dependencies proves to be important to better solve the correlated noise. This experiment illustrates a way to take advantage of a deterministic auxiliary process: by strengthening the sequential dependencies between the hidden random variables.
+
+% \input{Figures/nonlin_corr_ppmc_sce1}
+
+\begin{remark}
+  We also propose an alternative use of the latent process, where our
+  objective is to characterize explicitly the relationship
+  between the pair $(\lab_t,\obs_t)$ and the past observations $\obs_{t-1}$ when
+  $\latent_{0:T}$ is deterministic given the observations. Thus,  a closed-form
+  expression of $\p(\lab_t,\obs_t|\lab_{t-1},\obs_{t-1})$ is available contrary to
+  the general TMC introduced before.
+  A direct advantage of the resulting TMC model is that
+  it can be interpreted as the combination of a PMC model \eqref{eq:pmc_intro_uns}
+  with an RNN~\citep{rumelhart1986learning,
+  mikolov2014learning}, and that the distributions of interest can be computed
+  exactly, without any approximation.
+  This model is called a Partially Pairwise Markov Chain (PPMC), which is 
+  detailed in the Appendix~\ref{chap:appendix4}.
+\end{remark}
+
+
+\section{Experiments on real datasets}
+\label{sec:realworld}
+We finally experiment our models on two 
+real datasets. The first one is devoted to 
+a medical images. The main challenge 
+of this kind of data is that the noise associated to such images is unknown and non-usual; 
+that is why we introduce our TMCs to measure the impact of the third latent process.
+The next dataset is related to human activity recognition. 
+For this problem, the dependencies between the r.v. (the class and the observed r.v.) 
+are critical; that is why we focus on the impact of our PMCs.
+
+
+\subsection{Unsupervised segmentation of biomedical images}
+\label{sec:realworld_mct}
+We first illustrate the potential of the generalized TMC models on real biomedical data.
+The task consists in the segmentation of micro-computed tomography X-ray scans
+of human arteries containing a metallic stent biomaterial\footnote{Data provided by Dr. Salomé Kuntz (GEPROMED, Strasbourg, France)}. 
+These images are reminiscent of the synthetic experiment of 
+Scenario~\eqref{scenario-2-tmc}: some regions exhibit a particular type of correlated noise (because of
+ the beam hardening artifacts caused by the interactions
+between X-rays and the metallic stent) and some regions do not. \textcolor{black}{However, the noise is unknown and has not been simulated contrary to Scenario \eqref{scenario-2-tmc}.}
+
+Table~\ref{table:microct_scores} and Figure~\ref{fig:mct_illustrations} summarize the experiment. It can be seen that the classical models (HMC-IN and di-MTMC) are unable to handle the non-stationarity of the noise. The di-MTMC model even fail to provide any improvement over the HMC-IN model. On the other hand, major improvements can be seen when using the TMC models with a continuous auxiliary process, suggesting that the latter model offers more flexibility and that our parameter estimation algorithm enables to take advantage of it. These results on real-world data corroborates the results found in the synthetic experiment given in Section \ref{sec:exp_res_tmc}. Note that, in this case, we set $\beta_1=5$, $\beta_2=1$ and used the HMC-IN classification as a pre-segmentation. The network configurations are the same as in Section \ref{sec:exp_res_tmc}.
+
+
+\subsection{Unsupervised clustering for human activity recognition}
+\label{sec:realworld_har}
+
+We now illustrate the performances of classical PMC models, deep PMC models and deep PPMC 
+models on a real clustering task linked with human activity recognition. We use the Human 
+Activity and Postural Transition (HAPT) dataset described 
+in~\citep{reyes2016transition}\footnote{\url{http://archive.ics.uci.edu/ml/datasets/smartphone-based+recognition+of+human+activities+and+postural+transitions}}. 
+It consists of three-dimensional time series that we wish to cluster into 
+two classes: \emph{movement} and \emph{no movement}. \textcolor{black}{To solve this task, the models we used are the same as those introduced before, namely $\pyun$, $\pxun$, $\vartheta$ and $\zeta$ coincide with our first illustrative example in Section \ref{sec:generalParam} (\eqref{param-1}-\eqref{param-2}). 
+In the case of the deep parameterizations, $\pyun$ and $\pxun$ have one (unfrozen) hidden layer with $100$ neurons and
+the ReLU activation function. Moreover, in the case of the deep PPMC models, $\pzun$ is composed of two 
+independent standard RNNs with ReLU activation function, \ie~
+$\latent_t=[\latent_t^1,\latent_t^2]=[{\pzun}^1(\latent_{t-1}^1,\obs_{t-1}),
+{\pzun}^2(\latent_{t-1}^2,\obs_{t-1})]$, with $10$ hidden neurons.}
+
+The results are given in Table \ref{table:har_scores} for models sharing the same configurations with the models in Section \ref{sec:pmc} and \ref{sec:dppmc}. First of all, the modelization using the pairwise models seems very relevant in this application since we notice up to a $9\%$-point improvement over the HMC-IN model. In the case of the SPMCs, we clearly see the advantage of using deep parameterizations over the shallow models. The advantage of the deep parameterization is less significant in the PMC case. The contributions of the DPSPMC and DPPMC models are also less significant. The absence of gains in error rate when using the most complex models might be related to the limited length of the training sequences in this application (sequences of length between $15000$ and $20000$). 
+
+
+\begin{table}
+\centering
+\setlength\tabcolsep{6pt}
+\begin{tabular}{ccccc}
+\toprule
+Slice & HMC-IN & di-MTMC & MTMC & DMTMC \\\toprule
+Average & $8.6$ & $8.6$ & $7.6$ & $\pmb{6.5}$\\
+\bottomrule
+\end{tabular}
+\caption{Averaged error rates (\%) in unsupervised image 
+segmentation with all the generalized TMCs assessed on ten micro-computed 
+tomography slices. The detailed scores are given in Appendix~\ref{app:error_rates}.}
+\label{table:microct_scores}
+\end{table}
+
+\input{Figures/mct_illustration}
+
+\begin{table}
+  \small
+\centering
+\setlength\tabcolsep{6pt}
+\begin{tabular}{cccccccc}
+\toprule
+ Data & HMC-IN & SPMC & DSPMC & DPSPMC & PMC & DPMC & DPPMC \\\toprule
+Average & $25.2$ &$21.3$ &$16.8$ &$\pmb{16.7}$ &$17.1$ &$16.8$ & $16.8$ \\
+\bottomrule
+\end{tabular}
+\caption{Averaged error rates (\%) in the binary clustering of the first twenty raw entries of the HAPT dataset~\citep{reyes2016transition}. 
+The detailed scores are given in Appendix~\ref{app:error_rates}.}
+\label{table:har_scores}
+\end{table}
+
+
+  
+
+\section{Conclusions}
+In this chapter, we have proposed a general framework for PMC and TMC models which
+fully exploits the modeling power offered by such models for unsupervised signal
+processing. Contrary to previous work on \textcolor{black}{TMCs with a discrete
+hidden data}, we have introduced a continuous latent process. For these models,
+we have derived Bayesian inference algorithms for estimating their parameters
+and the associated hidden r.v. and we have emphasized the case where the
+parameterization relies on DNNs. Our algorithms rely on an objective function
+deduced from the variational Bayesian inference but which has been modified to
+include the interpretability of the discrete hidden r.v.
+
+This contribution enables us to propose an efficient answer to three recurrent
+questions linked with the practical applications of complex probabilistic
+graphical models for sequential data: which probability distributions to choose,
+how to parameterize them, and how to estimate their parameters in an
+unsupervised way. For several applications, it has indeed been shown that our
+global procedure leads to new models that consistently perform better than the
+classical ones. Importantly, the ability of these models to tackle more complex
+noises comes without no additional effort from the signal processing point of
+view. Our experiments also suggest that it is possible to model complex noises
+by using the universal approximating properties of DNNs and by training them in
+an unsupervised way with the new algorithms that we propose.
+
+On the other hand, while being invisible to a potential
+practitioner, these new capabilities permitted by the embedded DNNs and by the
+third auxiliary latent process come at the price of a more complex training
+procedure. The latter is indeed cast in the context of variational inference
+with inherent difficulties regarding the approximation of the lower bound, the
+choice of the variational distribution or the choice of the penalizing
+coefficients. However, since variational inference is a very popular research
+topic, it could inspire many improvements for future works with the Generalized
+Hidden Markov Models framework.
+%  We also note that the DNN pretraining and the
+% interpretability constraint require an available pre-segmentation. A future line
+% of research involving self-supervised learning might prove itself as an
+% efficient way to relax this requirement~\citep{zhu2020s3vae, gatopoulos2021self}.

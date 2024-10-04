@@ -1,0 +1,342 @@
+\chapter*{General introduction}
+\markboth{INTRODUCTION}{INTRODUCTION}
+\addcontentsline{toc}{chapter}{General introduction}
+
+
+\section*{Context} 
+
+This thesis explores and models sequential data through the application of
+various probabilistic models with latent variables, complemented by deep neural
+networks. The motivation for this research is the development of dynamic models
+that adeptly capture the complex temporal dynamics inherent in sequential data.
+Designed to be versatile and adaptable, these models aim to be applicable across
+domains including classification, prediction, and data generation, and adaptable
+to diverse data types. 
+The research focuses on several key areas, each detailed
+in its respective chapter. Initially, the fundamental principles of deep
+learning, and Bayesian estimation are introduced. Sequential data modeling is then
+explored, emphasizing the Markov chain models, which set the stage for the
+generative models discussed in subsequent chapters. 
+In particular, the research delves into the sequential Bayesian classification 
+of data in supervised,
+semi-supervised, and unsupervised contexts. The integration of deep neural
+networks with well-established probabilistic models is a key strategic aspect of
+this research, leveraging the strengths of both approaches to address complex
+sequential data problems more effectively. This integration leverages the
+capabilities of deep neural networks to capture complex nonlinear relationships,
+significantly improving the applicability and performance of the models.
+
+
+In addition to our contributions, this thesis also
+proposes novel approaches to address specific challenges posed by the
+\gls*{gepro}. These proposed solutions reflect the practical and  possible
+impactful application of this research, demonstrating its potential
+contribution to the field of vascular surgery.
+
+% \newpage
+% \vspace{.30cm}
+\section*{Neural networks}
+% A \gls*{nns} 
+Neural Networks (NNs)
+are foundational in machine learning, used for tasks like
+classification, regression, and clustering. Their strength lies in
+representation learning, the ability to discern a data representation that
+simplifies model building. Structurally, NNs are composed of layers of 
+(artificial) neurons,
+where each neuron generates an output that is a non-linear function of a linear
+combination of its inputs. This architectural feature allows NNs to model
+complex and non-linear relationships within data. The power of NNs is
+fundamentally based on universal approximation 
+theorems~\citep{cybenko1989approximation,hornik1991approximation,pinkus1999approximation,lu2017expressive, liang2016deep}, 
+which affirms its ability to approximate any continuous multivariable function. This
+theoretical basis is fundamental to their versatility and adaptability in a
+variety of problem domains.
+
+
+% \gls*{dnns}, 
+Deep Neural Networks (DNNs),
+characterized by their multiple hidden layers, further extend this
+capability. 
+Unlike traditional NNs, DNNs have a significantly larger number of layers, which
+allows them to learn more complex data representations.
+DNNs are particularly well suited for understanding intricate data
+patterns, which has led to state-of-the-art performance in areas like speech
+recognition~\citep{deng2013new, chan2016listen, abdel2013exploring, nassif2019speech},
+image classification~\citep{huang2023comparative},
+image recognition~\citep{fu2017look, traore2018deep, zheng2017learning}, and
+natural language processing~\citep{li2018deep,collobert2008unified, goldberg2017neural}.
+Their depth, that is, the number of hidden layers,
+enables deeper  learning of data features at various levels of
+abstraction, making (deep) NNs particularly well suited for our context,
+sequential data modeling.
+
+% \newpage
+\vspace{.30cm}
+\section*{Generative models}
+Generative models are designed to capture the underlying distribution of data,
+allowing them to generate new data points similar to those observed. These
+models are fundamental in fields such as image and speech recognition and
+natural language processing, where it is essential to understand and reproduce
+the complexity of natural data. The range of generative models spans from
+classical probabilistic models to the more recent deep generative models.
+
+Classical generative models, such as~\gls*{gmms}  and
+\gls*{hmc} models, have been fundamental in statistical modeling,
+providing a solid foundation for understanding data distributions and
+dependencies~\citep{harshvardhan2020comprehensive}. 
+On the other hand, deep generative
+models, such as~\gls*{gans} ~\citep{goodfellow2020generative},
+and~\gls*{vae}~\citep{kingma2014}, 
+represent a more recent paradigm that integrates the power of deep learning.
+Both classical and deep
+generative models continue to evolve, driven by advancements in computational
+power and algorithmic innovations, further expanding their applications and
+capabilities in various domains.
+
+% \newpage
+\vspace{.30cm}
+\section*{VAE and Variational Inference}
+
+VAEs integrate probabilistic approaches with neural
+networks, allowing for the generation of complex data structures with
+variability and flexibility. 
+They use latent variables to model complex, high-dimensional data structures in
+a way that classical models cannot efficiently capture. These models are
+characterized by their parametric nature, where parameters are usually
+determined by~\gls*{ml} estimation. However, in VAEs, these parameters are often
+derived from deep neural networks, which adds a layer of complexity to the
+learning process. 
+Given the complexity of VAEs, the likelihood function of these
+models is often intractable. This difficulty makes direct likelihood
+maximization impractical or even impossible. To address this 
+ problem, \gls*{vi}~\citep{jaakkola2000bayesian,Blei_2017} 
+is employed. VI offers a powerful approach to approximate the
+intractable likelihood, allowing VAEs to be trained and used efficiently in a
+variety of applications~\citep{an2015variational, pu2016variational,
+xu2017variational, chira2022image}.
+
+
+Despite their ability to capture complex data patterns, VAEs often take a
+fundamentally static perspective. They typically process each data point
+independently, without considering the temporal or sequential dynamics
+characteristic of many real-world datasets. This limitation is especially
+evident in contexts involving time series, video, or text, where the inherent
+sequence aspect of the data is crucial.
+
+\newpage
+% \vspace{.75cm}
+\section*{Probabilistic models}
+Popular probabilistic models such as~\gls*{hmc}~\citep{rabiner1989tutorial}, 
+\gls*{pmc}~\citep{pieczynski2003pairwise, derrode2004signal}, 
+and~\gls*{tmc}~\citep{wp-cras-chaines3,pieczynski2005triplet}
+models, are capable of capturing temporal dependencies and latent factors in
+sequential data. Each of these models provides a fundamental framework for
+processing sequential data, offering unique advantages and posing distinct
+challenges.
+
+HMC models are widely used to model sequences with both hidden and observed variables. 
+The applications of HMC models are diverse, 
+including natural language processing
+for tasks such as part-of-speech labeling; computer vision for image
+segmentation;  bioinformatics for genetic sequence 
+analysis~\citep{rabiner1989tutorial, gales2008application, 
+yoon2009hidden, li2021new, kupiec1992robust, paul2015hidden}, etc. 
+PMCs and TMCs extend the fundamental principles of HMCs. They aim to
+relax some underlying assumptions of HMCs by extending the direct
+dependencies between random variables or by incorporating an additional third
+latent process. The assumptions inherent in each of these models are fundamental.
+Not only do they shape the structure of the model, but they also define the
+nature of the relationships between variables, thus simplifying the inference
+and learning processes. The adaptability of these models to different types of
+data and their ability to capture complex dependencies make them particularly
+well suited for sequential data modeling.
+
+The parameter estimation is usually
+performed by maximizing the likelihood function with respect to the parameters. 
+However, when dealing with sequential data, the likelihood function can be intractable.
+Depending on the model structure, this estimator can be approximated by 
+\gls*{vi} methods~\citep{jaakkola2000bayesian,Blei_2017} or by the
+\gls*{em} algorithm~\citep{dempster1977maximum}.
+
+%   \citep{girin2020dynamical}
+
+% \newpage
+\vspace{.30cm}
+\section*{Sequential Bayesian classification}
+
+Classification is a fundamental task in machine learning, and Bayesian
+classification is a widely adopted approach to this challenge. In this approach,
+the main goal is to estimate the posterior distribution of classes (labels)
+given the observations. This task takes on additional complexity in the context
+of sequential data, where the observations are a sequence of random variables,
+and each observation is associated with a corresponding label. The estimation of
+these labels from the observations depends on the posterior distribution, which
+is usually unknown and can be estimated using a parametric model. This model
+selection process involves choosing a suitable generative model and a learning
+algorithm to estimate the model parameters. Markov chain models, such 
+as~\gls*{hmc}, \gls*{pmc} and \gls*{tmc} models, 
+are particularly suitable for modeling sequential data with both hidden
+and observed variables. 
+
+In the context of sequential classification, the learning process is influenced
+by the availability of labels associated with the observations. 
+In supervised scenarios, where labels
+are fully observed, learning involves estimating model parameters using both
+observations and labels. While in semi-supervised contexts, where only a subset of
+labels is available, the challenge is to estimate the parameters from the
+observations and this partial set of labels. Finally, in unsupervised learning,
+no observed labels are available, then parameter estimation must be performed from
+the observations alone.
+Each of these learning contexts presents unique challenges and requires
+specialized methodologies to address them effectively.
+
+
+
+\section*{Colaboration with the GEPROMED}
+
+GEPROMED\footnote{https://gepromed.com/en/aboutUs}
+is a non-profit organization founded in 1993.
+The organization emerged from the collaborative vision of Pr. Nabil Chakfé, a
+vascular surgeon in Strasbourg, France, and Pr. Bernard Durand, an expert in the
+mechanics of flexible materials. Their primary goal was to
+investigate and understand the complications associated with vascular prostheses,
+particularly focusing on the phenomena of tearing and rupture observed
+post-implantation in patients.
+GEPROMED is dedicated to promoting specialized learning methods, and
+continuous quality improvement and ensuring patient safety in the field of
+vascular surgery. A key area of focus for the organization is the advancement of
+image processing techniques in vascular surgery. 
+Previous research~\citep{gangloff2020probabilistic} has shown that deep 
+learning methods, and probabilistic models
+are very promising for addressing these challenges. 
+For example, on medical image segmentation tasks,
+probabilistic and deep learning methods have been shown 
+good performance.
+
+
+Medical image segmentation, a critical task in
+this field, involves identifying regions of interest within images. These
+identified regions are crucial for diagnosis, treatment planning and guidance of
+surgical procedures. The overall goal is to develop automated approaches that
+can be broadly applied to various types of medical images, thereby improving the
+efficiency of diagnostics, and medical interventions.
+
+
+% \newpage
+\vspace{.30cm}
+\section*{Contributions}
+
+This thesis aims at proposing 
+innovative methodologies that bridge the gap between
+classical probabilistic models based on Markov Chains and deep neural networks,
+specifically adapted to sequential data modeling. 
+The results obtained have been presented at different national and international conferences
+and published in peer-reviewed journals. Our contributions are detailed 
+in the following sections and are based on the following publications:
+
+\begin{itemize}
+    \item \cite{morales2021variational}: Variational Bayesian inference for
+    pairwise Markov models, In 2021 \textit{IEEE Statistical Signal Processing Workshop
+    (SSP) (pp. 251-255). IEEE}.
+    \item \citet*{gangloff2021general}:  A
+    general parametrization framework for pairwise Markov models: An application
+    to unsupervised image segmentation, In 2021 \textit{IEEE 31st International Workshop
+    on Machine Learning for Signal Processing (MLSP) (pp. 1-6), IEEE}.
+    \item \cite{morales2022pairwise}: Pairwise Markov Chains as Generative Models,
+    \textit{Colloque GRETSI 2022}, (pp. 649–652).
+    \item \citet*{gangloff2022chaines}: Chaînes de Markov cachées à bruit
+    généralisé, \textit{Colloque GRETSI 2022},  (pp. 17–20).
+    \item \citet*{gangloff2023deep}: Deep parameterizations of pairwise and
+    triplet Markov models for unsupervised classification of sequential data,
+    \textit{Computational Statistics \& Data Analysis, 180, 107663}.
+    \item \cite{morales2023probabilistic}: 
+    A Probabilistic Semi-Supervised Approach with Triplet Markov Chains, In 2023
+    \textit{IEEE 33rd International Workshop
+    on Machine Learning for Signal Processing (MLSP) (pp. 1-6). IEEE}
+\end{itemize}
+
+% In addition, 
+This thesis also includes preliminary but promising results in the area
+of low-resolution medical image segmentation. This area of research, while still
+a work in progress, demonstrates the potential of our methodologies to make
+significant advances in medical image analysis. Initial results are encouraging
+and lay the groundwork for further exploration and refinement. 
+These efforts are currently continuing with the goal of culminating 
+in a future publication. 
+
+
+
+% \newpage
+\vspace{.30cm}
+\section*{Outline}
+This thesis is structured to introduce and explore  methodologies in
+sequential data modeling, particularly through deep learning and Bayesian
+estimation techniques. It provides a comprehensive examination of both
+theoretical and practical aspects of generative models and their applications in
+supervised,
+semi-supervised and unsupervised classification tasks. 
+
+The thesis comprises
+five chapters. Chapter~\ref{chap:main_concepts} 
+offers a technical introduction, discussing the
+principles of deep learning, Bayesian estimation, and sequential data modeling
+with Markov chains. This chapter sets the foundation by covering topics such as
+maximum likelihood estimation with VI, and posterior distribution estimation.
+
+Chapter~\ref{chap:pmc} 
+delves into Generative Markov
+Chains, specifically focusing on PMCs as a unified
+model. It details parameter estimation methods, including general
+parametrization and VI for PMCs, and presents experiments and
+results that highlight the generative power of these models. 
+
+Chapter~\ref{chap:semi_supervised_pmc_tmc}
+extends the discussion to Generalized Hidden Markov Models for semi-supervised
+classification. It introduces the problem of semi-supervised estimation in TMCs,
+explores ELBO for semi-supervised learning, and describes the learning process. 
+The chapter also includes experiments comparing deep TMCs
+with existing models, and semi-supervised binary image
+segmentation. 
+
+Chapter~\ref{chap:unsp_pmc_tmc} 
+addresses Markov Chains for unsupervised classification,
+detailing Bayesian inference for PMCs and deep PMCs for unsupervised
+classification. It further explores TMCs for unsupervised classification,
+including VI, and deep TMCs. This
+chapter also presents simulations and experiments on real datasets, such as
+unsupervised segmentation of biomedical images and clustering for human activity
+recognition. 
+
+Chapter~\ref{chap:medical_perspectives}
+shows a workflow adapted to data provided by the GEPROMED group,  and future
+perspectives that can merge the models presented in the first chapters. 
+Finally, the thesis concludes with a summary of findings, a
+discussion on the implications of the research, and future directions for
+exploration and application.
+
+
+% % \katy{add medical images to the experiments} 
+% % Ideas to present our beautiful results:
+
+% % \textbf{Context: Time series}
+% % We consider a sequence of observed random variables $\obs_T=(x_{0}, \dots, x_{T})$ 
+% % with unknown distribution $p(\x_T)$.
+% % Two related estimation problems are considered:
+% % \begin{itemize}
+% %     \item Prediction of the next observation $x_{T+1}$ given $\x_T$.
+% %     \item This join distribution $p(\x_T)$ can be modeled by a family of distributions $\p(\x_T)$.
+% % \end{itemize}
+% %  It can be relevant to introduce a hidden sequence of random variables $\h_T=(h_{0}, \dots, h_{T})$
+% %  which depends on $\x_T$. So, the generative distribution of $\x_T$ can be written as
+% %  a marginalization of the joint distribution of $(\h_T,\x_T)$. $\p(\x_T)=\int \p(\h_T,\x_T) {\rm d}\h_T$. 
+
+% %  -> framework of Bayesian estimation in a latent data model $\p(\x_T,\h_T)$.
+ 
+% %  Problems:
+% %  \begin{enumerate}
+% %     \item Which family of parametric distributions $\p(\x_T)$ should we consider?
+% %     \item For a given family of distributions $\p(\x_T)$, how to estimate the parameters $\theta$ from a given realization $\x_T$?
+% %     \item For a given $theta$, how to compute or approximate quantities of interest such as the predictive distribution $\p(x_{T+1}|\x_T)$, any posterior/predictive distribution $\p(h_{t'}|\x_T)$, or the marginal likelihood $p(\x_T)$?
+% %  \end{enumerate}
+
+

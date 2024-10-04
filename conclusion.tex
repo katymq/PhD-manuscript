@@ -1,0 +1,235 @@
+% !TEX root = latex_avec_réduction_pour_impression_recto_verso_et_rognage_minimum.tex
+\chapter*{Conclusions and Perspectives}
+\markboth{CONCLUSIONS AND PERSPECTIVES}{CONCLUSIONS AND PERSPECTIVES}
+\addcontentsline{toc}{chapter}{Conclusions and Perspectives}
+% \epigraph{
+% ``To boldly go where no one has gone before.'' }{Captain Kirk}
+
+% %chapter abstract here
+
+
+Throughout this thesis, our research has integrated traditional
+probabilistic models with modern deep learning techniques to address 
+various challenges in machine learning. We have focused on generative
+sequential modeling, supervised, semi-supervised, 
+unsupervised Bayesian classification, and a collaboration with the GEPROMED project
+to address the segmentation of medical images.
+\vspace{0.27cm}
+
+First, we introduced a novel generative model based on Pairwise Markov Chains,
+which effectively combines the strengths of Hidden Markov Models,
+Recurrent Neural Networks, and the Stochastic RNNs.
+This model considers  observed and latent variables as well as the
+interactions between them, providing a more comprehensive representation of
+sequential data. 
+We developed a new parameter estimation method leveraging the variational inference
+framework, which is both computationally efficient and straightforward to
+implement. The integration of deep parameterizations within this PMC
+model demonstrated superior performance on different 
+datasets compared to traditional RNN and Stochastic RNN models.
+We also highlighted the linear and stationary Gaussian PMC's ability to model complex
+Gaussian distributions more effectively than previous models,  
+by using the covariance function. 
+\vspace{0.27cm}
+
+
+
+
+
+Moreover, if we consider the latent variables as discrete, \ie~the labels
+associated with each the observations,
+we demonstrated the potential of the PMC for supervised, and unsupervised 
+classification tasks. In a supervised setting, our first variational framework can 
+be easily adapted. In an unsupervised setting, we can use the PMC with traditional
+Bayesian parameter estimation methods, since the likelihood is tractable, 
+\ie~VI is not necessary. However, the use of this Bayesian framework with neural 
+networks in an unsupervised context is difficult due to the interpretation of the
+latent variables as discrete labels. Thus, we proposed an alternative 
+approach to address this issue by using a constrained output layer 
+and a pretraining step to initialize the neural network.
+\vspace{0.27cm}
+
+
+
+Next, we extended our generative model to Triplet Markov Chains that 
+incorporate an additional (continuous or discrete) process to model 
+the interactions between the 
+observed features and their corresponding labels. We illustrated the 
+feasibility of creating diverse generative models based on
+variational inference, which is particularly advantageous for datasets with
+partially labeled observations or missing labels.
+We proposed a new adapted parameter estimation methods for the TMC model,
+that combines the variational inference framework, 
+which is both computationally efficient, and interpretable in the context of 
+sequential data classification.
+Each context, semi-supervised and unsupervised classification, 
+has its own challenges,
+and we proposed different techniques to address them.
+For the semi-supervised context, we proposed a relaxation of the discrete
+variables using the Gumbel-Softmax trick, and 
+for the unsupervised classification, we proposed a constrained output layer
+and pre-classification.
+\vspace{0.27cm}
+
+
+In addition, our collaboration with the GEPROMED project allowed us to know the
+challenges of medical image analysis. We proposed an adapted workflow to
+address the segmentation of medical images, which is a helpful tool for
+clinicians. We also applied classic super-resolution and segmentation
+techniques to medical images, which are essential for improving the
+interpretability of medical images. However, the results are not always
+satisfactory or adapted to the available data. 
+We applied a probabilistic segmentation model that incorporates the 
+variational framework with conditional VAEs. 
+\vspace{0.27cm}
+
+
+
+In conclusion, the integration of traditional probabilistic models with
+modern deep learning techniques has shown promising results in various
+applications. The proposed models have demonstrated superior performance
+compared to traditional models, and the variational inference framework has
+proven to be a powerful tool for parameter estimation. 
+Future work should continue to explore the integration of deep neural networks
+with other probabilistic models to develop more robust and efficient generative models.
+Research into various neural architectures (\eg~U-net),
+and training paradigms could further
+improve model performance and broaden their applicability.
+While this thesis primarily focused on medical imaging, the proposed methods and
+models have potential applications in other fields such as natural language
+processing, bioinformatics, and finance. Future research could explore these
+domains to validate the versatility and robustness of our models.
+\vspace{0.27cm}
+
+Moreover, the application of these models to medical image analysis
+should be further explored to improve the interpretability of medical images
+and enhance the workflow of clinicians. For example, the integration of
+the TMCs with the U-NET architecture could provide a more comprehensive
+representation of the sequential data,  where the labels become the segmented images,
+and the observed features are the medical images.
+\vspace{0.27cm}
+
+In practice, semi-supervised classification tasks are
+challenging due to the discrete nature of the latent variables.
+The relaxation of the discrete variables using the Gumbel-Softmax trick
+provides a workaround, but it introduces a trade-off between the optimization
+of discrete variables and the quality of the approximation.
+Researchers continue to explore ways to improve the optimization of models with
+discrete variables, making them more tractable and effective for a wider range
+of applications.
+% \vspace{0.27cm}
+In the unsupervised case, we also noted that the DNN pretraining and the
+interpretability constraint require an available pre-classification. A future line
+of research involving self-supervised learning might prove itself as an
+efficient way to relax this requirement.
+
+\vspace{0.27cm}
+
+Finally, the stochastic realization theory can be also used to describe the
+covariance series which can be produced by linear and stationary PMCs, similar
+to the one used in the context of the GUM. The main difficulty is that they do
+not admit a state-space model representation due to the new dependencies
+introduced by the pairwise interactions, which makes the analysis more complex.
+The trick is to interpret the PMC as a particular HMC in augmented dimension.
+However, the theoretical analysis of the covariance series produced 
+by general linear and stationary PMCs remains an open question.
+
+% The development of a stochastic realization theory for these models would be a significant
+% contribution to the field of probabilistic modeling.
+% ~\citep{zhu2020s3vae, gatopoulos2021self}.
+
+% \pagebreak
+% \section*{Generative Sequential Modeling}
+% \textbf{Family of the probabilistic model studied:}\\
+
+% The probabilistic models studied in this thesis belong to the family of Markov
+% Chain models. Specifically, we have focused on Hidden Markov Chains,
+% Pairwise Markov Chains, and Triplet Markov Chains. These models are
+% essential for understanding and modeling sequential data due to their ability to
+% capture temporal dependencies and latent structures.
+
+% \textbf{Model, innovation:}\\
+% \textbf{Issue that has been addressed:}\\
+% % \textbf{}\\
+
+
+% \noindent\hfil\rule{0.5\textwidth}{.4pt}\hfil
+% \pagebreak
+
+     
+% \section*{Semi-supervised Bayesian classification}
+% \textbf{Family of the probabilistic model studied:}\\
+% \textbf{Model, innovation:}\\
+% \textbf{Issue that has been addressed:}\\
+% % \textbf{}\\
+
+% \noindent\hfil\rule{0.5\textwidth}{.4pt}\hfil
+
+% While these techniques provide a workaround, 
+% they are not without their limitations. 
+% The relaxation introduces a trade-off between the 
+% optimization of discrete variables and the quality of the approximation. 
+% As the temperature parameter is annealed during training, 
+% the model transitions from a more continuous relaxation to a more discrete one, 
+% potentially affecting model performance.
+
+% In practice, dealing with discrete variables often requires 
+% careful consideration of the trade-offs and the application's 
+% specific requirements. 
+% Researchers continue to explore ways to improve 
+% the optimization of models with discrete variables, 
+% making them more tractable and effective for a wider range of applications.
+
+
+% \pagebreak
+
+
+% \section*{Unsupervised Bayesian classification}
+% \textbf{Family of the probabilistic model studied:}\\
+% \textbf{Model, innovation:}\\
+% \textbf{Issue that has been addressed:}\\
+% % \textbf{}\\
+% \noindent\hfil\rule{0.5\textwidth}{.4pt}\hfil
+
+% \begin{itemize}
+%     \item How to link the model with the PMC in Chapter XXX
+%     % ~\ref{chap:pmc}?
+%     In the context, what we can modify the Variational PMC for unsupervised learning?
+% \end{itemize}
+
+% % \pagebreak
+% % \section*{Perspectives on medical images}
+% % \textbf{Family of the probabilistic model studied:}\\
+% % \textbf{Model, innovation:}\\
+% % \textbf{Issue that has been addressed:}\\
+% % % \textbf{}\\
+
+% % \noindent\hfil\rule{0.5\textwidth}{.4pt}\hfil
+
+% % VAEs and the Super resolution VAEs. 
+% % Conditional VAEs and the Super resolution CVAEs.
+% % CVAEs do not require an assumption of the conditional variable which can be seen as 
+% % a huge advantage or disadvantage depending on the application.
+
+% % VAE-based models have often been criticised for their
+% % feeble generative performance~\citep{chira2022image} but with new advancements
+% % such as VDVAE , there is now strong evidence that deep VAEs have the potential
+% % to outperform current state-of-the-art models for high-resolution image
+% % generatio.\\
+
+% % Pairwise Markov Model for super resolution tasks
+
+% % In the further, we will try to use the PMC for super resolution tasks.???
+% % In the future, we will
+% % continue to explore other SR algorithms and segmentation models. We will also
+% % continue to refine the segmentation of SR-CT images. A primary limitation we
+% % have encountered is the challenge of interpreting the results, and we emphasize
+% % the importance of a medical interpretation to further enhance the workflow.
+% % % \pagebreak
+% % % \section*{Possible questions and remarks}
+% % % Link with difussion models
+
+% % % Semi-supervised model and  the use of $\obs_{0:T}$ as a vector from left to right and
+% % % not from right to left, any change in the model?
+% % % (HMCs)For such models, choosing between a gradient ascent method or the EM-algorithm
+% % % remains an open question that we do not address.

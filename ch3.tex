@@ -1,0 +1,1310 @@
+% !TEX root = late\obs_avec_réduction_pour_impression_recto_verso_et_rognage_minimum.tex
+\chapter{Triplet Markov models for semi-supervised classification}
+\markboth{CHAPTER 3. TMCs FOR SEMI-SUPERVISED CLASSIFICATION}{Short right heading}
+\label{chap:semi_supervised_pmc_tmc}
+
+
+\localtableofcontents
+\pagebreak
+
+% \epigraph{
+% ``It’s not an idea until you write it down.'' }{Ivan Sutherland}
+
+
+\pagebreak
+
+\section{Introduction}
+\label{sec:introduction_ch3}
+% \yohan{Here, I would directly consider that you want to apply previous models in
+% the case where we have labels associated to each observation. So you have (z,x)
+% which is replaced by (z,x,y) where y are the labels. And I would insist on the
+% fact that there is no difficulties for the inference steps in the supervised
+% case since x would be replaced by (x,y). However, two difficulties remain : 1.
+% how to conceive a generative models for the observations AND the labels? 2. How
+% to proceed to bayesian inference when the labels are partially observed (the
+% case where there no observed will be Chapter 4).}
+
+In this chapter, we want to extend the study we have done in the previous chapters
+to the case where we have labels associated with each observation.
+% We recall the notations and the problem statement,  
+% we consider a sequence of random variables $\obs_{0:T}=(\obs_{0}, \dots, \obs_{T})$, 
+% a sequence of labels $\lab_{0:T}=(\lab_{0}, \dots,\; \lab_{T})$ associated 
+% to the previous sequence $\obs_{0:T}$, and a sequence of continuous latent variables
+% $\latent_{0:T}=(\latent_{0}, \dots,\; \latent_{T})$.
+Let us recall the sequence of random variables $\obs_{0:T}=(\obs_{0}, \dots, \obs_{T})$
+and the sequence of labels $\lab_{0:T}=(\lab_{0}, \dots,\; \lab_{T})$ associated to 
+the previous sequence $\obs_{0:T}$, 
+where $\obs_t \in \mathbb{R}^{d_x}$, and $\lab_t \in \Omega=\{\omega_1,\dots,\omega_C\}$, 
+with $C$ the number of classes.
+We also consider a sequence of latent variables 
+$\latent_{0:T}=(\latent_{0}, \dots,\; \latent_{T})$, where  
+$\latent_t \in \mathbb{R}^{d_{\latent}}$.
+% For example, we consider the problem of image segmentation, where
+% the observations $\obs_{0:T}$ can represent a 
+% noisy grayscale image while $\lab_{0:T}$ represents
+% the original black and white image.
+% The goal is to recover the original image from a noisy version of it.
+% % \katyobs{Add an image here and in the introduction}
+
+
+The objective associated to Bayesian classification 
+consists in computing, for all $t$,
+the posterior distributions  $p(\lab_t|\obs_{0:T})$. %given in~\eqref{eq:post_distrib}.
+% Different approaches can be considered to address this problem for sequential
+% data. 
+The difficulty of the problem depends on the availability of the labels
+associated with the observations. When the labels are observed, the problem is
+referred to as supervised learning.
+% Different approaches can be considered to address this problem
+% for sequential data. 
+% The difficulty of the problem depends on the availability of the labels
+% associated with the observations. When the labels are observed, the problem is
+% referred to as supervised learning. 
+Chapter~\ref{chap:pmc} 
+ was dedicated to a general
+generative model based on PMCs, which can be used for 
+supervised learning. This adaptation involves taking as observed variable the
+pair of observations and labels $\obs_t \leftarrow (\obs_t, \lab_t)$, and
+applying the adapted variational Algorithm~\ref{algo:algo_train_dpmc_gen} 
+ discussed in the chapter (see Appendix~\ref{chap:appendix2} for more details). 
+However, in many real-world applications, it is expensive or impossible to obtain
+labels for the entire sequence $\obs_{0:T}$
+due to various reasons, such as the high cost of labeling,
+the lack of expertise, or the lack of time, etc.
+The labels can be partially observed or not observed at all,
+which leads to the semi-supervised and unsupervised learning problems, 
+respectively.
+Two main challenges arise in this context:
+\begin{itemize}
+    \item How to effectively design generative models that
+not only generate  observations $\obs_t$, but also generate labels $\lab_t$? 
+% The idea is to
+% integrate the labels into the generative process so that they are consistent
+% with the observations in terms of the underlying data distribution.
+% \item Bayesian inference with partial labels: When labels are only partially
+% observed or not observed at all, the challenge becomes more complicated. 
+\item How to perform effective Bayesian inference under 
+these  conditions?
+%  of partially observed labels or no labels at all?
+% ~\ref{chap:unsupervised_pmc_tmc}.
+% These scenarios will be explored in detail in Chapter 4.
+\end{itemize}
+
+
+This chapter is devoted to the semi-supervised learning problem, 
+and the unsupervised learning problem  will be addressed in the next chapter.
+Here, the objective is to estimate the unobserved labels from the observations
+and the observed labels. To that end, the TMC model is  considered (see Subsection~\ref{sec:seq_gen_models})
+ in which we can model not only the
+sequence of observations $\obs_{0:T}$, 
+and their associated labels $\lab_{0:T}$, but also incorporate an 
+auxiliary sequence $\latent_{0:T}$,  which can provide additional information
+about the relationship between the observations and the labels.
+We  propose a new adaptation of the VI algorithm
+presented in the previous chapter, which enables us to estimate the parameters
+of a general TMC model, and the unobserved labels. 
+This general semi-supervised learning algorithm enables us to derive a variety
+of (deep) generative models which have been applied to sequential Bayesian
+classification problems. Finally, we consider the problem of image segmentation, where
+the observations $\obs_{0:T}$ represent a 
+noisy grayscale image while $\lab_{0:T}$ represent
+the original black and white image.
+The goal is to recover the original image from a noisy version of it.
+We show that our approach outperforms the
+state-of-the-art semi-supervised learning algorithms 
+such as the~\gls*{vsl}~\citep{chen2019variational},
+and the~\gls*{svrnn}~\citep{butepage2019predicting}.
+% \yohan{Maybe you should explain that the TMC you already introduced in the
+% introduction enables you to propose a full generative models on the labels and
+% the observations (in the sense that existing models are conditional models ?)}
+
+% \yohan{I would replace this section by : ``a brief description of the
+% semi-supervised problem in generative models''}
+
+% \newpage
+\section{Semi-supervised estimation in general TMC}
+% \section{General Triplet Markov Chain}
+\label{chp:gen_tmc}
+\subsection{General parameterization of the TMC}
+\label{sec:general_param_tmc}
+% \yohan{Think about it : is it better to introduce such parameterization before
+% or after the ELBO? Because we never use the specifical parameterization in the
+% bayesian inference section?}
+
+% the choice of the transition distribution
+% $\p(\triplet_t| \triplet_{t-1})$ is a thorny problem
+% from a theoretical point of view, similar to the one encountered in the PMC model.
+% The transition distribution can be factorized
+% in different ways and derive different models.
+
+
+
+We recall the TMC model given in Equation~\eqref{eq:tmc_intro}:
+$$\p( \latent_{0:T}, \lab_{0:T}, \obs_{0:T} ) = \p(\latent_0,\lab_0,  \obs_0) 
+\prod_{t=1}^T \p(\triplet_t| \triplet_{t-1}) \text{,}$$
+where the triplet $\triplet_t=(\latent_t, \lab_t,  \obs_t)$.
+Here, it is possible to have different factorizations of the transition
+distribution $\p(\triplet_t| \triplet_{t-1})$. 
+
+\begin{example}
+    The following factorizations are  the possible choices for the transition
+    distribution $\p(\triplet_t| \triplet_{t-1})$:
+    \begin{align*}
+        \p(\triplet_t| \triplet_{t-1}) 
+         &= \p(\obs_{t}| \triplet_{t-1}) \p(\lab_{t}| \obs_{t}, \triplet_{t-1}) \p(\latent_{t}| \obs_{t}, \lab_{t}, \triplet_{t-1}) 
+         \text{,}\\
+        \p(\triplet_t| \triplet_{t-1}) &= \p(\obs_{t}| \lab_{t}, \triplet_{t-1}) \p(\lab_{t}| \triplet_{t-1}) 
+        \p(\latent_{t}|\obs_{t},  \latent_{t}, \triplet_{t-1}) \text{,}\\
+        \p(\triplet_t| \triplet_{t-1}) &= \p(\obs_{t}| \obs_{t}, \lab_{t}, \triplet_{t-1}) \p(\lab_{t}| \latent_{t}, \triplet_{t-1})
+        \p(\latent_{t}|\triplet_{t-1}) \text{.}
+    \end{align*}
+    In the first example, $\obs_t$ depends on the triplet
+    $\triplet_{t-1}$,  the label $\lab_t$ depends on the observation $\obs_t$
+    and the triplet $\triplet_{t-1}$, and the latent variable $\latent_t$ depends on
+    the observation $\obs_t$, the label $\lab_t$ and the triplet $\triplet_{t-1}$.
+\end{example}
+The choice of the factorization of the transition distribution depends on 
+the specific application and the underlying model.
+Thus,  we use a general notation for the associated
+ conditional distributions
+$\p(\obs_t |\;\cdot\;)$, $\p(\latent_t| \;\cdot\;)$ and $\p(\lab_t | \;\cdot\;)$ 
+in order to avoid presenting a specific dependence between variables. 
+
+
+In Chapter~\ref{chap:pmc}, 
+we have introduced the probability density functions on $\mathbb{R}^{d_\obs}$, 
+$\mathbb{R}^{d_\latent}$, as $\zeta$, 
+and $\eta$, respectively 
+(Equations~\eqref{pmc-theta-1-gen}, and~\eqref{pmc-theta-2-gen}).
+They are introduced to describe a general parameterization of the PMC model.
+% These functions are used to describe the parameters of the transition
+% distributions for latent and observed variables within the PMC framework. 
+As we extend these ideas to the TMC model in this chapter, 
+we continue to use the functions to parameterize the transition distribution 
+in the TMC model.
+We also define $\vartheta$ as a probability distribution on $\Omega$, 
+which is used to parameterize the transition distribution for the labels
+and is differentiable w.r.t. their parameters.
+The general parameterized model is described by:
+
+\begin{align}
+\label{eq:general_model_tmc}
+    \p(v_t|v_{t-1}) &=  \p(\obs_t|\;\cdot\;) \; \p(\latent_t|\;\cdot\;) \; \p(\lab_t|\;\cdot\;) \text{,}\\
+\label{eq:pz}
+    \p(\latent_t | \;\cdot\;) &= \eta(\latent_t; \; \pz(\;\cdot\;) ) \text{,}\\
+\label{eq:py}
+    \p(\lab_t | \;\cdot\;) &= \vartheta(\lab_t; \; \py(\;\cdot\;)) \text{,}\\
+    \label{eq:px}
+    \p(\obs_t | \;\cdot\;) &= \zeta(\obs_t; \; \px(\;\cdot\;) ) \text{,}
+\end{align}
+where  $\py$, $\px$ and $\pz$ are 
+vector-valued functions that are assumed to be
+differentiable w.r.t. $\theta$. 
+% In other words, $\py$, $\px$ and $\pz$
+% describe the parameters of the (conditional) distribution $\vartheta$, 
+% $\zeta$ and $\eta$, respectively.
+% We also assume that $\zeta$, $\vartheta$ and $\eta$ are differentiable w.r.t. 
+% their parameters.
+
+% \yohan{The problem with this notation is that we have no idea on the dependencies 
+% on the conditional variables and so on the chosen factorization. 
+% So if you want to avoid to make a choice on the factorization, explain 
+% it better (for eg: in function of the chosen factorization, 
+% $z_t$ can depend on $x_t$,...)}
+
+
+\begin{example}
+    % \yohan{explain in this example the factorization you have chosen and the
+    % interest of such model (binar classification with continuous latent and
+    % observation variables,), so a generalization of the TMC of pieczynski where
+    % the latent variable is now continuous. For simplicity I will just assume the
+    % classical hidden markov chain with an additional latent variable in this
+    % example and explain that y is the pixel, x the noisy observation and z a
+    % variable which enables to ``learn'' the nature of the noise}
+
+    For the sake of clarity, let us explore a specific application of the
+    TMC model where the labels $\lab_t$ are binary ($\Omega=\{\omega_1,\omega_2 \}$).
+    The observations satisfy $\obs_t \in \mathbb{R}$, and $\latent_t \in \mathbb{R}$, 
+    for all $t$.
+    This setup is particularly useful in image processing tasks such as 
+     noise reduction and classification,
+     where $\lab_t$ represents a pixel's classification (\eg~object vs. background),
+     $\obs_t$ is the observed noisy pixel value, and $\latent_t$ models the latent
+     variables that influence the observation's noise characteristics.
+    Thus, we can extend the TMC model proposed in~\citep{pieczynski2005triplet},
+     by incorporating a continuous latent variable $\latent_t$.
+    In particular, the model can be described as
+    % \begin{align*}
+    %     \p(\lab_t | \lab_{t-1},\, \obs_{t-1}, \latent_{t-1} ) 
+    %     &= \vartheta(\lab_t;\; \py(\lab_{t-1},\, \obs_{t-1}, \latent_{t-1})) 
+    %     \text{,}\\
+    %     \p(\obs_t| \lab_{t-1} )   
+    %     &= \zeta(\obs_t;\; \px(\lab_{t-1}) ) \text{,}\\
+    %     \p(\latent_t| \obs_{t-1},\, \lab_{t-1})
+    %     &=  \eta(\latent_t;\pz(\obs_{t-1},\, \lab_{t-1})  )  
+    % \end{align*}
+    \begin{align*}
+        \py(\lab_{t-1},\, \obs_{t-1},\, \latent_t) &= 
+        {\rm sigm}(a_{\lab_{t-1}} \obs_{t-1} + b_{\lab_{t-1}} \latent_t + c_{\lab_{t-1}})
+        \text{,} \\
+        \px(\obs_{t}) 
+        &= \big[d_{\lab_{t}},\, \sigma_{\lab_{t}} \big] \text{,} \\
+        \pz(\obs_{t-1},\, \lab_{t-1}) &=  
+        \big[ e_{\lab_{t-1}}\obs_{t-1},\, \sigma_{\lab_{t-1}}'\big] 
+        \text{,} \\
+        \vartheta(\lab_t; \rho)&= \Ber\left(\lab_t; \rho \right) 
+        \text{,} \\
+        \zeta(\obs_t; s = [\mu,\, {\sigma}] ) &=     
+        \mathcal{N}(\obs_t; \mu,\, {\sigma}^2 )
+        \text{,} \\
+        \eta(\latent_t; s' = [\mu',\, {\sigma'}])  
+        &= \N\left(\latent_t;  \mu' ,\, {\sigma'}^2 \right)   
+        \text{,}
+    \end{align*}
+where ${\rm sigm}(v)=1/(1+\exp(-v)) \in [0,\,1]$ is the sigmoid function.
+Note that, for example, the notation $d_{\lab_{t}}$ means that
+the parameter $d$ depends on the label $\lab_{t}$, 
+\ie~$\p(\obs_t|\lab_{t} = \omega_j) = \N(\obs_t; d_{\omega_j},\, \sigma_{\omega_j}^{\obs})$.
+The set of parameters is then given by:
+\begin{align*}
+    \theta &= \big ( a_{\omega_i},\, b_{\omega_i},\, c_{\omega_i},\, 
+    d_{\omega_j},\, 
+    \sigma_{\omega_j},\, e_{\omega_i},\, \sigma_{\omega_i}'
+    | (\omega_i,\omega_j) \in \Omega^2 \big ) \text{.} 
+\end{align*}
+This parameterization can be easily extended to
+the multi-class cases with $C>2$ by replacing $\pyun$
+by a vector of the ${\rm softmax}$ function, 
+and $\vartheta(\lab_t;\rho)$ 
+by the categorical distribution described
+by the $C$ components of  a vector $\rho$. 
+% \katyobs{Check if it is a good example}
+\end{example}
+
+\begin{remark}
+    \label{rem:general_param}
+    The parameterization of the TMC model is very general and can be used to derive 
+    a variety of models. 
+    Similarly to the PMC model, the functions $\py$, $\px$ 
+    and $\pz$  can also be parameterized by deep neural networks, where 
+    the parameters $\theta$ encompass the 
+    weights and biases of the neural networks.
+    We will refer to this model as the \gls*{dtmc}
+    % deep TMC (d-TMC)
+     model.
+    % For example, the Variational Sequential Labeler (VSL)~\citep{chen2019variational}
+    % and the Semi-Supervised Variational Recurrent Neural Network (SVRNN)~\citep{butepage2019predicting}
+    % are particular instances of the TMC model.
+    % In the next sections, we present three particular instances of the TMC model.
+\end{remark}
+       
+
+
+
+\subsection{A brief description of the semi-supervised problem}
+In many practical scenarios, obtaining complete label information for all data
+points is often infeasible. Consequently, we frequently encounter 
+situations where only a
+subset of the labels is observed. This incomplete labeling poses significant
+challenges for effective model training and inference.  
+% In this section, we address the problem of semi-supervised Bayesian
+%  estimation in general TMCs given in~\eqref{eq:tmc_intro}.
+%  ~\eqref{eq:tmc_intro}.
+To clarify our approach, we decompose the sequence of labels  
+$\lab_{0:T}$ into observed and hidden components:
+$$\lab_{0:T}  = (\labl, \labu) \text{,}$$ 
+where $\labl=\{\lab_t\}_{t\in \LL}$  (resp. $\labu=\{\lab_t\}_{t\in \U}$) 
+is the set of observed (resp. hidden) labels.
+Here,  $\LL$ (resp. $\U$) denotes the set of time indices where labels are 
+observed (resp. hidden).
+We assume that $\LL \cap \U = \emptyset$ and $\LL \cup \U = \{0,\dots,T\}$.
+For example, if $T=5$, and labels are observed at time steps $0,1,2$, 
+then $\LL=\{0,1,2\}$ and $\U=\{3,4,5\}$.
+Thus, our observed data is  $(\obs_{0:5}, \lab_0, \lab_1, \lab_2)$, and 
+the hidden labels are $(\lab_3, \lab_4, \lab_5)$.
+
+
+% Our  main objectives are to estimate the parameters $\theta$ of the TMC model
+% and to compute the posterior distribution of the hidden labels $\labu$.
+% % is to train relevant generative models 
+% % based on TMCs~\eqref{eq:tmc}, and to look for estimating 
+% % the missing labels 
+% % associated to each sequence. 
+% The introduction of a continuous latent process $\latent_{0:T}$ is 
+% interesting from a modeling point of view, however
+% a direct application would involve the computation of intractable integrals.
+
+Here, our goal is to estimate the parameters $\theta$  of the TMC model
+from  $(\obs_{0:T},\labl)$,
+and compute the posterior distribution of the hidden labels $\lab_t$,
+for all $t \in \U$. 
+The likelihood of the observed data $(\obs_{0:T},\labl)$ reads
+\begin{align}
+    \label{eq:likelihood_semi}
+    \p(\obs_{0:T}, \labl)=\sum_{\lab_s \text{, }  s \in \U} 
+    \int \p(\latent_{0:T},\lab_{0:T},\obs_{0:T}) {\rm d}\latent_{0:T} \text{,}
+\end{align}
+and the posterior distributions, for all $t \in \U$, are defined as 
+\begin{align}
+    \label{eq:post_distrib_semi}
+    p(\lab_t|\obs_{0:T},\labl)=\frac{\sum_{\lab_s \text{, }  
+    s \in \U \backslash \{t\}} \int 
+    p(\latent_{0:T},\lab_{0:T},\obs_{0:T}) {\rm d}\latent_{0:T}  } 
+    { \sum_{\lab_s \text{, }  s \in \U} \int p(\latent_{0:T},\lab_{0:T},\obs_{0:T}) {\rm d}\latent_{0:T}} 
+    \text{.}
+\end{align}
+
+Equations~\eqref{eq:likelihood_semi} and~\eqref{eq:post_distrib_semi}
+involve integrals w.r.t. the latent variables.
+% , which are not exactly computable
+% in general.
+% ~\eqref{eq:likelihood_semi}, 
+% and posterior distributions~\eqref{eq:post_distrib_semi} 
+%  involve  integrals w.r.t. the latent variables.
+Consequently, they are not exactly computable in general. 
+To that end, we have proposed a VI approach
+presented in Chapters~\ref{chap:main_concepts}
+and~\ref{chap:pmc}.
+However, the algorithms cannot be applied directly to this case 
+since partial observations of the
+sequence $\lab_{0:T}$ result in hidden labels.
+As consequence, the variational distribution has to be adapted 
+to the case where the observed variables are 
+$(\obs_{0:T}, \labl)$
+and the latent variables are $(\latent_{0:T}, \labu)$.
+We deal with both discrete and continuous latent variables,
+which is a challenging problem since the variational distribution
+has to be factorized in order to be tractable, and 
+has to be independent of the time step $t$ 
+in order to have a general
+model able to be applied to different contexts.
+
+
+
+% \katy{HERE}
+% \begin{remark}
+%     \label{rem:factorization_tmc}
+%     % Our main interest is to propose a general model, 
+%     % which enables us to derive a variety of models.
+%     The following factorizations of the transition distribution are 
+%     some few examples, and there are other potential factorizations. 
+%     The choice of which to use will be driven by the specific application and 
+%     the underlying model.
+%     \begin{align*}
+%         \p(\triplet_t| \triplet_{t-1}) &= \p(\obs_{t}| \triplet_{t-1}) \p(\lab_{t}| \obs_{t}, \triplet_{t-1}) \p(\latent_{t}| \obs_{t}, \lab_{t}, \triplet_{t-1}) \text{,}\\
+%         \p(\triplet_t| \triplet_{t-1}) &= \p(\obs_{t}| \lab_{t}, \triplet_{t-1}) \p(\lab_{t}| \triplet_{t-1}) 
+%         \p(\latent_{t}|\obs_{t},  \latent_{t}, \triplet_{t-1}) \text{,}\\
+%         \p(\triplet_t| \triplet_{t-1}) &= \p(\obs_{t}| \obs_{t}, \lab_{t}, \triplet_{t-1}) \p(\lab_{t}| \latent_{t}, \triplet_{t-1})
+%         \p(\latent_{t}|\triplet_{t-1}) \text{.}
+%     \end{align*}
+    
+%     % This choice of the factorization
+%     % can derive different models. 
+%     % , such as the Variational Sequential Labeler (VSL)~\citep{chen2019variational}
+%     % and the Semi-Supervised Variational Recurrent Neural Network (SVRNN)~\citep{butepage2019predicting}.
+% \end{remark}
+
+
+% In Chapter~\ref{chap:pmc}, we have presented the PMC model
+% as a generative model for sequential data.
+% This model relies on a general parameterization of the two
+% distributions ($\p(\obs_t|\lab_{t-1:t}, \obs_{t-1})$ 
+% and $\p(\lab_t|\lab_{t-1},\obs_{t-1} )$)
+% involved in the transition distribution
+% $\p(\obs_t,\lab_t|\obs_{t-1},\lab_{t-1})$, which 
+% defines the joint distribution $\p(\obs_{0:T},\lab_{0:T})$,
+% \begin{equation*}
+%     \label{pmc_semi}
+%      \p(\lab_{0:T},\obs_{0:T})=\p(\lab_0,\obs_0)\prod_{t=1}^T \p(\lab_t,\obs_t|\lab_{t-1},\obs_{t-1}) \text{.} 
+% \end{equation*}
+
+
+% However, the choice of these distributions 
+% cannot be obvious in practice and can have
+% an impact on the performance of the classification. 
+% When we introduce the PMC the observation $\obs_t$ not only depends on $\lab_t$
+% but can also depend on $\lab_{t-1}$ (and/or $\obs_{t-1}$).
+% A consequence one has to deal with during the inference process is that
+% $\lab_{t-1}$ can also be associated to a class related to the observation
+% $\obs_t$.
+% The goal of this section is to consider three processes, 
+% the observations $\obs_{0:T}$, the labels $\lab_{0:T}$ and a third 
+% process $\latent_{0:T}$. 
+% This third auxiliary and continuous process  $\latent_{0:T}$
+% aims at complexifying the distribution
+% $\p(\lab_{0:T},\obs_{0:T})$~\citep{bayer2015learning}.
+% % The rationale behind this auxiliary process
+% % is that even if $\p(\latent_{0:T})$ and 
+% % $\p(\obs_{0:T}|\latent_{0:T})$ are two elementary distributions, the resulting
+% % distribution $\p(\obs_{0:T})=\int \p(\latent_{0:T})\p(\obs_{0:T}|\latent_{0:T}) {\rm d} \latent_{0:T}$ 
+% % can be complex~\citep{bayer2015learning}. 
+% In our classification context, the third latent process   can be 
+% used to implicitly estimate the nature of 
+% the distributions $\p(\obs_t|\lab_{t-1:t},\obs_{t-1})$ 
+% and $\p(\lab_t|\lab_{t-1}, \obs_{t-1})$
+% of our presented PMC; or to model the process $(\lab_{0:T}, \obs_{0:T})$ 
+% since  $\p(\lab_{0:T},\obs_{0:T})=\int \p(\latent_{0:T})\p(\lab_{0:T},\obs_{0:T}|\latent_{0:T}) {\rm d}\latent_{0:T}$.
+% Thus, we propose to consider a generalization of the PMC model 
+% by introducing a third continuous process $\latent_{0:T}$.
+% This generative model is  the Triplet Markov Chain
+% model~\eqref{eq:tmc}, 
+% which was previously presented in Section~\ref{chp:gen_tmc}.
+
+% \katy{END HERE}
+
+
+\section{Semi-supervised Variational Inference for TMCs}
+In this section, we explore the semi-supervised variational inference method
+applied to  general TMCs.
+We start by the ELBO, and the formulation of the variational
+distribution. Finally, we propose an algorithm to estimate the parameters
+of the TMC model in the semi-supervised context.
+
+\subsection{ELBO for semi-supervised learning}
+
+We consider the variational distribution 
+$\q(\latent_{0:T}, \labu|\obs_{0:T}, \labl)$. 
+The ELBO of the log-likelihood~\eqref{eq:likelihood_semi} reads
+\begin{align}
+\label{eq:elbo_seq}
+\Qsemi(\theta,\phi) \!&=\!  - \! \sum_{\substack{\lab_s, \\ s \in \U} } \int  \q(\latent_{0:T}, \labu|\obs_{0:T}, \labl) %\times \nonumber \\ & \quad \quad
+\log \left(\frac{\q(\latent_{0:T},\labu  |\obs_{0:T},\labl)}{\p(\latent_{0:T}, \lab_{0:T},\obs_{0:T})}\right)  {\rm d} \latent_{0:T} 
+\text{.}
+\end{align}
+% where  the joint distribution $\p(\latent_{0:T},\obs_{0:T}, \lab_{0:T})$ 
+% is defined by the TMC model.
+Let us now discuss on the 
+computation of 
+\eqref{eq:elbo_seq}.
+First, it is worthwhile to remark 
+that it does not depend on the choice of the generative model.
+Any parameterized TMC model~\eqref{eq:general_model_tmc}-\eqref{eq:py}
+can be used 
+since $ \p(\latent_{0:T},\obs_{0:T}, \lab_{0:T})$ is 
+defined by the transition distribution $\p(\triplet_t| \triplet_{t-1})$
+and the initial distribution $\p(\triplet_0)$.
+Thus, its computation only depends
+on the choice of the variational
+distribution $\q(\latent_{0:T}, \labu|\obs_{0:T}, \labl)$, 
+which can be factorized in two different ways.
+% \katyobs{For sake of clarity, we will omit
+% the initial distribution of the variables at time $t=0$.}
+
+The first factorization is given by
+\begin{align}
+\label{eq:fact-1}
+\q(\latent_{0:T}, \labu | \obs_{0:T}, \labl)= & \q^{0} \times  \prod_{t=1}^T  \q(\latent_t|\latent_{0:t-1},\lab_{0:t-1},\obs_{0:T},\lab_{t+1:T}^{\LL}) \times \nonumber \\ 
+& \prod_{\substack{t\geq 1\\ t \in \U}}^T  \q(\lab_t|\lab_{0:t-1},\latent_{0:t},\obs_{0:T},\lab_{t+1:T}^{\LL}) \text{,}
+\end{align}
+where  $\lab_{0:t-1}=(\lab_{0:t-1}^{\U},\lab_{0:t-1}^{\LL})$, and 
+\begin{eqnarray*}
+    \q^{0}&=& \left\{
+    \begin{matrix}
+    q(\latent_0| \obs_{0:T},\labl)  & \; \text{if }  t=0 \in \LL \text{,}\\ 
+    \q(\latent_0| \obs_{0:T},\labl) \q(\lab_{0}|\latent_0, \obs_{0:T},\labl) & \; \text{otherwise.}
+    \end{matrix} \right. %\text{.}
+\end{eqnarray*}
+While the second one coincides  with 
+\begin{align}
+\label{eq:fact-2}
+\q(\latent_{0:T}, \labu|\obs_{0:T}, \labl)=&  \q^{0} \times  \prod_{t=1}^T  \q(\latent_t|\latent_{0:t-1},\lab_{0:t},\obs_{0:T},\lab_{t+1:T}^{\LL}) \times \nonumber \\ 
+& \prod_{\substack{t\geq 1\\ t \in \U}}^T  \q(\lab_t|\lab_{0:t-1},\latent_{0:t-1},\obs_{0:T},\lab_{t+1:T}^{\LL}) \text{,}
+\end{align}
+and
+\begin{eqnarray*}
+    \q^{0}&=& \left\{
+    \begin{matrix}
+    q(\latent_0| \obs_{0:T},\labl)  & \; \text{if } t=0 \in \LL \text{,} \\ 
+    \q(\latent_0|\lab_0, \obs_{0:T},\labl) \q(\lab_{0}|\obs_{0:T},\labl) & \; \text{otherwise.}
+    \end{matrix} \right. %\text{\\}
+\end{eqnarray*}
+
+
+Once the variational distribution is chosen, and the generative model is fixed
+(\ie~the factorization of the transition distribution
+is fixed
+% ~\eqref{eq:general_model_tmc}-\eqref{eq:py}
+), 
+the ELBO $\Qsemi(\theta,\phi)$ in~\eqref{eq:elbo_seq} can be rewritten as
+\begin{align}
+\label{eq:elbo_seq2}
+\Qsemi(\theta,\phi) = %\beta 
+\L^{\LL}(\theta,\phi) + \L^{\U}(\theta,\phi) \text{,}
+\end{align}
+where
+% for the sake of clarity, we assume that $t=0$ is observed, \ie~$0 \in \LL$,
+\begin{align}
+\label{eq:elbo_seq_obs}
+\L^{\LL}(\theta,\phi) \;=\; &  \sum_{\substack{ t \in \LL} } \Big[ 
+\E_{\q(\latent_{t}| \cdot ) } (\log p(\obs_t| \; \cdot \; )
++\log p(\lab_t| \; \cdot \; ))
+% \nonumber \\& 
+- \dkl (\q(\latent_{t}|\; \cdot \; )|| \p(\latent_{t}|\; \cdot \; )) 
+\Big] \text{,} \\ 
+\label{eq:elbo_seq_hidden}
+\L^{\U}(\theta,\phi) = & \sum_{\substack{ t \in \U} } \Big[
+\E_{\q(\latent_{t}, \lab_{t}| \cdot ) } \log p(\obs_t| \; \cdot \; )
+- \dkl (\q(\latent_{t}|\; \cdot \; )|| \p(\latent_{t}|\; \cdot \; ))
+\nonumber \\& \quad  \quad \quad
+- \dkl (\q(\lab_{t}|\; \cdot \; )|| \p(\lab_{t}|\; \cdot \; ))
+\Big] \text{.}
+\end{align}
+% where $\beta$ is the weight of the supervised term $\L^{\LL}$, 
+% and it is a hyperparameter of the model.
+
+$\L^{\LL}$ and $\L^{\U}$ can be seen as the ELBOs associated to the 
+observed and hidden labels, respectively.
+% The decomposition~\eqref{eq:elbo_seq2} can be seen as a generalization to the 
+% sequential case of a XXXX
+
+
+% \begin{remark}
+%     $\L^{\LL}$ and $\L^{\U}$ can be seen as the ELBOs associated to the 
+%     observed and hidden labels, respectively.
+%     % In fact, the proposed ELBO  $\Qsup(\theta,\phi)$~\eqref{eq:elbo_sup_pmc}
+%     % in Chapter~\ref{chap:pmc}, for supervised classification 
+%     % (all labels are observed) with the PMC model,
+%     % can be seen as a particular case of $\L^{\LL}$.
+%     % Indeed, if we assume that all labels are observed, 
+%     % then $\U=\emptyset$ and $\L^{\LL}=\Qsup$,
+%     % with specific choices of the variational distribution
+%     % and the generative model.
+% \end{remark}
+
+\subsection{Learning semi-supervised TMCs}
+Now, it remains to compute the ELBO 
+$\Qsemi(\theta,\phi)$~\eqref{eq:elbo_seq2}, ,
+which is not tractable in general.
+Moreover, we also deal with both discrete and continuous latent variables. 
+We now present how to easily approximate the ELBO
+in this case.
+%  of discrete and continuous latent variables.
+
+
+\paragraph*{Continuous latent variables: } 
+The ELBO $\Qsemi(\theta,\phi)$
+involves computation of the expectation according to 
+the variational distribution,
+$\q(\latent_{t}|\;\cdot \;)$,
+which is often intractable.
+We thus propose to use a Monte-Carlo approximation based on the reparameterization 
+trick for continuous latent variables (see Section~\ref{subsec:optimization_vae}) 
+similar to the one used in the PMC model.
+This technique allows us to sample from the variational distribution
+% These techniques allow us to sample from the variational distributions    
+$\q(\latent_{t}|\; \cdot \;)$.
+% $\q(lab_t|\; \cdot \;)$, respectively.
+By sampling in this way, we obtain $M$ differentiable samples 
+$\latent_{0:T}^{(m)}$. 
+% given by
+% \begin{align}
+%     \label{eq:reparametrization_vtmc}
+%     \latent_{0:T}^{(m)} =& g(\phi ,\epsilon^{(m)}) \text{, for all } m = 1, \dots, M \text{,}
+% \end{align}
+% where $\epsilon^{(m)}$ is a random variable sampled from a distribution 
+% which does not depend on $\phi$, and where $g$ is a differentiable function of $\phi$.
+The $M$ samples $\latent_{0:T}^{(m)}$ are used to approximate the expectations. After this, 
+an optimization algorithm can be used to estimate the parameters
+% \item Handling of the continuous latent variables: We use the reparameterization trick
+(See example~\ref{ex:gaussian_case}).\\
+
+\paragraph*{Discrete latent variables: } 
+% Discrete variables pose several challenges 
+% in optimization and learning as 
+% they are fundamentally non-differentiable. 
+% % In most optimization algorithms
+% % used in practice, the gradients are computed and used to update the parameters.
+% Thus, it is not trivial to perform optimization with respect to the parameters of 
+% the categorical distributions $\p(\lab_t|\; \cdot \;)$ and
+%  $\q(\lab_t|\; \cdot \;)$.
+A static semi-supervised model with discrete latent variables 
+has been proposed in~\citep{kingma2014semi} and solves this problem by
+marginalizing out $\lab$ over all the labels. 
+However, this approach is not tractable
+when numerous labels are involved.
+In Chapter~\ref{chap:main_concepts},
+we have presented  the use of discrete variables 
+in a VI framework (see Subsection~\ref{subsec:vbi})
+The  Straight-Through Gumbel-Softmax estimator provides a way to relax discrete variables, 
+making them differentiable and amenable to gradient-based optimization. 
+In addition, the expectation with respect to the variational distribution
+$\q(\lab_t|\; \cdot \;)$ is evaluated with a single relaxed 
+sample~\citep{andriyash2018improved,jang2016categorical}.\\
+
+
+In summary, this approach combines the (classical)
+reparameterization trick for continuous latent variables
+and the G-S trick for discrete latent variables, in order
+to obtain differentiable samples from the variational distributions
+$\q(\latent_{t}|\; \cdot \;)$ and $\q(\lab_{t}|\; \cdot \;)$, respectively.
+These samples are used to approximate the ELBO \eqref{eq:elbo_seq2}, 
+making it computationally feasible for optimization. 
+In addition, the $\dkl$ terms in \eqref{eq:elbo_seq_obs} and \eqref{eq:elbo_seq_hidden}
+can be computed analytically since the variational distribution is assumed to be tractable.
+% ~\cite{maddison2016concrete, jang2016categorical} 
+% By using this Monte Carlo approximation, we can efficiently perform variational 
+% inference %in models with both continuous and discrete latent variables, 
+% facilitating the training and inference processes.
+Algorithm~\ref{algo:algo_train_tmc_semi} summarizes the proposed approach, 
+where we represent the hidden labels as a 
+stochastic vector, and the observed labels as a one-hot vector.
+In the case of S-T Gumbel-Softmax, in the forward pass,
+ line~\ref{line:sample_gumbel_softmax}
+is followed by an argmax operation to discretize the samples
+ (see Remark~\ref{rem:gumbel_softmax}).
+
+
+\begin{algorithm}[htbp!]
+    \caption{General parameter estimation for TMCs in semi-supervised classification context}
+    \label{algo:algo_train_tmc_semi}
+  \begin{algorithmic}[1]
+    \Require{$(\obs_{0:T}, \labl )$, the data where 
+    $\lab_t$ is one-hot encoded, for all $t \in \LL$; $\varrho$, the learning rate; 
+    $M$ the number of samples, 
+    $\tau$ the temperature parameter }
+    \Ensure{$(\theta^*, \phi^*)$, sets of estimated parameters}
+    \State Initialize the parameters $\theta^0$ and $\phi^0$
+    \State $j\leftarrow 0$\label{line:start_vtmc_semi}
+    \While{\text{convergence is not attained}}
+      \State Sample $\latent_0^{(m)}\sim q_{\phi^{{j}}}(\latent_0|\; \cdot \;)$,  
+      for all  $1 \leq m \leq M$.
+      \State Sample $\latent_t^{(m)}\sim q_{\phi^{{j}}}(\latent_t|\latent_{0:\cdot}^{(m)},\; \dots)$,   for all  $1 \leq m \leq M$, for all $1 \leq t \leq T$. 
+    %   \Statex{\textbf{Forward pass:}}
+    %   \State Sample $\lab_t^{G-M} \sim q_{\phi^{{j}}}(\lab_t|\latent_{0:\cdot}^{(m)}, \; \dots)$, 
+    %   using the Gumbel-Max trick, for all $t \in \U$. 
+    % \Statex{\textbf{Backward pass:}}  
+    \State Sample $\lab_t^{G-S} \sim q_{\phi^{{j}}}(\lab_t|\lab_{0:\cdot}^{G-M}, \; \dots)$,
+        using the Gumbel-Softmax trick, for all $t \in \U$, 
+        with temperature $\tau$. \label{line:sample_gumbel_softmax}
+    \State Evaluate the (approximated) loss $\widehat{\Qsemi}(\theta^{{j}},\phi^{{j}})$
+        with the samples $\latent_{0:T}^{(m)}$ and ${\lab_t}^{G-S}$, for all $t \in \U$.
+        % from \eqref{elbo_seq2}-\eqref{elbo_seq_hidden}. \label{line:evaluate_loss_semi}
+    \State{Compute the derivative of the loss function
+      $\nabla_{(\theta, \phi)} \widehat{\Qsemi}(\theta,\phi)$ with the 
+      samples $\latent_{0:T}^{(m)}$ and ${\lab_t}^{G-S}$, for all $t \in \U$.
+    %   from \eqref{eq:eq:elbo_seq2}-\eqref{eq:eq:elbo_seq_hidden}.
+    }\label{line:derivate_tmc_semi} 
+      \State Update the parameters with gradient ascent
+    \begin{equation}
+    \begin{pmatrix}\theta^{(j+1)}\\\phi^{(j+1)}\end{pmatrix}=
+    \begin{pmatrix}\theta^{{j}}\\\phi^{{j}}\end{pmatrix}
+    + \varrho {\nabla_{(\theta, \phi)} \widehat{\Qsemi}(\theta,\phi)}\Big|_{(\theta^{{j}},\phi^{{j}})}
+    \label{eq:elbo_grad_vtmc}
+    \end{equation}
+    \State  $j\leftarrow j+1$
+    \EndWhile
+    \State  $\theta^{*} \leftarrow \theta^{{j}}$
+    \State  $\phi^{*} \leftarrow \phi^{{j}}$
+    \label{line:end_dtmc_tmc_semi}
+  \end{algorithmic}
+    % \vspace*{0.2cm}
+\end{algorithm}
+
+% \begin{remark}
+%     In Line~\ref{eq:elbo_grad_vtmc}, we use the Adam optimizer~\citep{kingma2014adam}
+%     as in Algorithm~\ref{algo:algo_train_dpmc_gen}..
+% \end{remark}
+
+% which is nothing more than expectation 
+% according to $\q(\latent_{0:T}, \labu|\; \obs_{0:T}, \labl)$.
+% We thus propose to use a Monte-Carlo approximation based on the reparameterization trick in order
+% to obtain a differentiable approximation $\hat{Q}(\theta,\phi)$ of $Q(\theta,\phi)$. 
+
+%  we use the classical reparameterization trick to sample sequentially 
+% according to the continuous distribution $ q(\latent_t|\latent_{0:t-1},\lab_{0:t},\obs_{0:T},\lab_{t+1:T}^{\LL})$ (or 
+%  $q(\latent_t|\latent_{0:t-1},\lab_{0:t},\obs_{0:T},\lab_{t+1:T}^{\LL})$) (see  Example~\ref{example:gauss_variational}),
+% while we use the Gumbel-Softmax (G-S) 
+% trick~\citep{maddison2016concrete, jang2016categorical} to sample according to $q(\lab_t|$ $\lab_{0:t-1},\latent_{0:t},\obs_{0:T},\lab_{t+1:T}^{\LL})$ (or
+% $q(\lab_t|$ $\lab_{0:t-1},\latent_{0:t-1},\obs_{0:T},\lab_{t+1:T}^{\LL})$) since
+% the labels are discrete.
+
+%Since  only a subset of labels is observed $\labl$, the set of hidden 
+%labels $\labu$ is treated as latent variables and variational inference 
+%involves finding a lower bound on the marginal likelihood of the observed data $\obs_{0:T}$ and $\labl$.
+%The variational lower bound is given by: 
+% So the latent variables $\latent_{0:T}$ and $\labu$ are hidden variables that are not 
+% directly measurable or observable, but are inferred from the observed data  $\obs_{0:T}$ and $\labl$. 
+%\begin{align}
+ %   \label{eq:elbo_semi_tmc}
+ %   \log(\p(\obs_{0:T}, \labl) )   \geq  & -  \int \sum_{\labu}  \q(\latent_{0:T}, \labu|\obs_{0:T}, \labl) \times \nonumber \\ 
+ %   & \quad \quad  \log \left(\frac{\q(\latent_{0:T},\labu  |\obs_{0:T})}{\p(\latent_{0:T},\lab_{0:T}, \obs_{0:T})}\right)  {\rm d} \latent_{0:T} \nonumber \\
+ %   & =  Q(\theta,\phi) \text{,}  
+%\end{align}
+%where $\phi$ denotes the parameters of the variational distribution 
+%$\q(\latent_{0:T},\labu|\obs_{0:T}, \labl)$.
+
+%Since our model has both discrete and continuous latent variables, 
+%the approximation of the ELBO in Eq.~\eqref{eq:elbo_semi_tmc} becomes more complex.
+%To that end,  we can use the Gumbel-Softmax (G-S) 
+%trick~\cite{maddison2016concrete, jang2016categorical} and the reparametrization
+%trick~\cite{kingma2013auto} to approximate $Q(\theta,\phi)$ simultaneously.
+%For the continuous latent variables $\latent_{0:T}$, the reparametrization 
+%trick introduced in section \ref{subsec:varinf} is still valid.
+%On the other hand, for the discrete latent variables $\labu$, 
+%the G-S trick enables to obtain a differentiable approximation to the discrete
+%categorical distribution. 
+
+%It remains to choose a factorization of the variational distribution
+%$\q(\latent_{0:T}, \labu| \obs_{0:T}, \labl)$, which is a crucial step in variational inference.
+%Different models can be obtained by choosing different factorizations 
+%of the variational distribution, which will be discussed 
+%in the next section \ref{subsec:particular_cases}. For example, we can first consider  
+%$\q(\latent_{0:T}, \labu| \obs_{0:T}, \labl) =  \q(\latent_{0:T}| \obs_{0:T}, \lab_{0:T} ) \q(\labu| \obs_{0:T}, \labl )$ 
+%and then consider a mean-field variational distribution.
+
+
+
+% The computational complexity of using ELBO with both discrete and continuous 
+% latent variables depend on the specific model and the size of the data. 
+% In general, the Gumbel-Softmax trick involves sampling from a Gumbel
+% distribution and applying a softmax function, which tends to be 
+% computationally expensive. However, recent advances in hardware and 
+% software have made such calculations feasible and efficient.
+
+
+% \subsection{Estimation of the hidden labels}
+\paragraph*{Estimation of $\lab_{t}$, for all $t \in \U$: } 
+
+% Once we have an estimate $\phi^*$
+% of $\phi$ of the model with Algorithm~\ref{algo:algo_train_tmc_semi},
+% we can classify the hidden labels $\labu$, for all $t \in \U$.
+% This is done by using the variational distribution
+% $q_{\phi^*}(\lab_t|\; \cdot \;)$. 
+% Thus, we sample from the variational distribution
+% $\q(\lab_t|\; \cdot \;)$, for all $t \in \U$,
+% and obtain a complete sequence of  labels $\lab_{0:T}$.
+
+Once we have an estimate \(\phi^*\) of \(\phi\) of the model with Algorithm~\ref{algo:algo_train_tmc_semi},
+we can approximate the hidden labels \(y_{0:T}^{\mathcal{H}}\), for all \(t \in
+\mathcal{H}\). This can be done by using either the variational approximation
+\(q_{\phi^*}(y_t \mid \cdot)\) or an importance sampling approach with weighting.
+In the variational approximation method, we sample from the variational
+distribution \(q_{\phi}(y_t \mid \cdot)\), for all \(t \in \mathcal{H}\), and
+obtain a complete sequence of labels \(\hat{y}_{0:T}\). Alternatively, using the
+importance sampling approach, we would sample from the proposal distribution and
+weight the samples to obtain an approximation of the hidden labels. This method
+can provide a more accurate estimation, especially when the variational
+approximation is not sufficiently close to the true posterior.
+
+
+\section{Experiments}
+\label{sec:simulation}
+% \begin{example}
+%     We present the proposed approach for the case of a TMC with Gaussian latent variables
+%     and Bernoulli hidden variables,
+%     %  which is a particular case with $C=2$,  
+%     \ie
+%     $\lab_t$ takes values in $\Omega = \{1,0\}$  
+%     with probabilities $\pi_1 =\roqy$ $(\lab_t = 1)$
+%      and $\pi_2 = 1- \roqy$ $(\lab_t = 0)$.
+%     $\latent_t$ is a Gaussian random variable
+%     with mean $\mulatent$ and variance $\siglatent$.\\
+%     Thus, the variational distributions $\q(\latent_t|\; \cdot \;)$ 
+%     and $\q(\lab_t|\; \cdot \;)$
+%     are specified as follows:
+%     \begin{align*}
+%         \q(\latent_t|\; \cdot \;)= &
+%         \q(\latent_{t}|\latent_{t-1},\obs_{t})\\
+%         =& \mathcal{N}\left(\latent_t; \mulatent(\latent_{t-1},\obs_{t} ) , 
+%         \diag(\siglatent(\latent_{t-1},\obs_{t})) \right) \text{,}\\
+%         \q(\lab_t| \; \cdot \;)=& 
+%         \q(\lab_{t}|\latent_{t-1},\obs_{t}) \text{, for }  t \in \U \\
+%         =& \Ber(\lab_t; \roqy(\latent_{t-1},\obs_{t})) \text{,}
+%     \end{align*}
+%     where $\mulatent$, $\siglatent$ and $\roqy$ are differentiable 
+%     functions w.r.t. $\phi$
+%     and $\diag(\;\cdot \;)$ denotes  the diagonal matrix 
+%     deduced from the values of $\siglat$.  
+
+%     First, a sample $\latent_{t}^{(m)}$, for all $i \in [1:M]$ and $t \in [0:T]$,
+%     can be reparameterized  by using the reparameterization trick, 
+%     \begin{equation*}
+%         \latent_{t}=\mulatent(\latent_{t-1}^{(m)},\obs_t)+
+%         \diag(\siglatent(\latent_{t-1},\obs_t))^{\frac{1}{2}} 
+%         \times  \epsilon_t^{(m)} \text{,} \quad \quad \epsilon_t^{(m)} \overset{\text{\iid}}{\sim} \mathcal{N}(0,I) \text{.}
+%     \end{equation*}
+
+
+%     Now, we consider the hidden labels $\lab_t$. 
+%     For simplicity, we neglect the temperature $\tau$ in the following 
+%     discussion; in practice, however, the temperature parameter can be useful.
+%     Specifically, $\lab_t =1$ if 
+%     $$\log \pi_1 + G_1 > \log \pi_2 + G_2 \text{,}$$
+%     where $G_1$ and $G_2$ are i.i.d. samples from the Gumbel 
+%     distribution $\text{Gumbel}(0,1)$, 
+%     and made  the $\argmax$  explicit through the inequality, for  all $t \in \U$,
+    
+%     \begin{eqnarray}
+%         \label{eq:example_semi}
+%         \lab_t^{G-M}&=& \left\{
+%         \begin{matrix}
+%         \noindent 1  & \; \text{if } \log \roqy -\log(1-\roqy)  + G_1 - G_2>0 \text{, }\\ 
+%         0 & \; \text{otherwise.}
+%         \end{matrix} \right. %\text{.}
+%     \end{eqnarray}
+%     The Gumbel-Softmax trick allows us to obtain a differentiable approximation of the
+%     $\argmax$ function, \ie
+%     \begin{align*}
+%         \lab_t^{G-S} &=  \sigma(\log \roqy -\log(1-\roqy)  + G_1 - G_2) 
+%         \text{, for all } t \in \U \text{,}
+%     \end{align*}
+%     where $\sigma$ is the sigmoid function since $\lab_t$ takes values in $\{0,1\}$
+%     and the sigmoid is a particular case of the softmax function.
+%     % $\lab_t^{G-S}$ is a differentiable approximation of $\lab_t^{G-M}$. 
+%     The Kulback-Leibler divergence terms in 
+%     \eqref{eq:elbo_seq_obs} and \eqref{eq:elbo_seq_hidden}
+%     can be computed analytically and the reconstruction term dependents on the generative model.
+%     The corresponding Kullback-Leibler divergence terms with Bernoulli
+%     % and Gaussian distributions
+%     distributions can be calculated analytically, 
+%     for all $t \in \U$, as follows:
+%     \begin{align*}
+%         \dkl(\q(\lab_t|\cdot)|| \p(\lab_t|\cdot)) &= 
+%         \sum_{c\in \Omega} \log ((\roqy)^{c} (1-\roqy)^{(1-c)})
+%         - \log ((\ropy)^{c} (1-\ropy)^{(1-c)}) \text{,} \\
+%     \end{align*}
+%     where $\ropy$ is the probability of $\lab_t$ according to $\p(\lab_t|\cdot)$, 
+%     \ie~$\ropy = \p(\lab_t=1|\cdot)$.
+
+%     % Then the  approximation of the  general ELBO 
+%     % can be rewritten as
+%     % \begin{align*}
+%     %     \widehat{\Qsemi}(\theta,\phi)= & - \frac{1}{M} \sum_{i=1}^M   
+%     %     \log \left( \frac{\q(\latent_0^{(m)}|\obs_0, \lab_0 )}{\p(\latent_0^{(m)},\obs_0, \lab_0)}\right)
+%     %     - \frac{1}{M} \sum_{i=1}^M  \sum_{\substack{t\geq 1\\ t \in \U}} 
+%     %     \log \left(\q(\lab_t|\latent_{t-1}^{(m)},\obs_t) \right)   \\
+%     %     & - \frac{1}{M} \sum_{i=1}^M \sum_{t=1}^T 
+%     %     \log \left(\frac{\q(\latent_t^{(m)}|\latent_{t-1}^{(m)},\obs_t)}
+%     %     {\p(\latent_t^{(m)},\obs_t, \lab_t|\latent_{t-1}^{(m)},\obs_{t-1}, \lab_{t-1})} \right)
+%     % \end{align*}
+%     % which is next optimized w.r.t. $(\theta,\phi)$.
+% \end{example}
+
+In this section, we present the practical applications and 
+effectiveness of the TMC  model in a semi-supervised learning framework. We
+start by comparing our deep TMC models with existing probabilistic and deep
+learning models to highlight their advantages in terms of flexibility.
+Next, we detail binary data generation experiments that will be used
+for model comparison. Finally, we discuss the implementation of the semi-supervised 
+classification task and present the results obtained with each model variant. 
+
+
+\subsection{DTMC vs  existing models}
+\label{subsec:particular_cases}
+We have presented a general framework for semi-supervised learning
+with TMCs. It depends on the choice of
+the generative model, which is described by the transition distribution
+$\p(\triplet_t|\triplet_{t-1})$. It
+has an impact on the performance of the model 
+for a specific task  
+(classification, prediction, detection, or generation). 
+The choice of the variational distribution  
+$\q(\latent_{0:T}, \labu|\obs_{0:T}, \labl)$ is also crucial
+since it has an impact on the computational complexity of the model.
+% is a crucial step in variational inference.
+Different models can be obtained by choosing different factorizations
+of the variational distribution. A general factorization is given by
+\begin{align*}
+        \q(\latent_t | \;\cdot\;) &=  \tau(\latent_t; \qz (\;\cdot \;)) \text{,}\\
+        \q(\lab_t | \;\cdot\;) &=  
+        \varsigma(\lab_t;  \qy(\;\cdot\;)) \text{, for } t\in \U\text{,}
+\end{align*}
+where $\varsigma(\lab_t; \cdot )$ (resp. $\tau(\latent_t; \cdot )$ )
+is a probability distribution on $\Omega$
+(resp. probability density function on $\mathbb{R}^{d_\latent}$).
+$\qy$ and $\qz$ are assumed to be differentiable functions w.r.t. $\phi$ 
+(remember that $(\cdot)$ 
+denotes a non-specified dependence between the variables of the model).
+In the Deep TMC model, the set of parameters $(\theta, \phi)$  
+of the generating  and the variational distributions 
+can be described by deep neural networks.\\
+
+Now, we present two popular models in the literature, 
+which have been proposed for semi-supervised classification tasks.
+First, we present a variation
+of the Variational Sequential Labeler~\citep{chen2019variational} model 
+based on our general model;
+and then we present the
+Semi-supervised Variational Recurrent Neural Network model
+proposed by~\cite{butepage2019predicting}.
+Both models are considered as particular cases of the proposed framework
+and will be used in the experimental section to compare 
+the performance of the proposed model. 
+
+% \subsection{Modified variational sequential labeler}
+On one hand, the VSL is a semi-supervised learning model
+for sequential data which has originally been proposed for the 
+sequence labeling tasks in natural language processing, 
+that is based on conditional VAEs~\citep{pagnoni2018conditional}.
+% where at each time step $t$, the observation $\obs_t$ is generated
+% according its associated context $u_t$, which consists of the observations
+% other than $\obs_t$. 
+% The lower bound of the log-likelihood at each time step $t$ is given by
+% \begin{align*}
+%     \log \p(\obs_t | u_t) &\leq 
+%     \E_{\q(\latent_t|\obs_{0:T})} 
+%     \left[ \log \p(\obs_t | \latent_t, u_t)\p(\latent_t|u_t) \p(\lab_t|\latent_t, u_t)   \right]
+%     \text{, for all } t \in \LL \text{.}\\
+%     \log \p(\obs_t | u_t) &\leq 
+%     \E_{\q(\latent_t, \lab_t |\obs_{0:T})} 
+%     \left[ \log \p(\obs_t | \latent_t, u_t)\p(\latent_t|u_t) \p(\lab_t|\latent_t, u_t)  \right]
+%     \text{, for all } t \in \U  \text{.}
+% \end{align*}
+We propose a variation of this model by considering a modified version
+where the context depends on the previous observation $\obs_{t-1}$ 
+and the current latent variable $\latent_t$ 
+(more details are given in the Appendix~\ref{chap:appendix3}).
+We refer to it as the modified Variational Sequential Labeler (mVSL)
+and the associated generative model is given by
+\begin{align*}
+% \label{eq:vsl}
+\p(v_t|v_{t-1}) \overset{\rm mVSL}{=}  \p(\obs_t|\latent_t) 
+\p(\lab_t|\latent_t) \p(\latent_t|\obs_{t-1}, \latent_{t-1})  
+\text{.}
+\end{align*}
+While the associated variational distribution
+satisfies factorization \eqref{eq:fact-1}
+with
+\begin{align}
+    \q(\latent_t|\latent_{t-1},\lab_{t-1},\obs_{0:T},\lab_{t+1:T}^{\LL})
+    &=\q(\latent_t|\obs_{0:T}) \text{,} \\
+    \q(\lab_t|\lab_{t-1},\latent_t,\obs_{0:T},\lab_{t+1:T}^{\LL})
+    &=\p(\lab_t|\latent_t) \text{, for all } t \in \U \text{.}
+\end{align}   
+In this case, the ELBO \eqref{eq:elbo_seq2} reduces to
+\begin{align*}
+    % \label{eq:elbo_vsl}
+    \Qsemi(\theta,\phi) \overset{\rm mVSL}{=}& 
+    \sum_{t \in \LL} \E_{\q(\latent_{t}| \obs_{0:T})} \left(
+     \log\p(\lab_{t}|\latent_{t}) \right) + \nonumber \\
+    % & \E_{\q(\latent_0|\obs_{0:T})} \log \p(\obs_0|\latent_0) -
+    % \dkl(\q(\latent_0|\obs_{0:T})||\p(\latent_0)) + \nonumber \\
+    & \! \sum_{t=0}^T\!\!
+    \Bigg[ \E_{\q(\latent_{t}| \obs_{0:T})} \log \p(\obs_t|\latent_t) \nonumber \\
+    & -    \dkl(\q(\latent_t|\obs_{0:T})|| \p(\latent_t|\obs_{t-1}, \latent_{t-1} ))  \Bigg] 
+    \text{,}
+\end{align*}
+where $\obs_{-1} =\latent_{-1} = \emptyset$.
+% \begin{align}
+% \label{eq:elbo_vsl}
+% Q(\theta,\phi) \overset{\rm mVSL}{=}& 
+% \sum_{t \in \LL} \int \q(\latent_{t}| \obs_{0:T}) \log\p(\lab_{t}|\latent_{t}) {\rm d} \latent_t + \nonumber \\
+% & \q(\latent_0|\obs_{0:T}) \log \p(\obs_0|\latent_0) + \nonumber \\ 
+% \sum_{t=0}^T \int \q(\latent_{t}| \obs_{0:T}) \Bigg[ \log \p(\obs_t|\latent_t) -\nonumber\\ 
+% & 
+% \log \left(\frac{\q(\latent_t|\obs_{0:T})}{p(\latent_t|\obs_{t-1}, \latent_{t-1} )} \right)  \Bigg]  {\rm d} \latent_t 
+% \text{.}
+% \end{align}
+% Additionally, it can be observed that it consists of two terms and 
+% that the previous assumptions enable us to interpret it as an expectation 
+% according to $\q(\latent_{0:T}|\obs_{0:T})$. 
+% Thus, it is not necessary to sample discrete variables according to 
+% the G-S trick. Moreover, a regularization term $\beta$ can be introduced 
+% in the second part of the ELBO in 
+% order to encourage good performance on labeled data 
+% while leveraging the context of the noisy observations during reconstruction.
+% While this model simplifies the inference, 
+% it should be noted that in the generative process, 
+% the observation $\obs_t$ is conditionally independent of its associated label and may not
+% be adapted to some applications.
+
+%Moreover, the VSL simplifies the ELBO by setting $\q(\lab_t| \latent_t) = \p(\lab_t| \latent_t)$, which enables the use of classical variational inference with only continuous latent variables. To further improve performance, they also introduce a regularization term into the loss function that encourages good performance on labeled data while leveraging the context of the noisy image during reconstruction. 
+
+% \subsection{Semi-supervised variational RNN}
+\label{sec:svrnn}
+On the other hand, the generative model used in the SVRNN model
+is a particular case of the TMC model where the latent variable
+$\latent_t$ consists of the pair $\latent_t=(z'_t, h_t)$. The associated
+transition distribution reads:
+% \begin{align}
+% \label{eq:svrnn}
+%  \p(v_t|v_{t-1}) = \p(\lab_t|v_{t-1}) \p(\latent_t|\lab_t, v_{t-1}) \p(\obs_t|\lab_t,\latent_t,v_{t-1}) \text{,}
+% \end{align}
+\begin{align*}
+% \label{eq:svrnn}
+ \p(v_t|v_{t-1})  \overset{\rm \scriptscriptstyle SVRNN }{ = }\p(\lab_t|v_{t-1}) \p(\latent_t|\lab_t, v_{t-1}) \p(\obs_t|\lab_t,\latent_t,v_{t-1}) \text{,}
+\end{align*}
+where 
+\begin{eqnarray*}
+\p(\lab_t|v_{t-1})&=& \p(\lab_t|h_{t-1})\text{,} \\
+\p(\latent_t|\lab_t,v_{t-1})&=&\delta_{f_{\theta}(z'_t,\lab_t,\obs_t,h_{t-1})}(h_t) \times \p(z'_t|\lab_t, h_{t-1}) \text{,} \\
+\p(\obs_t|\lab_t,\latent_t,v_{t-1})&=& \p(\obs_t|\lab_t, z'_t, h_{t-1}) \text{,}
+\end{eqnarray*}
+and where $f_{\theta}$ is a deterministic, 
+\ie~the variable $\latent'_t$ is a stochastic latent variable 
+and $h_t$ is deterministically given by 
+$h_t = f_{\theta}( z'_t, \obs_t, \lab_t, h_{t-1})$, 
+where $f_{\theta}$ is a function parameterized 
+by a RNN, for example. 
+The variational distribution $\q(\latent_{0:T}, \labu|$ $ \obs_{0:T}, \labl)$ satisfies
+the factorization \eqref{eq:fact-2}
+with
+\begin{align*}
+ q(z'_t|\latent_{t-1},\lab_{t},\obs_{0:T},\lab_{t+1:T}^{\LL})=  \q(z'_t| \obs_t, \lab_t, h_{t-1})\text{,} \\
+q(\lab_t|\lab_{t-1},\latent'_{t-1},\obs_{0:T},\lab_{t+1:T}^{\LL})= 
+\q(\lab_t| \obs_t, h_{t-1}) \text{.}
+\end{align*}
+The ELBO of the SVRNN model is given by
+\begin{align*}
+    % \label{eq:elbo_svrnn}
+    \Qsemi(\theta,\phi) \overset{\rm \scriptscriptstyle SVRNN }{=}& \quad
+    \L^{\LL}(\theta,\phi) + \L^{\U}(\theta,\phi) + J^{\LL}(\theta,\phi) \text{,}
+\end{align*}
+where 
+\begin{align}
+    \L^{\LL}(\theta,\varphi) = \sum_{t\in \LL}
+     & \E_{\q(\latent'_t| \obs_t, \lab_t, h_{t-1})} 
+       \log \p(\obs_t|\lab_t, \latent'_t, h_{t-1}) 
+       + \log(\p(\lab_t | h_{t-1} ))    \nonumber \\ 
+    &  - \dkl (\q(\latent'_t|\obs_t, \lab_t, h_{t-1})||
+    p(\latent'_t|\lab_t, h_{t-1} ))  \text{,} \\
+    \L^{\U}(\theta,\varphi) =&  \sum_{t\in \U}
+     \E_{\q(\latent'_t, \lab_t| \obs_t, h_{t-1})} 
+       \log \p(\obs_t|\lab_t, \latent'_t, h_{t-1})     \nonumber \\ 
+    & - \dkl (\q(\latent'_t|\obs_t, \lab_t, h_{t-1})) \nonumber  \\
+    & - \dkl (\q(\lab_t| \obs_t, h_{t-1})|| \p(\lab_t|h_{t-1} )) \text{,}\\
+    J^{\LL}(\theta,\phi) = & \sum_{t\in \LL} 
+    \E_{\tilde{p}(\lab_t, \obs_t)}
+    \log(\p(\lab_t | h_{t-1} ) \q(\lab_t| \obs_t, h_{t-1})) \text{,}
+\end{align}
+where $\tilde{p}(\lab_t, \obs_t)$, for $t\in \LL$, 
+denotes the empirical distribution of the data.
+Their final ELBO does not coincide with \eqref{eq:elbo_seq2}. 
+The reason why is that they derive it 
+from the static case~\citep{jang2016categorical} and add 
+a penalization term $J^{\LL}(\theta,\phi)$  that encourages 
+$\p(\lab_t|h_{t-1})$ and $\q(\lab_t| \obs_t, h_{t-1})$ 
+to be close to the empirical distribution of the data.
+Since $\Lat_t$ is deterministic given $(z'_t, \obs_t, \lab_t, h_{t-1})$,
+its posterior distribution becomes trivial, and thus 
+there is no need to consider a variational distribution for it.
+
+
+\subsection{Binary data generation}
+\label{subsec:data_generation}
+We used the Binary Shape Database
+\footnote{\url{http://vision.lems.brown.edu/content/available-software-and-databases}}.
+% ~\citep{binaryimg} 
+and focused 
+on both \textit{cattle}-type and \textit{camel}-type images. 
+To transform these images into a $1$-D signal ( $\obs_{0:T}$ ), 
+we used a Hilbert-Peano filling curve~\citep{sagan2012space}. 
+To evaluate the models presented in Section~\ref{subsec:particular_cases},
+we introduced non-linear blurring to highlight their ability to learn and
+correct for signal corruption. 
+% Specifically, we applied general stationary noise (resp. stationary multiplicative noise)  
+% to the \textit{cattle}-type (resp. \textit{camel}-type) image. 
+More precisely, we generated an artificial noise for the \textit{cattle}-type by
+generating $\obs_t$ according to
+\begin{equation}
+    \label{eq:noise_eq1}
+    \obs_t| \lab_{t},\obs_{t-1} \sim \mathcal{N}\Big(\sin(a_{\lab_t}+\obs_{t-1});
+    \sigma^2\Big),
+\end{equation}
+where $a_{\omega_1}=0$ , $a_{\omega_2} = 0.4$ and $\sigma^2=0.25$. 
+% The generated image is shown in Figure\ref{fig:res_cow40}(a).
+We now consider the \textit{camel}-type image which is corrupted 
+with a stationary multiplicative noise (non-elementary noise) given by
+\begin{equation}
+\label{eq:noise_eq2}
+    \obs_t|\lab_t,\latent_t \sim\mathcal{N}\left(a_{\lab_t};b_{\lab_t}^2\right) * \latent_t,
+\end{equation}
+where $\latent_t\sim\mathcal{N}(0, 1)$, $a_{\omega_1}=0\text{, } a_{\omega_2} = 0.5$ and $b_{\omega_1}=b_{\omega_2}=0.2$. 
+
+The generated images are presented in Figure~\ref{fig:res_cow40}(a) 
+and Figure~\ref{fig:res_camel60}(a), respectively. 
+% More details about the image generation process are
+% available in~\cite{gangloff2023deep}. 
+Additionally, we randomly selected
+pixels $\lab_t \in \labl$, with a percentage of the pixels being labeled, and the rest considered unobserved or hidden (\textit{e.g.} Figure~\ref{fig:res_cow40}(c) 
+and Figure~\ref{fig:res_camel60}(c)). %(\textit{e.g.} $40\%$ or $60\%$).
+
+
+
+
+\subsection{Semi-supervised binary image segmentation}
+% In this section, we present the
+% semi-supervised binary image segmentation  problem. 
+Our goal is to recover the 
+segmentation of a binary image $(\Omega=\{\omega_1,\omega_2\})$
+from the noisy observations
+$\obs_{0:T}$ when a partial segmentation $\labl$ is available.
+In particular, $\vartheta(\lab_t; \cdot )$ (resp. $\varsigma(\lab_t;\cdot)$) 
+is set  as a Bernoulli distribution with parameters $\ropy$ (resp. $\roqy$). 
+As for the distribution  $\zeta(\obs_t; \cdot )$ 
+(resp. $\eta(\latent_t;\cdot)$ and  $\tau(\latent_t;\cdot)$), 
+we set it as a Gaussian distribution with parameters 
+$[ \muobs , \diag(\sigobs) ]$ (resp.  $[ \mulatentp , \diag(\siglatentp)]$
+ and $[ \mulatent , \diag(\siglatent) ]$),
+% \begin{align*}
+%     \p(v_t|v_{t-1}) &=  \p(\obs_t|\cdot) \p(\latent_t|\cdot)\p(\lab_t|\cdot) \nonumber\\
+%     \p(\obs_t | \cdot) &= \N(\obs_t; \mu_{px, t}, {\rm diag}(\sigma_{px,t}) ) \\
+%     \p(\latent_t | \cdot) &= \N(\obs_t; \mu_{pz, t}, {\rm diag}(\sigma_{pz,t}) ) \\
+%     \p(\lab_t | \cdot) &= \Ber(\lab_t;  \rho_{py,t}) \text{,}
+% \end{align*}
+where ${\rm diag(.)}$ denotes the diagonal matrix deduced from the values 
+of $\sigma_{\cdot,t}$.
+% and the parameters are $\theta = \{\mu_{pz,t}, \sigma_{pz,t}, \mu_{px,t}, \sigma_{px,t}, \rho_{py,t}\}$  
+% and $\phi = \{ \mu_{qz,t}, \sigma_{qz,t} , \rho_{qy,t}\}$.
+
+In our simulations, we consider three particular cases of this deep TMC model
+which read as follows:
+\begin{align}
+    \label{eq:TMC_I}
+    \p(\triplet_t|\triplet_{t-1}) \overset{\rm TMC-I}{=}  \quad &
+    \p(\lab_t|\lab_{t-1}) 
+    \p(\latent_t|\latent_{t-1}) 
+    \p(\obs_t|\lab_t,\latent_t) \text{,}\\
+    \label{eq:TMC_II}
+    \p(\triplet_t|\triplet_{t-1}) \overset{\rm  TMC-II}{=}  \quad &
+    \p(\lab_t|\lab_{t-1}, \obs_{t-1}) 
+    \p(\latent_t|\latent_{t-1}) 
+    \p(\obs_t|\lab_t,\latent_t)\text{,} \\
+    \label{eq:TMC_III}
+    \p(\triplet_t|\triplet_{t-1}) \overset{\rm TMC-III}{=}  \quad&
+    \p(\lab_t|\lab_{t-1}, \obs_{t-1}) 
+    \p(\latent_t|\latent_{t-1}) 
+    \p(\obs_t|\lab_t,\latent_t, \obs_{t-1})
+    \text{.}
+\end{align} 
+The TMC-I~\eqref{eq:TMC_I} model assumes a Markovian distribution 
+for the labels and the latent variables aim at 
+learning the distribution of the noise given the label and 
+the latent variable.
+In the TMC-II~\eqref{eq:TMC_II}, and TMC-III ~\eqref{eq:TMC_III}
+models the Markovianity assumption
+for the labels is relaxed. The TMC-III model  also
+considers the previous observation $\obs_{t-1}$
+as an additional input to the distribution of the observation $\obs_t$.
+
+In order to capture temporal dependencies 
+in the input data and to have an efficient computation of the 
+variational distribution for the \gls*{dtmc} models, 
+we use a deterministic function to generate $\tilde{h}_t$ which  
+takes as input $(\obs_t, \lab_t, \latent_t, \tilde{h}_{t-1})$. 
+After this, the variational distribution $\q(\latent_{0:T}, \labu|$ $ \obs_{0:T}, \labl)$ satisfies the factorization \eqref{eq:fact-2}
+with $\q(\latent_t|\obs_t, \lab_t,\tilde{h}_{t-1} )$ and $\q(\lab_t|\obs_t, \tilde{h}_{t-1})$. 
+In the TMC-I case, the parameters are given by:
+\begin{align*}
+    &[ \muobs , \sigobs ]  = \px(\lab_t, \latent_t),\\
+    &[ \mulatentp , \siglatentp]  = \pz(\latent_{t-1}), \\
+    &\ropy  = \py(\lab_{t-1}),\\
+     &[\mulatent , \siglatent] = \qz( \obs_t, \lab_t,\tilde{h}_{t-1})\text{, }\\
+    &\roqy  = \qy( \obs_t, \tilde{h}_{t-1}) \text{.}
+\end{align*} 
+In the TMC-II and TMC-III cases, the parameters are given  in the same way,
+except that $\px$ and $\qy$ take $\obs_{t-1}$ as an additional input.
+
+
+
+\subsection{Results}
+\label{subsec:results}
+Each model was trained using stochastic gradient descent to 
+optimize the negative associated ELBO, with the Adam optimizer~\cite{kingma2014adam}. 
+The neural networks $\psi_{(\cdot)}^{(\cdot)}$ were designed with two hidden 
+layers using rectified linear units and appropriate outputs, such as linear, softplus, 
+and sigmoid. To ensure a fair comparison, we matched the total number 
+of parameters of all models to be approximately equal. 
+As a result, the number of hidden units for each hidden layer differs 
+for each model. In fact, the SVRNN, TMC-I, TMC-II, TMC-III, 
+and VLS models have 14, 25, 25, 24, and 30 hidden units, respectively.
+We used an RNN cell to generate $\tilde{h}_t$ (resp. $h_t$) 
+for the \gls*{dtmc} (resp. SVRNN) models. 
+In the VLS model, we used the parameterization approach for 
+$\q(\latent_t|\obs_{0:T})$ presented in~\cite{chen2019variational}, 
+which involves using an RNN cell and with a regularization term equal to $0,1$.
+We also added a penalization term used in the SVRNN to the ELBO of the 
+TMC-I, TMC-II, and TMC-III models that was presented in Section~\ref{sec:svrnn}.
+
+
+
+The performance of the models is evaluated in terms of
+the error rate (ER) of the reconstruction of the unobserved pixels, 
+which are estimated by using the variational approximation approach.
+Table~\ref{tab:error_rates} presents the average of the error rates 
+obtained for reconstructing unobserved pixels on all the 
+\textit{name}-type images. 
+The notation \textit{name $\%$} is used to indicate the specific 
+image set and the percentage of unobserved labels in the image. 
+As shown in the table, the deep TMC models consistently outperform 
+the VSL and the SVRNN, achieving a lower average error rate for each image set. 
+
+% \input{Figures/table_semi}
+\vspace{-0.1cm}
+
+\begin{table}[!htpb]
+    \begin{center}
+    % \small
+    \begin{tabular}{|l|r|r|r|r|}
+    \hline
+    \multirow{2}{*}{Model}  &\multicolumn{3}{c|}{Data sets and \% of unlabeled pixels}\\ 
+    \cline{2-4} 
+      & \multicolumn{1}{c|}{Cattle 40\%} & \multicolumn{1}{c|}{Cattle 60\%} & \multicolumn{1}{c|}{Cammel 60\%} \\ 
+      \hline \hline
+      \multicolumn{1}{|l|}{VSL}      & 20,59\% & 22,38\% & 18,82\% \\ \hline
+      \multicolumn{1}{|l|}{SVRNN}    & 14,92\% & 20,12\% & 16,80\% \\ \hline
+      \multicolumn{1}{|l|}{\gls*{dtmc}-I}   & 3,50\%  & 6,44\%  & 4,50\%  \\ \hline
+      \multicolumn{1}{|l|}{\gls*{dtmc}-II} & \textbf{2,95\%}                  & \textbf{5,53\%}                  & \textbf{4,25\%}                 \\ \hline
+      \multicolumn{1}{|l|}{\gls*{dtmc}-III} & 3,21\%  & 6,09\%  & 4,59\%  \\ \hline
+      \end{tabular}
+      \vspace{-0.2cm}
+      \caption{Average error rates of the
+       reconstruction of the unobserved pixels on different 
+       sets of images with different percentages of unobserved pixels.}      
+    \label{tab:error_rates}
+    \end{center}
+\end{table}
+
+Moreover, our algorithm achieves superior performance for both noises.
+Figure~\ref{fig:res_cow40} (resp. Figure~\ref{fig:res_camel60}) 
+displays the performance of our proposed algorithms compared to the
+ VSL and the SVRNN on a \textit{cattle}-type (resp. \textit{camel}-type) 
+ image with $60\%$ (resp.  $60\%$) of unobserved labels.
+In particular, we observe that in the VSL model, 
+the error is mainly due to the misclassification of the black pixels 
+(Figure~\ref{fig:res_cow40}(d) 
+and Figure~\ref{fig:res_camel60}(d)). 
+While for the SVRNN, the error results from the misclassification 
+of the two classes (Figure~\ref{fig:res_cow40}(e) 
+and Figure~\ref{fig:res_camel60}(e)).
+% Additionally, we observe that when dealing with elementary noise, 
+% the performance of the VLS model is superior to that of SVRNN. 
+% However, this capability is lost as we increase the percentage 
+% of unobserved labels, even with elementary noise.
+
+\input{Figures/cow}
+\input{Figures/cattle}
+
+ 
+% \subsection{Discussion}
+% \label{subsec:discussion}
+
+\newpage
+\section{Conclusions}
+\label{sec:conclusion}
+% In this section, we proposed a  general semi-supervised generative
+% latent variable model.
+% In particular, by considering the TMC model, we have shown that it is possible
+% to obtain a wide variety of generative models and
+% to estimate them in the common framework of
+% variational inference in the case where only
+% a part of the observations are labelled.
+% Our general model learns to represent discrete labels, continuous features observations 
+% over time  able to classify, predict labels,
+% and also generate new sequences of features.
+% The experiments demonstrate the effectiveness of the proposed 
+% approach in achieving state-of-the-art performance on 
+% the task of binary image segmentation.
+
+In this chapter, we presented a semi-supervised latent variable generative model.
+By exploring the TMC model, we have illustrated the
+feasibility of creating a diverse set of generative models based
+on the VI. This approach is particularly advantageous when dealing
+with data sets in which only a subset of the observations are labeled. The model
+we propose is capable of learning and representing a wide range of data features.
+It can effectively handle discrete labels and continuous feature observations
+over time, providing capabilities to classify, predict labels, and generate new
+feature sequences. This versatility makes the model particularly suitable for
+complex temporal data scenarios. The results of our experiments support the
+effectiveness of our approach in achieving good performance in the
+task of binary image segmentation.

@@ -1,0 +1,74 @@
+% !TEX root = late\obs_avec_réduction_pour_impression_recto_verso_et_rognage_minimum.tex
+\chapter{Additional material}
+\label{chap:appendix}
+
+
+\begin{algorithm}[htbp!]
+    \caption{Expectation Maximization \citep{dempster1977maximum} }
+    \label{algo:em_algorithm}
+  \begin{algorithmic}[1]
+    \Require{$\obs$, the observations.}
+    \Ensure{$\hat{\theta}$ the set of estimated parameters.}
+    \State Initialize the parameters $\theta^0$
+    \State $j\leftarrow 0$
+    \While{\text{convergence is not attained}}
+        \Statex{\textbf{E-step:}}
+        \State Define $\mathcal{Q}(\theta|\theta^j)$ by 
+        \begin{equation}
+        \label{eq:e-step}
+        \mathcal{Q}(\theta|\theta^j)= \E_{p(\lab|\obs,\theta^j)}
+        \left[\log p(\obs,\lab|\theta)\right] \text{.}
+        \end{equation}
+        \Statex{\textbf{M-step:}}
+        \State Estimate the new set of parameters
+        \begin{equation}
+        \theta^{j+1} \leftarrow \argmax\obs_{\theta} \mathcal{Q}(\theta|\theta^j)
+        \end{equation}
+        \State  $j\leftarrow j+1$
+    \EndWhile
+    \State  $\hat{\theta} \leftarrow \theta^{{j}}$
+  \end{algorithmic}
+    % \vspace*{0.2cm}
+  \end{algorithm}
+% \subsection{Proof of proposition \ref{prop:cov}}
+% \label{anex:proof_prop_1}
+
+% \subsection{Proof of proposition \ref{prop:cov-pmc}}
+% \label{anex:proof_prop_2}
+
+% \subsection{Particle filter}
+% \label{alg:particle_filter}
+
+% Hereeee  we present the particle filter algorithm used in the experiments.
+\newpage
+\begin{lemma}
+    \textbf{\citep{rao1973linear}}\\
+    \label{prop:gaussian}
+    Let $x \in \mathbb{R}^p$, $y \in \mathbb{R}^q$, 
+    $F \in \mathbb{R}^{p \times q}$, $d \in \mathbb{R}^p$, $m \in \mathbb{R}^q$,
+    $\Sigma_1$ and $\Sigma_2$ 
+    be $p\times p$ and  $q\times q $ positive definite matrices, respectively. 
+    Then  the following equality holds
+    \begin{equation*}
+        \int_{y \in  \mathbb{R}^q} 
+        \mathcal{N}(x;\; F y  + d , \Sigma_1) \mathcal{N}(y;\; m , \Sigma_2) dy 
+        = \mathcal{N}(x;\; Fm + d , \Sigma_1 + F \Sigma_2 F^T)\text{.\\}
+    \end{equation*}  
+\end{lemma}
+
+
+\vspace{0.65cm}
+\subsubsection*{Conditional Variational Autoencoder}
+Let $\obs$, $\lab$, and $\latent$ be the input image, the corresponding ground truth,
+and the latent representation, respectively.
+The~\gls*{cvae} is an extension of VAE 
+(see Example~\ref{ex:gaussian_case})
+% ~\ref{sec:variational_autoencoder}) 
+to conditional tasks such as image segmentation. 
+Each component of the model is conditioned on some observed image $\obs$.\\
+The ELBO objective function for the CVAE is defined as follows:
+\begin{equation*}
+    \mathcal{Q}_{\text{CVAE}}(\obs,\lab) = 
+    \mathbb{E}_{q_{\phi}(\latent|\obs,\lab)}\left[\log p_{\theta}(\lab|\obs,\latent)\right] 
+    - \text{KL}\left(q_{\phi}(\latent|\obs,\lab)||p(\latent|\obs)\right) \text{.}
+\end{equation*}

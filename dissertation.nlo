@@ -1,0 +1,27 @@
+\nomenclatureentry{G, 01$a$@[{$a$}]\begingroup Light lower case letters represent scalars or functions\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{G, 02$A$@[{$A$}]\begingroup Upper case letters represent matrices\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{G, 03$\mathbb{R}^n$@[{$\mathbb{R}^n$}]\begingroup Set of real vectors of dimension $n$\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{G, 04$\mathbb{R}^{n \times m}$@[{$\mathbb{R}^{n \times m}$}]\begingroup Set of real matrices of dimension $n \times m$\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{G, 05$\mathbb{C}$@[{$\mathbb{C}$}]\begingroup Set of complex numbers\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{G, 05$\Re$@[{$\Re$}]\begingroup Real part of a complex number\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{G, 06$\mathrm{diag}(\cdot)$@[{$\mathrm{diag}(\cdot)$}]\begingroup Diagonal matrix\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{G, 07$\cdot^{\top}$@[{$\cdot^{\top}$}]\begingroup Transpose operator of a matrix or a vector\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{G, 08$\rm sigm $@[{$\rm sigm $}]\begingroup Sigmoid function $ \rm sigm (x) = 1/(1 + \exp(-x))$\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{P, 01$x$@[{$x$}]\begingroup (Observed) random variable and its realization. As far as the context is clear, we use the same symbol for both.\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{P, 02$y$@[{$y$}]\begingroup Random variable and its realization, which represents the label associated with $x$\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{P, 03$z$@[{$z$}]\begingroup Latent random variable and its realization\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{P, 04$x_t$@[{$x_t$}]\begingroup Random variable or realization at time $t$\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{P, 05$x_{t:k}$@[{$x_{t:k}$}]\begingroup Random variable or realization from time $t$ to $k$\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{P, 06$x_{0:T}$@[{$x_{0:T}$}]\begingroup Sequence of random variables or realizations from time $0$ to $T$\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{P, 07$\mathcal{N}(x; \mu, \sigma)$@[{$\mathcal{N}(x; \mu, \sigma)$}]\begingroup Gaussian density function with mean $\mu$ and covariance $\sigma$ taken at point $x$\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{P, 08$\mathcal{N}(\mu, \sigma)$@[{$\mathcal{N}(\mu, \sigma)$}]\begingroup Gaussian distribution with mean $\mu$ and covariance $\sigma$\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{P, 09$\mathcal Ber (p)$@[{$\mathcal Ber (p)$}]\begingroup Bernoulli distribution of parameter $p$\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{P, 10$\sim$@[{$\sim$}]\begingroup Indicates the law followed by a random variable\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{P, 11$p(x)$@[{$p(x)$}]\begingroup Probability of a realization $x$ (discrete case) and probability density function of $x$ (continuous case)\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{P, 12$\mathrm{D}_{\mathrm{KL}}(q \mid p)$@[{$\mathrm{D}_{\mathrm{KL}}(q \mid p)$}]\begingroup Kullback-Leibler divergence between distributions $q$ and $p$\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{P, 13$\mathbb{E}(x)$@[{$\mathbb{E}(x)$}]\begingroup Expectation of a random variable $x$\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{P, 14$\mathbb{E}_{p(\cdot)}(\cdot)$@[{$\mathbb{E}_{p(\cdot)}(\cdot)$}]\begingroup Expectation under the distribution $p(\cdot)$\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{P, 15$\mathrm{Var}(x)$@[{$\mathrm{Var}(x)$}]\begingroup Variance of a random variable $x$\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{P, 16$\mathrm{Cov}(x, y)$@[{$\mathrm{Cov}(x, y)$}]\begingroup Covariance between the random variables $x$, and $y$\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{P, 17$[\mu_{\theta}^{x}, \sigma_{\theta}^{x}]$@[{$[\mu_{\theta}^{x}, \sigma_{\theta}^{x}]$}]\begingroup Mean and variance or covariance matrix of the random variable $x$ that depends on $\theta$\nomeqref {0}|nompageref}{vii}
+\nomenclatureentry{P, 18$\rho_{\theta}^{x}$@[{$\rho_{\theta}^{x}$}]\begi

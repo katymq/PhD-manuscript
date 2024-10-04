@@ -1,0 +1,75 @@
+% !TEX root = latex_avec_réduction_pour_impression_recto_verso_et_rognage_minimum.tex
+
+% % \chapter*{Nomenclaturexxx}
+% \renewcommand{\nomgroup}[1]{%
+%   \item[\bfseries
+%   \ifthenelse{\equal{#1}{G}}{General}{%
+%   \ifthenelse{\equal{#1}{P}}{Probability Theory}{}}%
+% ]}
+
+
+% % General
+% \nomenclature[G]{$a$}{Light lower case letters represent scalars or functions}
+% \nomenclature[G]{$A$}{Upper case letters represent matrices}
+% % \nomenclature[G]{$I$}{Identity matrix of size $n$}
+% \nomenclature[G]{$\mathbb{R}^n$}{Set of real vectors of dimension $n$}
+% \nomenclature[G]{$\mathbb{R}^{n \times m}$}{Set of real matrices of dimension $n \times m$}
+% % \nomenclature[G]{$\mathcal{T}$}{Toeplitz matrix}
+% \nomenclature[G]{$\mathrm{diag}(\cdot)$}{Diagonal matrix}
+% \nomenclature[G]{$\cdot^{\top}$}{Transpose operator of a matrix or a vector}
+
+% % Probability
+% \nomenclature[P]{$x$}{Random variable and its realization. As far as the context is clear, we use the same symbol for both.}
+% \nomenclature[P]{$\mathcal{N}(\cdot, \cdot)$}{Normal (Gaussian)  density function (first argument is the mean, 
+% second is the variance or covariance matrix if the random variable is multidimensional)}
+% \nomenclature[P]{$\mathcal Ber (\cdot)$}{Bernoulli distribution (the argument is the probability of success)}
+% \nomenclature[P]{$\sim$}{Indicates the law followed by a random variable}
+% \nomenclature[P]{$p(x)$}{Probability  of a realization $x$ (discrete case) and 
+% probability density function of $x$ (continuous case)}
+% \nomenclature[P]{$x_t$}{Random variable or realization at time $t$}
+% \nomenclature[P]{$x_{0:T}$}{Sequence of random variables or realizations from time $0$ to $T$}
+% \nomenclature[P]{$\mathrm{D}_{\mathrm{KL}}(q \mid  p)$}{Kullback-Leibler divergence between distributions $q$ and $p$}
+
+% \nomenclature[P]{$\mathbb{E} (x)$}{Expectation of a random variable $x$}
+% \nomenclature[P]{$\mathbb{E}_{p(\cdot)} (\cdot)$}{Expectation under the distribution $p(\cdot)$}
+% \nomenclature[P]{$\mathrm{Var} (x)$}{Variance of a random variable $x$}
+% \nomenclature[P]{$\mathrm{Cov} (x, y)$}{Covariance between the random variables $x$, and $y$}
+
+\renewcommand{\nomgroup}[1]{%
+  \item[\bfseries
+  \ifthenelse{\equal{#1}{G}}{General}{%
+  \ifthenelse{\equal{#1}{P}}{Probability Theory}{}}%
+]}
+
+% General
+\nomenclature[G, 01]{$a$}{Light lower case letters represent scalars or functions}
+\nomenclature[G, 02]{$A$}{Upper case letters represent matrices}
+\nomenclature[G, 03]{$\mathbb{R}^n$}{Set of real vectors of dimension $n$}
+\nomenclature[G, 04]{$\mathbb{R}^{n \times m}$}{Set of real matrices of dimension $n \times m$}
+\nomenclature[G, 05]{$\mathbb{C}$}{Set of complex numbers}
+\nomenclature[G, 05]{$\Re$}{Real part of a complex number}
+\nomenclature[G, 06]{$\mathrm{diag}(\cdot)$}{Diagonal matrix}
+\nomenclature[G, 07]{$\cdot^{\top}$}{Transpose operator of a matrix or a vector}
+% sigm
+\nomenclature[G, 08]{$\rm sigm $}{Sigmoid function $ \rm sigm (x) = 1/(1 + \exp(-x))$}
+% Probability
+\nomenclature[P, 01]{$x$}{(Observed) random variable and its realization. As far as the context is clear, we use the same symbol for both.}
+\nomenclature[P, 02]{$y$}{Random variable and its realization, which represents the label associated with $x$}
+\nomenclature[P, 03]{$z$}{Latent random variable and its realization}
+\nomenclature[P, 04]{$x_t$}{Random variable or realization at time $t$}
+\nomenclature[P, 05]{$x_{t:k}$}{Random variable or realization from time $t$ to $k$}
+\nomenclature[P, 06]{$x_{0:T}$}{Sequence of random variables or realizations from time $0$ to $T$}
+\nomenclature[P, 07]{$\mathcal{N}(x; \mu, \sigma)$}{Gaussian density function with mean $\mu$ and covariance $\sigma$ taken at point $x$}
+\nomenclature[P, 08]{$\mathcal{N}(\mu, \sigma)$}{Gaussian distribution with mean $\mu$ and covariance $\sigma$}
+\nomenclature[P, 09]{$\mathcal Ber (p)$}{Bernoulli distribution of parameter $p$}
+\nomenclature[P, 10]{$\sim$}{Indicates the law followed by a random variable}
+\nomenclature[P, 11]{$p(x)$}{Probability of a realization $x$ (discrete case) and probability density function of $x$ (continuous case)}
+\nomenclature[P, 12]{$\mathrm{D}_{\mathrm{KL}}(q \mid p)$}{Kullback-Leibler divergence between distributions $q$ and $p$}
+\nomenclature[P, 13]{$\mathbb{E}(x)$}{Expectation of a random variable $x$}
+\nomenclature[P, 14]{$\mathbb{E}_{p(\cdot)}(\cdot)$}{Expectation under the distribution $p(\cdot)$}
+\nomenclature[P, 15]{$\mathrm{Var}(x)$}{Variance of a random variable $x$}
+\nomenclature[P, 16]{$\mathrm{Cov}(x, y)$}{Covariance between the random variables $x$, and $y$}
+\nomenclature[P, 17]{$[\mu_{\theta}^{x}, \sigma_{\theta}^{x}]$}{Mean and variance or covariance matrix of the random variable $x$ that depends on $\theta$}
+\nomenclature[P, 18]{$\rho_{\theta}^{x}$}{Bernoulli parameter of the random variable $x$ depends on $\theta$}
+
+\printnomenclature

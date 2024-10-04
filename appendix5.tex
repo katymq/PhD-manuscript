@@ -1,0 +1,423 @@
+% !TEX root = late\obs_avec_réduction_pour_impression_recto_verso_et_rognage_minimum.tex
+\chapter{Medical image segmentation}
+\label{chap:appendix5}
+
+\tocless\section{Protocol and Database Construction}
+\label{anex:protocol_database}
+We describe the protocol and the database construction as follows.
+\begin{itemize}
+    \item \textbf{Patients and explant recovery:}
+    \begin{enumerate}
+        \item Patients scheduled for transfemoral amputation in the 
+        vascular surgery department are informed of the
+        procedure and asked not to object during the pre-operative 
+        consultation scheduled for the day before the operation.
+        \item Management of the patient in
+        accordance with current practice, with an injected preoperative CT scan.
+        \item During routine transfemoral amputation surgery: recovery of the
+        sample (portion of the amputation including the damaged artery) to be
+        analysed after rinsing the artery lumen.
+        \item Recovery of the explant with macroscopic analysis at GEPROMED and
+        storage on their premises. The subjects' participation in the research
+        ends after the surgery.
+    \end{enumerate}
+    \item \textbf{GEPROMED:} Ex-vivo microscanner imaging at GEPROMED.
+    % , see Figure~\ref{fig:data_availability_all}.
+    \begin{enumerate}
+        % \item Placement of the explant on a special support.
+        \item The microCT 3D images of the arteries are acquired at the CVPath Institute,
+        Inc. (Gaithersburg, MD, USA).
+        \item Histology are performed on the specimens 
+    as described in~\cite{torii2019histopathologic}. \label{item:histo}
+        \item Co-registration are subsequently performed manually
+        between the microCT images and the histologic slices obtained 
+        during the steps described above.
+        The result of this step consists in pairs of data: the
+        micro CT 2D image with its histologic ground truth. \label{item:co_registration}
+        \item  An expert annotate the micro CT images using the histologic 
+        ground truths in the GIMP software7. \label{item:annotation}
+        They are 6 classes: 
+        \begin{itemize}
+            \item  soft tissue (ST): soft tissue, formaldehyde, thrombus, fibrous
+            plaque.
+        	\item fatty tissue (FT): fatty tissue, lipid pool.
+        	\item sheet calcification (SC).
+        	\item nodular calcification (NC).
+        	\item specimen holder (SH).
+        	\item background (Ba)
+        \end{itemize}
+        % gangloff2020probabilistic
+        \item Collection and analysis of \textit{dicom} data (CT images): 
+        Centerline information is available for the CT images.
+        The centerline is given by an expert and is used to select the interest region
+        of the images, since the lesion represents a small area of the artery,
+        \ie~of the CT image. 
+        \label{item:correlation_ct}
+        \item Correlation between  CT scanner  and micro CT scanner  using standard
+        references (collaterals, branches and specific lesions).\label{item:correlation}
+    \end{enumerate}
+\end{itemize}
+
+
+
+\tocless\section{Previous Work}
+% \paragraph{Segmentation of micro CT images:}  
+\cite{gangloff2020probabilistic} has proposed different methods to segment the
+micro CT images of the SAFP. They used pairs of micro CT images
+histologically annotated micro-CT images, which constituted the training set. 
+In other words, they mainly used the pairs of information obtained until 
+Step~\ref{item:annotation} of the protocol described above.
+The additional information
+obtained after that step, which is related to the correlation between the CT scanner
+and the micro CT scanner,  were not exploited from a segmentation point of view.
+The authors have used a CNN based on the U-Net architecture~\citep{ronneberger2015u}
+to segment the micro CT images into 6 classes.
+We describe this technique with more details in 
+Subsection~\ref{sec:unet}.
+The number of classes was selected based on the histopathologists' advice.
+% It has then been decided with the histopathologists that 6 classes were of
+% interest to develop a first version of the algorithm
+Notice that their work is a 2D supervised segmentation, 
+since the pairs (micro CT image, ground truth) are only available for some slices
+of the 3D micro CT image.
+%  are only possible 
+% for the slices where the histological ground truth is available.
+
+
+The measure of performance is the Dice score, which is a measure of the similarity
+between two sets of data. In the context of image segmentation,
+for example, the Dice score can be used to evaluate the similarity between a
+predicted segmentation mask and the ground truth segmentation mask.
+The Dice score is defined as follows:
+\begin{equation}
+    \label{eq:dice_score}
+    \text{Dice score} = \frac{2|A \cap B|}{|A| + |B|} \text{, }
+\end{equation}
+where $A$ and $B$ are the two sets of data.
+This score is a number between 0 and 1, where 0 indicates no similarity and 1
+indicates perfect similarity.
+
+% The soft tissue, background, and specimen holder classes are well segmented 
+% with Dice scores $> 0.86$.
+% One remarkable fact is that the calcification classes 
+% are segmented with Dice scores 
+% $0.85$ and $0.64$ for the sheet calcification, and nodular calcification, respectively. 
+% This is a good result considering the complexity of the images where
+% the differentiation is almost impossible by the naked eye, even for an expert.
+
+% \begin{remark}
+%     The Dice score is a measure of the similarity between two sets of data. 
+%     In the context of image segmentation,
+%     for example, the Dice score can be used to evaluate the similarity between a
+%     predicted segmentation mask and the ground truth segmentation mask.
+% \end{remark}
+
+% \paragraph{3D segmentation:} 
+% \cite{gangloff2020probabilistic} also proposed a 3D 
+% segmentation on the test SAFP, which is based on the 2D segmentation
+% and probabilistic post-processing approaches. 
+% A 3D segmentation of stents is also proposed.
+% We will not present the details of the 3D segmentation, since it is not the 
+% principal interest of this work.
+
+% We take this work as a starting point for our study.
+% In the next section, we describe the objective of our work and the challenges
+% that we face. We also present the workflow that we have devised to address them.
+
+
+% In summary, the main limitation of the previous work is that 
+% it is still not possible to segment the CT images of the SAFP, 
+% which are of low resolution and the annotations 
+% (ground truth) are only available for the micro CT images.
+% This problem is the motivation for the work presented in this chapter.
+
+
+
+
+
+% \begin{figure}[htb!]
+%     \centering
+%     \includegraphics[width=1\textwidth]{Figures/Medical_images/all_data.jpg}
+%     \caption{Atherosclerotic characterisation of fibrous (A), calcific (B),
+%     and lipid (C) plaques of the popliteal artery with co-registration between
+%     computed tomography (CT) angiography  and microCT 
+%     with histology~\citep{kuntz2021co}.}
+%     \label{fig:data_availability_all}
+% \end{figure}
+
+
+
+
+\tocless\section{Super resolution}
+\tocless\subsection{Super resolution via VAEs}
+Super-resolution (SR) techniques, while sharing a common objective of enhancing
+image resolution, employ a variety of methods to achieve this goal. 
+% In this
+% section, we focus on a specific SR algorithm based on 
+% VAEs~\citep{kingma2014} (see Chapter~\ref{chap:main_concepts})
+% VAEs, a class of generative models rooted in the variational inference framework,
+% offer to learning both a latent-variable model and its
+% corresponding inference model.
+% \subsection{Super-resolution via Variational Auto-Encoders}
+Super-resolution VAEs architectures have been proposed
+by~\citep{gatopoulos2020super}, 
+which requires a dataset of high-resolution images and their corresponding
+low-resolution images. 
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.6\textwidth]{Figures/sr_vae_sup.PNG}
+    \caption{Stochastic dependencies of the proposed model. Our approach
+    takes advantage of a compressed representation y of the data in the
+    variational part, that is then utilized in the super-resolution in the
+    generative part.
+    Figure taken from~\citep{gatopoulos2020super}}
+    \label{fig:srvae_network_sup}
+\end{figure}
+On the one hand, an unsupervised real image denoising 
+and Super-Resolution approach via Variational
+AutoEncoder (dSRVAE) was proposed by~\citep{liu2020unsupervised}.
+The architecture of the proposed model is shown in Figure~\ref{fig:srvae_network}.
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=1\textwidth]{Figures/dSRVAE.png}
+    \caption{Complete structure of the proposed dSRVAE model. It includes
+    Denoising AutoEnocder (DAE) and Super-Resolution SubNetwork (SRSN). The
+    discriminator is attached for photo-realistic SR generation.
+    Figure taken from~\citep{liu2020unsupervised}}
+    \label{fig:srvae_network}
+\end{figure}
+
+SR models based on VAEs are a branch of
+image processing focused on generating high-resolution images from
+low-resolution ones~\citep{appati2023deep, liu2020unsupervised,
+gatopoulos2020super, hyun2020varsr}. 
+These models have gained popularity due to their
+effectiveness in modeling high-resolution images, traditionally dominated by
+autoregressive models~\citep{li2001new,joshi2005learning}, 
+and GANs~\citep{chira2022image}.
+Images generated by VAEs present, in general, blurry details, which is a
+limitation of these models. 
+% \cite{gatopoulos2020super} proposed a 
+% SR algorithm based on VAEs, which consists  of a DenseNet-based encoder, 
+% a DenseNet-based decoder, and  a flow-based prior to generate crisp images.
+% This model is still trained using the log-likelihood objective.
+% They have introduced a downscaled representation of the image as a random variable,
+% and utilize it in a SR manner. Then the model uses three latent variables, 
+% where one is the downscaled version of the original image.
+
+% Original ground truth images are commonly used to train SR algorithms. 
+% \cite{liu2020unsupervised} proposed a SR algorithm based on VAEs that does not require
+% ground truth images. This is a significant advantage since ground truth images
+% are not always available. The proposed model consists of a joint image denoising 
+% and SR model via Variational AutoEncoder in an unsupervised manner.
+% Denoising is performed by a conditional VAE, where the encoder compresses 
+% the clean image to learn the latent variables. Then the decoder learns to 
+% extract the noise from the noisy image and with a latent variable.
+% Once a clean image is obtained, the SR is performed by a
+% SR subnetwork (SRSN). The basic structure of the SRSN is a set of
+% hierarchical residual blocks. The denoised image is initially up-sampled 
+% to the desired dimension by bicubic interpolation.
+% In addition, the model is trained with a
+% discriminator to improve the quality of the generated images.
+% Since the model is trained in an unsupervised manner, the quality of the
+% generated HR images is evaluated using a strategy based on the backprojection theory. 
+
+\paragraph*{Applicability to medical images: }
+\label{sec:applicability_sr}
+Since the  LR-CT images we have are small ($5\times 5$ to $12\times 12$) pixels  
+and the details are important for the segmentation, 
+% (Step~\ref{item:super_resolution}).
+the factor of up-scaling is important.
+In addition, the images are noisy, which is a common problem in medical images.
+The SR algorithms based on VAEs presented above are promising, however,
+they are not suitable for our problem due to the up-scaling factor, and the
+noise in the images. The SR algorithm based on VAEs presented 
+in~\citep{gatopoulos2020super} proposes 
+a factor of up-scaling of 2, which is not enough for our problem. Moreover, 
+the input for training is an HR (micro CT) center line of the artery, 
+which is not yet available. 
+From a point of view of the applicability to medical images, 
+we won't be able to use this algorithm. Although, it is a promising algorithm
+for future researches in this field which can be related to the  work 
+we have presented in previous chapters.
+% On the other hand, the SR algorithm based on VAEs in~\citep{liu2020unsupervised}
+% proposes a factor of up-scaling of 4, which is more suitable for our problem.
+% \katy{Pending to check the factor of up-scaling and the reason why it is not suitable for our problem.}
+
+%------------------------
+% Podemos usar varias veces este algoritmo, es decir la salide meterla nuevamente
+% en el algoritmo para obtener una imagen de mayor resolucion. 
+% Esto es importante para nuestro problema, ya que las imagenes son pequenas, pero 
+%  eso no aumenta la resolucion de los detalles, solo de la imagen.
+%------------------------
+
+% Different approaches are available for SR via VAEs such as 
+
+% % Our interest in this section is to present the SR algorithm based on VAEs
+% Very Deep Variational Autoencoder for SR (VDVAE-SR)~\citep{chira2022image}
+% VDVAE-SR , a new model that aims to exploit the most recent deep VAE
+% methodologies to improve upon the results of similar models. VDVAE-SR tackles
+% image SR using transfer learning on pretrained VDVAEs. The
+% presented model is competitive with other state-of-the-art models, having
+% comparable results on image quality metrics.
+
+% In particular, we can use a VAE to learn a mapping from the LR image to the HR image.
+% The LR images act as inputs to the VAE, and the HR images act as the targets.
+% The Encoder maps the LR images to a latent space, and the Decoder reconstructs
+% the high-resolution images from the latent space representation.
+
+
+% Advantages: probabilistic framewrok
+% distribution of HR images
+
+
+% Handling uncertaintyGeneration multiple outpuets 
+% : flexibility
+
+% Disavtanges: Complexity advantages 
+% DeCarefull trainingReconstructuin details
+% Detail preservation accurate diagnosis 
+
+% reco
+% nstructoiAccuracy interpretable 
+% careful validation 
+
+% Combination of both
+\tocless\subsection{Laplacian pyramid SR network}
+%  proposed a SR algorithm based on the Laplacian pyramid
+
+The Laplacian Pyramid Super-Resolution Network (LapSRN), presented in
+~\citep{lai2017deep}, is a 
+method for single-image super-resolution using CNNs. 
+It progressively reconstructs the sub-band residuals of high-resolution (HR) images
+without requiring bicubic interpolation, which reduces computational complexity.
+Figure~\ref{fig:lsrn_network} 
+shows the LapSRN architecture where we can see the different layers of the network.
+LapSRN directly extracts feature maps from low-resolution images and
+progressively predicts sub-band residuals in a coarse-to-fine manner using
+transposed convolutional layers for upsampling. It is trained end-to-end with
+deep supervision using a robust Charbonnier loss function, which improves
+accuracy and reduces visual artifacts. LapSRN stands out for its fast processing
+speed, accuracy, and ability to generate multi-scale predictions in one
+feed-forward pass, making it suitable for resource-aware applications.
+
+\begin{remark}
+    The Charbonnier loss function is a variant of the L1 loss function,
+    commonly used in image processing and computer vision tasks, particularly
+    for regression problems like image super-resolution.
+    This loss function is defined as follows:
+    \begin{equation*}
+        \mathcal{L}_{\text{Charbonnier}}(x) = \sqrt{(y_{pred}-y_{true})^2 + \epsilon^2}
+    \end{equation*}
+    where $y_{pred}$ is the predicted value, $y_{true}$ is the ground truth value,
+    and  $\epsilon$ is a small constant which ensures numerical stability and
+    prevent division by zero.
+    The inclusion of the $\epsilon$ term allows the Charbonnier loss to be less 
+    sensitive to outliers than the $L_2$ loss, while being smoother and less abrupt 
+    than the $L_1$ loss, which can be beneficial in training neural networks for 
+    tasks like image super-resolution.
+\end{remark}
+
+% details multiple scales
+% segmentation after fidelity anatomic structures
+% interpretaibili
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{Figures/LSRN_network.jpg}
+    \caption{Red arrows indicate convolutional layers. Blue arrows indicate
+    transposed convolutions (upsampling). Green arrows denote element-wise
+    addition operators, and the orange arrow indicates recurrent layers. 
+    Figure taken from~\citep{lai2017deep}}
+    \label{fig:lsrn_network}
+\end{figure}
+
+\cite{lai2017deep} have compared LapSRN with other classic SR algorithms
+such as Super Resolution Convolutional Neural Network (SRCNN)~\citep{dong2015image},
+Fast Super Resolution Convolutional Neural Network (FSRCNN)~\citep{dong2016accelerating},
+Very Deep Convolutional Neural Network (VDSR)~\citep{kim2016accurate}, 
+and some other state-of-the-art SR algorithms.
+They have shown that LapSRN outperforms these
+algorithms in terms of accuracy and visual quality.
+% The authors have also proposed the Multi-scale LapSRN (MS-LapSRN) 
+% in~\citep{lai2018fast}, which can reconstruct sharper and more accurate SR images.
+
+
+\tocless\section{Probabilistic U-Net architecture}
+% \paragraph{Probabilistic U-Net Architecture - }
+The central component of the Probabilistic U-Net is the latent space, which is
+the key to modeling the ambiguity of the segmentation problem.
+The latent space is a low-dimensional space where the segmentation variants are
+represented as probability distributions.
+A sample from the latent space 
+is drawn and then injected into the U-Net to produce the
+corresponding segmentation map $S$, defined as follows:
+\begin{equation*}
+    S(\obs, \latent) = f_{comb}(f_{U-Net}(\obs),\latent) \text{.}
+\end{equation*}
+Here, $f_{U-Net}$ is the U-Net architecture and  $f_{comb}$
+is the function that combines the information obtained from the latent space and
+the output of the U-Net.
+
+
+Figure~\ref{fig:proba_unet},
+(a) represents the sampling process, where 
+a sample is  drawn  from the prior distribution $p(\latent|\obs)$. 
+Next,  the segmentation map $S$ is obtained.
+%  by combining the sample into the U-Net.
+Figure~\ref{fig:proba_unet}(b) 
+represents the training process, where the model is trained with the
+standard training procedure for conditional VAEs. The ELBO objective function
+for the Probabilistic U-Net reads
+
+\begin{equation*}
+    \mathcal{Q}_{\text{P-U-Net}}(\obs,\lab) = 
+    \mathbb{E}_{q_{\phi}(\latent|\obs, \lab)}
+    \left[\log p_{\theta}(\lab|S(\obs, \latent))\right] 
+    -\beta\; \text{KLD}\left(q_{\phi}(\latent|\obs,\lab)||p(\latent|\obs)\right) 
+    \text{,}
+\end{equation*}
+where $\beta$ is a hyperparameter that controls the trade-off between the
+reconstruction loss and the KLD term~\citep{higgins2017beta}.
+The reconstruction loss is the cross-entropy between the segmentation map $S$ and
+the ground truth $\lab$.
+The KLD term is the Kullback-Leibler divergence between the
+approximate posterior $q_{\phi}(\latent|\obs,\lab)$ and the prior
+$p(\latent|\obs)$.
+
+% A cross-entropy loss penalizes differences between S and Y (the cross-entropy
+% loss arises from treating the output S as the parameterization of a pixel-wise
+% categorical distribution Pc). Additionally there is a Kullback-Leibler
+% divergence DKL(Q||P ) = Ez∼Q [log Q - log P ] which penalizes differences
+% between the posterior distribution Q and the prior distribution P . Both losses
+% are combined as a weighted sum with a weighting factor β, as done in [25]:
+
+% A cross-entropy loss penalizes differences between S and Y (the cross-entropy
+% loss arises from treating the output S as the parameterization of a pixel-wise
+% categorical distribution Pc).
+% The networks are trained with the standard training procedure for conditional
+% VAEs (Fig. 1b), i.e.\ by minimizing the variational lower bound (Eq. 4). The
+% main difference with respect to training a deterministic segmentation model, is
+% that the training process additionally needs to find a useful embedding of the
+% segmentation variants in the latent space.
+% The encoder $q_{\phi}(\latent|\obs,\lab)$ maps the input image $\obs$ and the
+% corresponding ground truth $\lab$ to a latent representation $\latent$.
+% The decoder $p_{\theta}(\lab|\obs,\latent)$ maps the latent representation
+% $\latent$ and the input image $\obs$ to the corresponding ground truth $\lab$.
+
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=1\textwidth]{Figures/proba_unet.png}
+    \caption{The Probabilistic U-Net. (a) Sampling process. 
+    The heatmap represents the
+    probability distribution in the low-dimensional latent space. 
+    (b) Training process illustrated for one training example.
+    Figure taken from~\citep{kohl2018probabilistic}. }
+    \label{fig:proba_unet}
+\end{figure}
+
+
+
+

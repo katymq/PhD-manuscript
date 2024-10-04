@@ -1,0 +1,173 @@
+% % !TEX root = late\obs_avec_réduction_pour_impression_recto_verso_et_rognage_minimum.tex
+\chapter{Semi-supervised Bayesian classification}
+\label{chap:appendix3}
+% \subsection{Modified variational sequential labeler}
+The VSL~\citep{chen2019variational} is based on conditional 
+VAEs~\citep{pagnoni2018conditional},
+where at each time step $t$, the observation $\obs_t$ is generated
+according its associated context $u_t$, which consists of the observations
+other than $\obs_t$. 
+The lower bound of the log-likelihood at each time step $t$ is given by
+\begin{align*}
+    \log \p(\obs_t | u_t) &\leq 
+    \E_{\q(\latent_t|\obs_{0:T})} 
+    \left[ \log \p(\obs_t | \latent_t, u_t)\p(\latent_t|u_t) \p(\lab_t|\latent_t, u_t)   \right]
+    \text{, for all } t \in \LL \text{.}\\
+    \log \p(\obs_t | u_t) &\leq 
+    \E_{\q(\latent_t, \lab_t |\obs_{0:T})} 
+    \left[ \log \p(\obs_t | \latent_t, u_t)\p(\latent_t|u_t) \p(\lab_t|\latent_t, u_t)  \right]
+    \text{, for all } t \in \U  \text{.}
+\end{align*}
+The VSL model simplifies some dependencies by assuming that
+$\p(\lab_t|\latent_t, u_t) = \p(\lab_t|\latent_t)$ and 
+$\p(\obs_t | \latent_t, u_t) = \p(\obs_t | \latent_t)$.
+While the associated variational distribution is given by
+\begin{align*}  
+\q(\latent_{0:T}, \labu| \obs_{0:T}, \labl) =& \prod_{t=0}^T 
+\q(\latent_t| \obs_{0:T}) \prod_{t\in  \U}  \q(\lab_t| \latent_t) \text{,}
+\end{align*}
+ which satisfies  the factorization~\eqref{eq:fact-1}
+with
+\begin{align*}
+ \q(\latent_t|\latent_{t-1},\lab_{t-1},\obs_{0:T},\lab_{t+1:T}^{\LL})
+ &=\q(\latent_t|\obs_{0:T}) \text{,} \\
+ \q(\lab_t|\lab_{t-1},\latent_t,\obs_{0:T},\lab_{t+1:T}^{\LL})
+ &=\p(\lab_t|\latent_t) \text{, for all } t \in \U \text{.}
+\end{align*}
+
+Our proposed variation of this model considers
+$u_t = (\obs_{t-1}, \latent_t)$, \ie~we assume the context $u_t$ depends on the previous observation $\obs_{t-1}$ 
+and the current latent variable $\latent_t$.
+The associated ELBO~\eqref{eq:elbo_seq2} 
+for the VSL model is given by
+\begin{align*}
+\Qsemi & (\theta,\phi) \overset{\rm mVSL}{=}
+    \sum_{t \in \LL} \E_{\q(\latent_{t}| \obs_{0:T})} \left(
+     \log\p(\lab_{t}|\latent_{t}) \right) +\\
+    % & \E_{\q(\latent_0|\obs_{0:T})} \log \p(\obs_0|\latent_0) -
+    % \dkl(\q(\latent_0|\obs_{0:T})||\p(\latent_0)) + \nonumber \\
+    & \! \sum_{t=0}^T\!\!
+    \Bigg[ \E_{\q(\latent_{t}| \obs_{0:T})} \log \p(\obs_t|\latent_t) 
+    -    \dkl(\q(\latent_t|\obs_{0:T})|| \p(\latent_t|\obs_{t-1}, \latent_{t-1} ))  \Bigg] 
+    \text{.}
+\end{align*}
+% where $\obs_{-1} =\latent_{-1} = \emptyset$.
+It consists of two terms and 
+that the previous assumptions enable us to interpret it as an expectation 
+according to $\q(\latent_{0:T}|\obs_{0:T})$. 
+Thus, it is not necessary to sample discrete variables according to 
+the G-S trick. Moreover, a regularization term $\beta$ can be introduced 
+in the second part of the ELBO in 
+order to encourage good performance on labeled data 
+while leveraging the context of the noisy observations during reconstruction.
+While this model simplifies the inference, 
+it should be noted that in the generative process, 
+the observation $\obs_t$ is conditionally independent of its associated label and may not
+be adapted to some applications.
+% The VSL simplifies the ELBO by setting 
+% $\q(\lab_t| \latent_t) = \p(\lab_t| \latent_t)$, 
+% which enables the use of classical variational inference with 
+% only continuous latent variables. 
+% To further improve performance, they also introduce a regularization term into 
+% the loss function that encourages good performance on labeled data 
+% while leveraging the context of the noisy image during reconstruction. 
+
+% \subsection{Semi-supervised variational RNN}
+% \label{sec:svrnn}
+% The generative model used in the SVRNN~\citep{butepage2019predicting} 
+% can also be seen as a particular version of the TMC model where the latent variable
+% $\latent_t$ consists of the pair $\latent_t=(z'_t, h_t)$. The associated
+% transition distribution reads:
+% % \begin{align}
+% % \label{eq:svrnn}
+% %  \p(v_t|v_{t-1}) = \p(\lab_t|v_{t-1}) \p(\latent_t|\lab_t, v_{t-1}) \p(\obs_t|\lab_t,\latent_t,v_{t-1}) \text{,}
+% % \end{align}
+% \begin{align}
+% \label{eq:svrnn}
+%  \p(v_t|v_{t-1})  \overset{\rm \scriptscriptstyle SVRNN }{ = }\p(\lab_t|v_{t-1}) \p(\latent_t|\lab_t, v_{t-1}) \p(\obs_t|\lab_t,\latent_t,v_{t-1}) \text{,}
+% \end{align}
+% where 
+% \begin{eqnarray*}
+% \p(\lab_t|v_{t-1})&=& \p(\lab_t|h_{t-1})\text{,} \\
+% \p(\latent_t|\lab_t,v_{t-1})&=&\delta_{f_{\theta}(z'_t,\lab_t,\obs_t,h_{t-1})}(h_t) \times \p(z'_t|\lab_t, h_{t-1}) \text{,} \\
+% \p(\obs_t|\lab_t,\latent_t,v_{t-1})&=& \p(\obs_t|\lab_t, z'_t, h_{t-1}) \text{,}
+% \end{eqnarray*}
+% and where $f_{\theta}$ is a deterministic, 
+% \ie  the variable $\latent'_t$ is a stochastic latent variable 
+% and $h_t$ is deterministically given by 
+% $h_t = f_{\theta}( z'_t, \obs_t, \lab_t, h_{t-1})$, 
+% where $f_{\theta}$ is a function parameterized 
+% by a Recurrent Neural Network (RNN), for example. 
+% The variational distribution $\q(\latent_{0:T}, \labu|$ $ \obs_{0:T}, \labl)$ satisfies
+% the factorization \eqref{eq:fact-2}
+% with
+% \begin{align*}
+%  q(z'_t|\latent_{t-1},\lab_{t},\obs_{0:T},\lab_{t+1:T}^{\LL})=  \q(z'_t| \obs_t, \lab_t, h_{t-1})\text{,} \\
+% q(\lab_t|\lab_{t-1},\latent'_{t-1},\obs_{0:T},\lab_{t+1:T}^{\LL})= 
+% \q(\lab_t| \obs_t, h_{t-1}) \text{,}
+% \end{align*}
+
+% \begin{align}
+%     \label{eq:elbo_svrnn}
+%     \Qsemi(\theta,\phi) \overset{\rm \scriptscriptstyle SVRNN }{=}& \quad
+%     \L^{\LL}(\theta,\phi) + \L^{\U}(\theta,\phi) + J^{\LL}(\theta,\phi) \text{,}
+% \end{align}
+% where 
+% \begin{align}
+%     \L^{\LL}(\theta,\varphi) = \sum_{t\in \LL}
+%      & \E_{\q(\latent'_t| \obs_t, \lab_t, h_{t-1})} 
+%        \log \p(\obs_t|\lab_t, \latent'_t, h_{t-1}) 
+%        + \log(\p(\lab_t | h_{t-1} ))    \nonumber \\ 
+%     &  - \dkl (\q(\latent'_t|\obs_t, \lab_t, h_{t-1})||
+%     p(\latent'_t|\lab_t, h_{t-1} ))  \text{,} \\
+%     \L^{\U}(\theta,\varphi) =&  \sum_{t\in \U}
+%      \E_{\q(\latent'_t, \lab_t| \obs_t, h_{t-1})} 
+%        \log \p(\obs_t|\lab_t, \latent'_t, h_{t-1})     \nonumber \\ 
+%     & - \dkl (\q(\latent'_t|\obs_t, \lab_t, h_{t-1})) \nonumber  \\
+%     & - \dkl (\q(\lab_t| \obs_t, h_{t-1})|| \p(\lab_t|h_{t-1} )) \text{,}\\
+%     J^{\LL}(\theta,\phi) = & \sum_{t\in \LL} 
+%     \E_{\tilde{p}(\lab_t, \obs_t)}
+%     \log(\p(\lab_t | h_{t-1} ) \q(\lab_t| \obs_t, h_{t-1})) \text{,}
+% \end{align}
+% where $\tilde{p}(\lab_t, \obs_t)$, for $t\in \LL$, 
+% denotes the empirical distribution of the data.
+% Their final ELBO does not coincide with \eqref{eq:elbo_seq}. 
+% The reason why is that they derive it 
+% from the static case~\citep{jang2016categorical} and add 
+% a penalization term $J^{\LL}(\theta,\phi)$  that encourages 
+% $\p(\lab_t|h_{t-1})$ and $\q(\lab_t| \obs_t, h_{t-1})$ 
+% to be close to the empirical distribution of the data.
+
+% \begin{remark}
+% Note that since $\Lat_t$ is deterministic given $(z'_t, \obs_t, \lab_t, h_{t-1})$,
+% its posterior distribution becomes trivial, and thus 
+% there is no need to consider a variational distribution for it.
+% \end{remark}
+
+
+
+% In this section, we present the results of the proposed models on
+% semi-supervised binary image segmentation. Our goal is to recover the 
+% segmentation of a binary image $(\Omega=\{\omega_1,\omega_2\})$
+% from the noisy observations
+% $\obs_{0:T}$ when a partially segmentation $\labl$ is available.
+% In particular, $\vartheta(\lab_t; \cdot )$ (resp. $\varsigma(\lab_t;\cdot)$) 
+% is set  as a Bernoulli distribution with parameters $\ropy$ (resp. $\roqy$). 
+% As for the distribution  $\zeta(\obs_t; \cdot )$ 
+% (resp. $\eta(\latent_t;\cdot)$ and  $\tau(\latent_t;\cdot)$), 
+% we set it as a Gaussian distribution with parameters 
+% $[ \muobs , \diag(\sigobs) ]$ (resp.  $[ \mulatentp , \diag(\siglatentp)]$
+%  and $[ \mulatent , \diag(\siglatent) ]$),
+% % \begin{align*}
+% %     \p(v_t|v_{t-1}) &=  \p(\obs_t|\cdot) \p(\latent_t|\cdot)\p(\lab_t|\cdot) \nonumber\\
+% %     \p(\obs_t | \cdot) &= \N(\obs_t; \mu_{px, t}, {\rm diag}(\sigma_{px,t}) ) \\
+% %     \p(\latent_t | \cdot) &= \N(\obs_t; \mu_{pz, t}, {\rm diag}(\sigma_{pz,t}) ) \\
+% %     \p(\lab_t | \cdot) &= \Ber(\lab_t;  \rho_{py,t}) \text{,}
+% % \end{align*}
+% where ${\rm diag(.)}$ denotes the diagonal matrix deduced from the values 
+% of $\sigma_{\cdot,t}$.
+% % and the parameters are $\theta = \{\mu_{pz,t}, \sigma_{pz,t}, \mu_{px,t}, \sigma_{px,t}, \rho_{py,t}\}$  
+% % and $\phi = \{ \mu_{qz,t}, \sigma_{qz,t} , \rho_{qy,t}\}$.
+
+
+

@@ -1,0 +1,152 @@
+\chapter{Generative Pairwise Markov Models}
+\label{chap:appendix_22}
+
+\tocless\section{Proof of Theorem \ref{prop:cov-pmc}}
+
+
+Let's recall that in the stationary case, the function from $\mathbb{N}$ to
+$\mathbb{R}$ that associates $r_k$ to any $k$ is a covariance function (or a
+covariance sequence) if and only if, for any $T \geq 0$, 
+the Toeplitz matrix
+with the first row  $[r_0, r_1, \ldots,r_T]$ is a covariance matrix, \ie~it is
+positive semi-definite. This set of constraints thus restricts the set of
+possible sequences, and we aim to characterize this set.  
+ $\{r_0, r_1, r_2, ...\}$ is a covariance function if and
+only if $r_0 \geq 0$,  and  if
+\[ C(z) = r_0 + 2 \sum_{k=1}^{+\infty} r_k z^k \]
+is a function of the Carathéodory class, \ie~$C(z)$ has a positive real part
+for $z$ in the open unit disk 
+(Carathéodory-Toeplitz theorem~\citep{akhiezer1965classical})
+
+
+% the Carathéodory-Toeplitz theorem~\citep{akhiezer1965classical} is a
+% covariance function if
+
+Thus, we look for values of $\tilde{A}$ and $\tilde{B}$ such that the 
+covariance matrix $\Sigma^{\obs}_{T}$ with first row
+$[1,\; \tilde{B},\; \tilde{A}^2,\; \tilde{A}^2\tilde{B},\; \tilde{A}^4,\; \tilde{A}^4\tilde{B},\; \dots ]$
+ satisfies:
+\begin{equation*}
+  \forall T \in \mathbb{N}^*, \; \Sigma^{\obs}_{T} \geq 0 \iff \forall z \in 
+  \{ u \in \mathbb{C}; \; |u|<1 \}, \Re\Big( 1+ 2(\tilde{B}z + \tilde{A}^2z^2) 
+  \sum_{\tau=0}^{\infty}(\tilde{A}^2z^2)^\tau \Big) \geq 0 \text{,}
+\end{equation*}
+which is derived from:
+\begin{align*}
+  C(z) = & 1 + 2 ( \tilde{B}z +  \tilde{A}^2z^2 + \tilde{A}^2\tilde{B}z^3 +  \tilde{A}^4z^4 + \tilde{A}^4\tilde{B}z^5 + \dots) \\
+  = & 1 + 2 \big[\tilde{B}z ((\tilde{A}^2z^2)^0  + (\tilde{A}^2z^2)^1 + (\tilde{A}^2z^2)^2 + (\tilde{A}^2z^2)^3 + \dots)\\
+  & +  \tilde{A}^2z^2 ((\tilde{A}^2z^2)^0  + (\tilde{A}^2z^2)^1 + (\tilde{A}^2z^2)^2 + (\tilde{A}^2z^2)^3 + \dots) \big ]  \\
+  = & 1 + 2(\tilde{B}z + \tilde{A}^2z^2) \sum_{\tau=0}^{\infty}(\tilde{A}^2z^2)^\tau
+\end{align*}
+
+% We have, for all \( z \in \{ u \in \mathbb{C}; \; |u|<1 \}, |\tilde{A}^2z^2|<1 \) 
+% then \( \sum_{\tau=0}^{\infty}(\tilde{A}^2z^2)^\tau = \frac{1}{1- \tilde{A}^2z^2} \).\\
+
+The positive real part condition is equivalent to:
+\begin{align*}
+&\Re\Big( 1+ 2(\tilde{B}z + \tilde{A}^2z^2) \sum_{\tau=0}^{\infty}(\tilde{A}^2z^2)^\tau \Big)  \geq 0\\
+\overset{(i)}{\iff }& \; \Re\Big( 1+ 2\; \frac{\tilde{B}z + \tilde{A}^2z^2}{1-\tilde{A}^2z^2} \Big) \geq 0\\
+\iff & \; \Re\Big( \frac{1 + 2\tilde{B}z + \tilde{A}^2z^2}{1-\tilde{A}^2z^2} \Big)  \geq 0\\
+\overset{(ii)}{\iff}& \; \Re\Big( \frac{1 + 2\tilde{B}re^{i\theta} + \tilde{A}^2r^2e^{2i\theta}}{1-\tilde{A}^2r^2e^{2i\theta}} \Big) \geq 0\\
+\iff & \; \Re\Big( \frac{(1 + 2\tilde{B}re^{i\theta} + \tilde{A}^2r^2e^{2i\theta})(1-\tilde{A}^2r^2e^{-2i\theta})}{|1-\tilde{A}^2r^2e^{2i\theta}|^2} \Big) \geq 0\\
+\iff & \; \Re\Big( (1 + 2\tilde{B}re^{i\theta} + \tilde{A}^2r^2e^{2i\theta})(1-\tilde{A}^2r^2e^{-2i\theta}) \Big) \geq 0\\
+  \iff & \; 1 + 2\tilde{B}r\cos(\theta) - 2\tilde{A}^2\tilde{B}r^3\cos(-\theta) - \tilde{A}^4r^4 \geq 0\\
+  \overset{(iii)}{\iff} & \; 1 + 2\tilde{B}r\cos(\theta) - 2\tilde{A}^2\tilde{B}r^3\cos(\theta) - \tilde{A}^4r^4 \geq 0\\
+  \iff & \; 1 + 2\tilde{B}r\cos(\theta)(1-\tilde{A}^2r^2) - \tilde{A}^4r^4 \geq 0  \text{, }
+\end{align*}
+where we used the following arguments:
+\begin{enumerate}[label=(\roman*)]
+\item $|\tilde{A}^2z^2|<1$ since $\tilde{A}\in [-1, 1]$ and $|z|<1$.
+\item Writing $z = re^{i\theta}$, for all $r \in [0, 1)$ and $\theta \in [-\pi, \pi]$.
+\item Cosine is an even function.
+\end{enumerate}
+
+Thus, we need to analyze the expression:
+\begin{equation}
+  \label{eq:condCarat}
+    1 + 2\tilde{B}r\cos(\theta)(1-\tilde{A}^2r^2) - \tilde{A}^4r^4 \geq 0 \text{,}
+\end{equation}
+and we can distinguish four cases:
+\begin{enumerate}
+  \item Case $\tilde{A}=0$: Let us first consider the case where $\tilde{A}=0$. In this case, \eqref{eq:condCarat} simplifies to:
+  \[
+  1 + 2\tilde{B}r\cos(\theta) \geq 1 - 2|\tilde{B}| \geq 0,
+  \]
+  which implies $|\tilde{B}|\leq \frac{1}{2}$.
+  
+  \item Case $\tilde{B}=0$: We then have the condition $|\tilde{A}|\leq 1$, which is true.
+  
+  \item Case $\tilde{B}>0$: 
+  \begin{align*}
+        &1 + 2\tilde{B}r\cos(\theta)(1-\tilde{A}^2r^2) - \tilde{A}^4r^4 \\
+        \geq & \; 1 - 2\tilde{B}(1-\tilde{A}^2) - \tilde{A}^4. 
+  \end{align*}
+  
+  Note that $1-\tilde{A}^2r^2\geq 0$ and $\tilde{A}^4r^4 \geq 0$. Therefore,
+  \begin{align*}
+        &1 + 2\tilde{B}r\cos(\theta)(1-\tilde{A}^2r^2) - \tilde{A}^4r^4 \geq 0 \\
+        \iff &\; \tilde{B} \leq \frac{\tilde{A}^2+1}{2}.
+  \end{align*}
+  
+  \item Case $\tilde{B}<0$: 
+  \begin{align*}
+        &1 + 2\tilde{B}r\cos(\theta)(1-\tilde{A}^2r^2) - \tilde{A}^4r^4 \\
+        \geq & \; 1 + 2\tilde{B}(1-\tilde{A}^2) - \tilde{A}^4. 
+  \end{align*}
+  
+  Note that $1-\tilde{A}^2r^2 \geq 0$ and $\tilde{A}^4r^4 \geq 0$. Therefore,
+  \begin{align*}
+        &1 + 2\tilde{B}r\cos(\theta)(1-\tilde{A}^2r^2) - \tilde{A}^4r^4 \geq 0 \\
+        \iff &\; \tilde{B} \geq - \frac{\tilde{A}^2+1}{2}.
+  \end{align*}
+\end{enumerate}
+Then $\{r_k\}_{k \in \NN}$ is a covariance function if and only if
+  \begin{equation*}
+  -1 \leq \tilde{A} \leq 1 \quad \text{and} \quad -\frac{\tilde{A}^2 +1}{2} \leq \tilde{B} \leq \frac{\tilde{A}^2 +1}{2}.
+  \end{equation*}
+
+
+\vspace{0.65cm}  
+Now, the objective is to determine if any such probability distribution function can be modeled by some PMC model. For this, we study the inverse mapping of:
+
+\begin{align}
+  \label{eq:phige}
+      \phi : \theta \mapsto \big(\tilde{A} = \tilde{A}(\theta), \tilde{B} = \tilde{B}(\theta)\big),
+\end{align}
+where $\theta$ represents the set of parameters of the model.
+
+We set $\gamma = b$, and \(f\) either as \(0\) or \(-a - bc\) (two particular
+cases of the PMC), that coincide with \eqref{eq:cov-pmm-e}. 
+The following expressions for \(\tilde{A}\) and \(\tilde{B}\) are obtained:
+\begin{eqnarray*}
+    \left\{
+    \begin{matrix}
+    \tilde{A} = \sqrt{ce} \quad \text{and} \quad \tilde{B} = b(c(1 - b^2\eta) + e\eta)  & \;  \text{if } f = 0, \\ 
+    \tilde{A} = \sqrt{e^2\eta + a^2(1 - b^2\eta)} \quad \text{and} \quad \tilde{B} = be\eta - a(1 - b^2\eta) & \; \text{if } f = -a - bc.
+    \end{matrix} \right.
+\end{eqnarray*}
+
+First, the case \(f = 0\), \(\gamma = b\) implies that \(a = -bc\), so the set of parameters is \(b, c, e, \eta\) since \(a, f\), and \(\gamma\) are functions of these parameters. Thus, \(\phi\) can be written as:
+
+\begin{align}
+\label{eq:inv1}
+    \phi :(b, c, e, \eta) \mapsto \big(\tilde{A} = \sqrt{ce}, \tilde{B} = b(c(1 - b^2 \eta) + e \eta) \big).
+\end{align}
+
+The domain \((\tilde{A}, \tilde{B})\) has been characterized to obtain a
+covariance matrix, \ie~\(\tilde{A} \in [-1, 1]\) and \(-\frac{\tilde{A}^2 +
+1}{2} \leq \tilde{B} \leq \frac{\tilde{A}^2 + 1}{2}\), which  defines a surface
+\(\mathcal{S}\). We obtain an inverse mapping
+\(\phi^{-1}\) of Equation~\eqref{eq:inv1}, showing that for some \((\tilde{A},
+\tilde{B}) \in \mathcal{S}\), there exists at least one PMC which yields an
+observation probability distribution.
+For simplicity, we do not show the detailed inverse mappings and their
+calculations here, as they are lengthy and complex. The important result is that
+such a mapping exists and is consistent with the conditions stated above.\\
+
+Next, the case \(f = -a - bc\), \(\gamma = b\)  implies \(c = e\eta - ab\eta\). The set of parameters is then \(a, b, e, \eta\), and \(\phi\) can be written as:
+\begin{align}
+\label{eq:inv2}
+    \phi :(a, b, e, \eta) \mapsto \big(\tilde{A} = \sqrt{e^2 \eta + a^2 (1 - b^2 \eta)}, \tilde{B} = be \eta - a (1 - b^2 \eta) \big).
+\end{align}
+Similarly, we can obtain the inverse mapping \(\phi^{-1}\) of Equation~\eqref{eq:inv2}, showing that for some \((\tilde{A}, \tilde{B}) \in \mathcal{S}\), there exists at least one PMC which yields an observation probability distribution.

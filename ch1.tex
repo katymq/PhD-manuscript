@@ -1,0 +1,1398 @@
+% !TEX root = latex_avec_réduction_pour_impression_recto_verso_et_rognage_minimum.tex
+\chapter{Technical introduction}
+\label{chap:main_concepts}
+
+% \epigraph{
+% ``It’s not an idea until you write it down.'' }{Ivan Sutherland}
+
+% In this chapter  \\
+\localtableofcontents
+
+\pagebreak
+
+% \section*{Introduction}
+% \label{sec:introduction_ch1}
+
+\section{Deep learning}
+\label{sub:nn}
+
+% \yohan{DONE it is important that in Chap 1, 
+% you briefly explain that the gradient wrt
+% the parameters of a DNN can be easily computed. FROM CHAPTER 4}
+
+\subsection{Fundamental principle}
+\label{sub:principle}
+% \gls*{dnns}  
+DNNs 
+have significantly gained popularity in recent years
+due to their remarkable performance in various tasks such as speech 
+recognition~\citep{deng2013new, chan2016listen,
+abdel2013exploring}, image recognition \citep{fu2017look, traore2018deep,
+zheng2017learning}, natural language processing \citep{collobert2008unified,
+goldberg2017neural}. %  including prediction and classification~\citep{li2018deep,huang2023comparative}. 
+Mathematically, a DNN is a parameterized vector-valued function $\f(\obs)$, $\obs \in
+\mathbb{R}^{d_\obs}$, constructed through the sequential and alternating
+composition of linear and non-linear functions. 
+If vector $\obs'$ represents the input to a specific hidden layer, the scalar
+output of a neuron is computed as $\sigma(w\obs'+b)$, where
+ $w\obs'$ is the dot product of a vector of
+weights $w$ and $\obs'$. Here $b$
+represents the bias, and $\sigma(\cdot)$ is the (non-linear) activation
+function. Common activation functions include sigmoid $(\rm sigm(x) = \frac{1}{1 + e^{-x}})$,
+ hyperbolic  tangent $(\tanh(x) = \frac{e^x - e^{-x}}{e^x + e^{-x}})$, 
+ and  Rectified Linear Unit (ReLU=$\max(0,x)$).
+
+
+The set of parameters $\theta$ of a DNN,
+which includes all weights and biases, enables these networks to act as
+universal approximators, theoretically capable of approximating 
+any vector-valued function $f(\obs)$ under some assumptions
+% DNNs can be seen as universal approximators in the sense that $\f(\obs)$ can
+% theoretically approximate any vector-valued function $f(\obs)$, under some assumptions
+~\citep{cybenko1989approximation,hornik1991approximation,
+pinkus1999approximation,lu2017expressive, liang2016deep}.
+The estimation of $\theta$ relies on the observation that the gradient of $\f$
+w.r.t. $\theta$ can be exactly computed with the backpropagation algorithm,
+a foundational technique for learning in neural networks, as described
+by~\cite{rumelhart1985learning,hecht1992theory}.
+This efficiency is because the algorithm takes advantage of the chain rule of
+computation to decompose the global gradient computation into a series of
+simpler local gradient computations along the layers of the network. 
+% These local
+% gradients propagate backward from the output layer to the input layer, hence the
+% name ``backpropagation''.
+For example, in  a classification problem of an observation $\obs$, 
+the function  $\f(\obs)$ 
+aims at approximating the conditional probability \( P(Y = y \mid x) \) for all
+\( y \) in  the 
+% the true class $\lab$, which belongs to the
+set $\Omega = \{\omega_1, \ldots, \omega_{C}\}$, 
+where $C$ is the number of classes.
+Provided that we have access to a labeled training dataset
+$\mathcal{D} = \{(\obs^i, \lab^i)\}_{i=1}^n$, it is possible to
+minimize a loss function $\mathcal{L}(\mathcal{D})$, \eg~the cross-entropy loss,
+ with a gradient descent approach~\citep{ruder2016overview}. 
+
+% In supervised learning, DNNs are trained on labeled
+% datasets, allowing the network to learn to predict the output $\lab$ 
+% directly from the input data $\obs$. In
+% semi-supervised learning, DNNs utilize a combination of a small amount of
+% labeled data and a large amount of unlabeled data. This approach leverages the
+% structure learned from the labeled data to make predictions about the unlabeled
+% data, often leading to improved generalization over purely supervised methods.
+% Unsupervised learning, on the other hand, does not use labeled data at all.
+% Instead, DNNs are tasked with discovering the underlying patterns and
+% distributions within the data, such as clustering or density estimation. Each of
+% these learning strategies can exploit the representational power of DNNs to
+% extract complex features and relationships within the data.
+
+
+% \katyobs{Here a deleted remark about supervised, semi-supervised and unsupervised learning.}
+% \begin{remark}
+%     When the labels $\lab$ are available for all the observations $\obs$,
+%     we have a supervised learning problem.
+%     In the case when the labels  are not available for all the
+%     observations, we have a semi-supervised learning problem characterized
+%     by the availability of a dataset $\mathcal{D}_2$ contains both unlabeled data
+%     $\{\tilde{\obs}^j\}_{j=1}^m$ and a subset of labeled data $\{(\obs^i, \lab^i)\}_{i=1}^n$
+%     Finally, an unsupervised learning problem is
+%     characterized by an unlabeled dataset $\mathcal{D}_3 =\{\obs^i\}_{i=1}^n$.   
+%     We will discuss these learning problems in more detail in next chapters.  
+% \end{remark}
+
+\subsection{Deep neural networks architectures for sequential data}
+\label{subsec:neural_networks}
+
+
+While classic DNNs have demonstrated significant versatility and
+power in various domains, their conventional architectures may not be optimal 
+for processing sequential data, such as time series, audio signals, or textual
+content. Different types of neural networks have been developed to address this
+issue, such as~\gls*{rnn}~\citep{fausett2006fundamentals, 
+medsker2001recurrent, mikolov2014learning}.
+RNNs are  architected to process
+sequential information, where dependencies exist across temporal intervals. 
+This capability is achieved by incorporating recurrent connections within the
+network, allowing information to be retained across time steps.
+% RNNs are distinguished by their ability to encode temporal information in the
+% network architecture, which is achieved through loops that act as memory gates.
+The design allows an RNN to not only process the current input, but also to use
+the context provided by previously received inputs. 
+For instance, when predicting the next word in a sentence, the RNN considers the
+sequence of words that preceded it to make a more accurate prediction.
+% This architecture is particularly useful for tasks such as speech
+% recognition~\citep{shewalkar2019performance}, language
+% modeling~\citep{kombrink2011recurrent, xiao2020research}, and machine
+% translation~\citep{sundermeyer2014translation}. 
+
+
+In contrast to classic DNNs,
+the parameters $\theta$ in an RNN are shared across different time steps,
+rather than learning a separate set of parameters for each moment in time.
+This sharing reduces the model's complexity and enables the RNN to generalize across
+sequences of different
+ lengths. At each time step $t$, the hidden
+state $\lat_t \in \mathbb{R}^{d_\lat}$ of the RNN is updated based on the current
+input $\obs_t$ and the
+previous hidden state $\lat_{t-1}$. The RNN's output $o_t$  at time $t$ is
+computed based on the hidden state $\lat_t$.
+This model can be expressed as follows:
+\begin{eqnarray} 
+    \label{eq:rnn_v1} \lat_t&=&\f(\lat_{t-1},\obs_{t}) 
+    \text{, } \text{for all } t\in\NN \text{,}\\
+    \label{eq:rnn_v2} o_t&=&\g(\lat_{t})
+    \text{, } \text{for all } t\in\NN \text{.} 
+\end{eqnarray} 
+Here $f_{\theta}$ and $\g$ are parameterized activation functions, \eg~neural networks.
+Figure~\ref{fig:rnn_intro} illustrates the graphical representation of an RNN.
+This architectural design enables the RNN to effectively handle data where 
+current decisions depend on past information, such as time series data, speech, or text.
+\begin{figure}[htb]
+    \centering
+    \includegraphics[width=0.45\textwidth]{Figures/Graphical_models/rnn_intro.pdf}
+    \caption{Graphical representation of a Recurrent Neural Network.
+    The recurrent connections between the nodes highlight the network's
+    ability to process sequences of data by maintaining a `memory' of previous
+    inputs through the hidden states.}
+    \label{fig:rnn_intro}
+\end{figure}
+
+\begin{remark}
+    The output $o_t$ of an RNN has a dual predictive capability. For instance,
+    in a stock market analysis application, it could predict the label $\lab_t$
+    categorizing market trends or forecast future stock prices $\obs_{t+1}$. 
+    This versatility makes RNNs a tool of
+    choice for various predictive modeling tasks.
+    % The output  can be used to predict a label  of the input $\obs_t$, or to 
+    % predict a next input in a sequence.
+\end{remark}
+
+Despite their advantages, RNNs are not without challenges.
+They are particularly prone to issues of vanishing and exploding gradients, 
+especially when dealing with longer sequences. 
+To overcome these problems, architectures
+such as~\gls*{lstm} and \gls*{gru} have been
+developed. LSTMs and GRUs incorporate mechanisms that regulate the flow of
+information, allowing the network to retain or forget information selectively.
+This capability significantly improves their performance on tasks involving long
+sequences or where the temporal gap between relevant information is large.
+% , for example, incorporate gates that regulate information flow,
+% thereby preserving relevant temporal information without the decay faced by
+% traditional RNNs.
+While these networks are beyond the scope of this thesis, interested readers can
+refer to~\cite{sherstinsky2020fundamentals, LSTM, GRU} for more details.
+
+
+\section{Bayesian estimation}
+\label{sec:bayesian_estimation}
+
+
+% Bayesian Estimation offers a  framework for dealing with uncertainty in
+% model parameters. This approach integrates prior knowledge with new evidence,
+% using Bayes' theorem to update the belief about the model parameters
+% continuously. In a typical setting, Bayesian Estimation involves defining a
+% prior distribution that encapsulates our beliefs about the parameters before
+% observing any data. After data acquisition, the likelihood function, which
+% represents the probability of observing the data given the parameters, is used
+% to update these beliefs, resulting in the posterior distribution. 
+% The utility of 
+% Bayesian Estimation extends beyond simple parameter estimation; 
+% it is also fundamental in the development of probabilistic models that can account for
+% uncertainty and variability in complex systems. 
+
+
+
+In the context of deep learning, we have seen how common DNNs, including RNNs, can be
+used to approximate functions for various tasks. While these models are powerful,
+they often do not directly account for the uncertainty inherent in real-world
+data. Bayesian estimation extends the predictive power  by
+incorporating a probabilistic framework capable of capturing not just the
+observed data but also the underlying latent structures, such as the intrinsic
+features of an image that are not immediately observable.
+
+% Bayesian estimation provides a framework that models both the observed
+% variables and latent structures, providing a more complete representation of
+% data uncertainties.
+
+
+
+In Bayesian Estimation, we deal with the observed random variable
+ (r.v.) $\obs \in \mathbb{R}^{d_\obs}$ 
+and the latent (unobserved or hidden) r.v. $\latent \in \mathbb{R}^{d_\latent}$, 
+each playing a distinct role in the modeling process.
+Throughout this thesis, we do not distinguish between random variables and their
+realizations.
+% The observed variable $\obs$ represents the data we have access to, while the
+% latent variable $\latent$ captures the underlying structure of the data that is
+% not directly observable.
+% with focus on their joint distribution $p(\obs, \latent)$. 
+Our interest, which will be explained in more detail later, lies in calculating
+the posterior distribution
+% For reasons that will be clearer later,
+% our main interest is in computing the posterior distribution 
+\begin{equation*}
+    \label{eq:posterior}
+    p(\Latent|\Obs) = \frac{p( \Latent, \Obs)}{p(\Obs)} \text{,}
+\end{equation*}
+which offers insights into the latent variables given
+the observed data.
+However, the direct computation of $p(\obs, \latent)$ 
+is often impractical, whether due to the high-dimensional nature of the data,
+which leads to computational complexity, or the unknown distributional
+characteristics.
+% To address this, we  introduce a parameterized model
+Thus, we can start by parameterizing the joint distribution $p(\obs, \latent)$ 
+with a set of parameters $\theta$,
+leading to the model  $p_{\theta}(\obs, \latent)$.
+% $p_{\theta}(\obs, \latent)$, where $\theta$ is the set of parameters.
+% Parameterizing the joint distribution with a set of parameters
+% % The joint distribution $p(\obs, \latent)$ is parameterized by a set of parameters
+% $\theta$,  we obtain the model $\p(\obs, \latent)$.  
+Once a class of distributions $\p$ has been chosen, the
+objective is to estimate the parameter  $\theta$ from a realization $\obs$
+in an unsupervised way, that is to say without observing $\latent$.
+A common approach for parameter estimation is the Maximum-Likelihood (ML)
+estimator,
+$\hat{\theta}^{\mathrm{ML}} = \argmax_{\theta} \p(\obs) = \argmax_{\theta} \int \p(\latent, \obs) \d \latent$,
+due to its statistical properties~\citep{Hube67,White-MLE}. 
+However,  the ML estimator may not be tractable since $\p(\Obs)$ 
+is not necessarily known
+in a closed form. 
+According to the
+structure of $\p(\latent,\obs)$, the ML estimator can be approximated with a
+gradient ascent method on the likelihood function, the
+%  Expectation Maximization 
+\gls*{em}
+algorithm~\citep{dempster1977maximum} or a  
+Variational Inference 
+% \gls*{vi}
+algorithm~\citep{jaakkola2000bayesian,Blei_2017}.
+% % https://andrewcharlesjones.github.io/journal/em-and-vi.html
+
+% The EM algorithm's approach to dealing with latent variables and its
+% optimization process can be considered a particular case of the framework
+% provided by VI due to their foundational similarities.
+% We will focus on the latter in the following sections.
+% % \katyobs{read the last paragraph and see if it is clear.}
+% % When $\theta$ is estimated, the posterior distribution $\p(\latent|\obs)$ has to be
+% % computed, or approximated.
+% % Generally, this can be done by using a Monte-Carlo method such as normalized importance
+% % sampling \citep{these-hesterberg}, however, in the context of high-dimensional
+% % data, this approach can be computationally expensive.
+% % Alternatively, VI can also be used to approximate the posterior
+% % distribution with a simpler distribution, that is detailed below.
+
+
+In summary, Bayesian estimation offers a probabilistic approach 
+to modeling by considering
+both observed and latent variables. This method provides a comprehensive
+framework for understanding the underlying uncertainties in data. In practice,
+computing the posterior distribution $\p(\latent|\obs)$ directly is often
+infeasible due to high-dimensional data or unknown distribution characteristics.
+VI provides a robust alternative by approximating the
+true posterior with a simpler, and parameterized distribution
+This approach  is discussed in the following subsection.
+
+
+\subsection{Approximated Maximum Likelihood estimation with Variational Inference}
+\label{subsec:vbi}
+
+Given independent and identically distributed observations
+$\{\obs^i\}_{i=1}^M$,  a
+direct computation of $\argmax_{\theta} \p(\obs)$ becomes impractical except in
+simpler cases, such as when $\p(\obs)$ is directly available (\eg~when $\latent$ is
+discrete or in linear and Gaussian scenarios). 
+VI offers a flexible and scalable alternative
+for more complex models where such straightforward calculations are not feasible.
+VI is introduced as a method for approximate inference in
+models where the computation of the posterior distribution is complex or
+intractable. Unlike Maximum Likelihood estimation, which focuses on finding
+parameter values that maximize the likelihood of the observed data, VI 
+approaches the problem by approximating the true posterior
+distribution $\p(\latent|\obs)$ with a simpler, parameterized distribution 
+$\q(\latent|\obs)$ (see \eg~\cite{Blei_2017} for a detailed introduction).
+
+
+
+This method is the cornerstone of the Bayesian inference algorithms we propose in 
+this thesis, for our (highly) parameterized models. 
+Let us consider the general problem of computing or approximating a posterior
+distribution $\p(\latent|\obs) \propto \p(\latent,\obs) $ known up to a constant
+when $\obs$ is observed and $\Latent$ is latent. VI
+relies on a parameterized
+distribution $\q(\latent|\obs)$ that is optimized to fit the posterior
+distribution $p(\latent|\obs)$ by minimizing the~\gls*{kld}  
+%  Kullback-Leibler Divergence (KLD) 
+ between $\q(\latent|\obs)$ and $\p(\latent|\obs)$, \ie 
+\begin{align}
+%\label{eq:DKL-1}
+\dkl(\q,\p)& =\int \q(\latent|\obs) \log \left(\frac{\q(\latent|\obs)}{\p(\latent|\obs)} \right) \d \latent \geq 0 \text{,} \nonumber  \\
+\label{eq:DKL-2}
+&= \int \q(\latent|\obs) \log \left(\frac{\q(\latent|\obs)}{\p(\latent,\obs)} \right) \d \latent  + \log \left( \p(\obs) \right)
+\end{align}
+w.r.t. $\theta$.
+The choice of the variational distribution $\q(\latent|\obs)$ is
+critical, as the first term on the right-hand side of the above equation must be
+computable or easily approximated, and subsequently optimized with respect to $\phi$. 
+A popular choice of variational distribution is the mean-field approximation
+\citep{bishop2006pattern} where the variational components of
+$\latent=(\latent_1,\ldots,\latent_{d_\latent})$ are independent given $\obs$
+and one set of parameters $\phi_i$ is associated to each component $\latent_i$,
+\ie~$\q(\latent|\obs)=\prod_{i=1}^{d_x} q_{\phi_i}(\latent_i|\obs)$ and
+$\phi=(\phi_1,\ldots,\phi_{d_\latent})$.
+
+
+This approach also provides a parameter estimation method when some parameters
+of the original model $\p$ are unknown. Indeed, 
+we deduce from~\eqref{eq:DKL-2} that
+\begin{equation}
+\label{eq:elbo}
+\log \p(\obs) \geq  - \int \q(\latent|\obs) \log 
+\left(\frac{\q(\latent|\obs)}{\p(\latent,\obs)} \right) {\rm d}\latent 
+= \elbo(\theta,\phi)\text{,}
+\end{equation}
+where equality holds when $\q(\latent|\obs)=\p(\latent|\obs)$.
+%belongs to the same class of distributions as $\p$ 
+%and $\phi=\theta$.
+
+
+
+
+Computing the so-called \gls*{elbo}
+% Evidence Lower Bound (ELBO) 
+$\elbo(\theta,\phi)$ and next
+maximizing it w.r.t. $(\theta,\phi)$ leads to a maximization of a lower bound of
+the log-likelihood $\log \p(\obs)$. The resulting variational EM 
+algorithm~\citep{variational-EM} is an alternative to the 
+EM algorithm~\citep{dempster1977maximum}
+when the original posterior $\p(\latent|\obs)$ is not available. 
+% \katyobs{Add this remark????}
+% \begin{remark}
+% The EM algorithm can be considered a special case of VI, in which the
+% variational distribution exactly matches the original posterior distribution.
+% This means that EM assumes that the expectation on the posterior is computable
+% and can be treated without approximations and, therefore, the divergence
+% KL~\eqref{eq:DKL-2} becomes zero.
+% \end{remark}
+% \subsubsection*{Parameter Estimation}
+\label{subsec:optimization_vae}
+Our objective is to maximize the ELBO $\elbo(\theta,\phi)$  as defined in
+Equation~\eqref{eq:elbo}, 
+w.r.t. the parameters $(\theta, \phi)$.
+% This optimization is typically performed using stochastic gradient ascent
+% algorithms, or equivalently, by applying gradient descent on the negative
+% ELBO. 
+% To deal with scenarios where computing gradients
+% directly is infeasible, we employ Monte Carlo estimators, which offer a
+% practical solution to obtain unbiased estimates of the gradients using the
+% statistical sampling technique.
+% For continuous latent variables, we utilize the reparameterization
+% trick~\citep{kingma2014} facilitates obtaining an unbiased estimator for the
+% gradient of the ELBO. When $\Latent$ is discrete, the Gumbel-Softmax (G-S) trick
+% is used~\citep{maddison2016concrete, jang2016categorical}. These techniques are
+% detailed below.
+
+
+To address scenarios whereThe, we
+employ Monte Carlo estimators, which provide a practical solution for obtaining
+unbiased gradient estimates using statistical sampling techniques. For
+continuous latent variables, we use the reparameterization trick~\citep{kingma2014}, 
+which facilitates obtaining an unbiased estimator for the gradient of the ELBO.
+ When z is discrete, we
+use the Gumbel-Softmax (G-S) trick~\citep{maddison2016concrete,
+jang2016categorical}.
+These techniques are detailed below
+
+% Generally, the direct computation of the ELBO's gradient is intractable.
+% A Monte Carlo estimator can be used for estimating the gradient with respect to
+% $\theta$ and $\phi$.
+% While unbiased gradient estimators with respect to $\theta$ are relatively
+% straightforward to compute using samples from $\q(\Latent|\Obs)$, obtaining
+% unbiased gradient estimators with respect to $\phi$ is more challenging, since
+% the expectation is taken with respect to the variational distribution
+% $\q(\Latent|\Obs)$, which itself depends on $\phi$.
+% For continuous latent variables, we utilize the reparameterization trick~\citep{kingma2014} facilitates obtaining an unbiased estimator for the
+% gradient of the ELBO. When $\Latent$ is discrete, the Gumbel-Softmax (G-S) trick is
+% used~\citep{maddison2016concrete, jang2016categorical}.
+% These techniques are detailed below.
+% For discrete latent variables, an alternative approach,
+% called the Gumbel-Softmax (G-S) trick~\citep{maddison2016concrete,
+% jang2016categorical} is applied.
+
+% Maximizing with respect to parameters indirectly maximizes the log-likelihood of
+% our data. To deal with scenarios where computing
+% gradients directly is infeasible, we employ Monte Carlo estimators, which offer
+% a practical solution to obtain unbiased estimates of the gradients using the
+% statistical sampling technique.
+
+% For continuous latent variables, we utilize the reparameterization trick
+% ~\citep{kingma2014},
+% transforming the randomness in our model into a differentiable function with
+% respect to , facilitating the use of gradient-based optimization methods. In
+% cases where the latent variables are discrete, the Gumbel-Softmax (G-S) trick
+% provides a differentiable approximation, enabling gradient computation in
+% scenarios where traditional methods would falter.
+
+% \katy{Here, I think that the orevious paragraph is confusing wrt the explanation
+% of Monte Carlo estimation. I would suggest to remove the paragraph and to 
+% add a simpler idea before we introduce a more detailed explanation of the
+% reparameterization trick.}
+\paragraph{Continuous latent variables: }
+\label{subsec:reparameterization_trick}
+The idea of the reparameterization trick 
+is to rewrite the random variable $\Latent$
+as a deterministic differentiable function of a random variable $\epsilon$,
+%  function of a random variable $\epsilon$, 
+that is independent of $\phi$~\citep{kingma2014}.
+In other words, we want to rewrite the random variable $\Latent$ as
+\begin{equation}
+    \label{eq:reparameterization_trick}
+    \Latent = g(\epsilon, \phi, \obs) \text{,}
+\end{equation}
+% $$\Latent = g(\epsilon, \phi, \obs),$$ 
+where $\epsilon$ is independent of $\phi$ and $\obs$.
+The expectations w.r.t $\q(\Latent|\Obs)$ can be then rewritten as
+\begin{equation*}
+    \label{eq:expectation_reparameterization}
+    \E_{\q(\Latent|\Obs)}( f(z) ) = 
+    \E_{p(\epsilon)} (g(\epsilon, \phi, \obs))\text{,}
+\end{equation*}
+and the gradients of the previous expectation w.r.t $\phi$, 
+$$\nabla_{\phi} \E_{\q(\Latent|\Obs)}( f(z) ) =  \nabla_{\phi}
+\E_{p(\epsilon)} f(g(\epsilon, \phi, \obs))\text{,}$$
+% \begin{equation*}
+%     \label{eq:grad_expectation_reparameterization}
+%     \nabla_{\phi} \E_{\q(\Latent|\Obs)}( f(z) ) =  \nabla_{\phi}
+%     \E_{p(\epsilon)} (f(z))\text{,}
+% \end{equation*}
+can be now estimated with a Monte Carlo estimator. 
+We now obtain unbiased estimates of the gradient of the ELBO w.r.t $\phi$ and $\theta$.
+The reparameterization trick is illustrated in 
+Figure~\ref{fig:rep_trick_cont}
+for the case of continuous latent variables.
+
+\begin{figure}[htb]
+\begin{subfigure}[b]{0.4\linewidth}
+        \centering
+        \includegraphics[width=0.9\textwidth]{Figures/Graphical_models/rep_trick_original.pdf}
+        \caption{Original form.}
+        \label{fig:rt_original}
+\end{subfigure}
+\begin{subfigure}[b]{0.5\linewidth}
+        \centering
+        \includegraphics[width=1.05\textwidth]{Figures/Graphical_models/rep_trick.pdf}
+        \caption{Reparameterized form.}
+        \label{fig:rt}
+\end{subfigure}
+\caption{Illustration of the reparameterization trick.
+In the original form, we cannot compute the gradient of $f$ w.r.t $\phi$. While
+in the reparameterized form, gradient of $f$ w.r.t $\phi$ is easily computed.
+Diamonds indicate no stochasticity, while blue circles highlight its presence.
+Figure based on~\citep{kingma2014}.}
+\label{fig:rep_trick_cont}
+\end{figure} 
+
+
+\begin{example}
+    \label{ex:gaussian_case}
+    % \katy{Is it a good idea to add this example here? In the sense we are mixing
+    % the concepts of Bayesian framework with deep learning. Maybe we can simplify the example
+    % and add it in the next section}
+    We present the Variational AutoEncoder model with a continuous latent variable, where 
+    the joint distribution $\p(\Obs, \Latent)$ is factorized into 
+    the prior distribution $\p(\Latent)$ and the conditional distribution 
+    $\p(\Obs|\Latent)$, also called the probabilistic decoder.
+    Here, the set of parameters $\theta$ could be the output of (deep)
+    neural networks, which are estimated from a dataset 
+    with the assumption that the data points are \iid. 
+    The variational distribution (probabilistic encoder)
+    $\q(\Latent|\Obs)$ is a multivariate Gaussian distribution with diagonal 
+    covariance matrix,
+    \begin{equation*}
+        \q(\Latent|\Obs) = \mathcal{N}(\mu_{\phi}(\Obs), \diag(\sigma_{\phi}(\Obs))) \text{,}
+    \end{equation*}
+    where
+    $\mu_{\phi}(\Obs)$ and $\sigma_{\phi}(\Obs)$ are the outputs of neural networks. 
+    Next, a sample $z^{(m)}$ is drawn from $\q(\Latent|\Obs)$ with the 
+    reparameterization trick,
+    \begin{equation*}
+        \latent^{(m)} = \mu_{\phi}(\Obs) + 
+        \sigma_{\phi}(\Obs) \odot \epsilon^{(m)} \text{ for all } m = 1, \dots, M \text{,}
+    \end{equation*}
+    where $\epsilon^{(m)}$ is a sample from the standard Gaussian distribution
+    and $\odot$ denotes the element-wise product.
+
+    The ELBO~\eqref{eq:elbo} is then approximated with the 
+    Monte Carlo estimator,
+    \begin{equation*}
+        \label{eq:elbo_vae_mc}
+        \mathcal{Q}(\theta, \phi) \approx - \frac{1}{M} \sum_{m=1}^M \log 
+        \frac{\q(\latent^{(m)}|\Obs)}
+        { \p(\Obs|\latent^{(m)}) \p(\latent^{(m)}) }\text{.}
+    \end{equation*}
+    After this, the parameters $(\theta, \phi)$ are estimated by maximizing the 
+    previous expression
+    w.r.t  $(\theta, \phi)$ with a gradient ascent algorithm.
+    Figure~\ref{fig:rt_example_gaussian} 
+    illustrates the VAE model.
+    
+    \begin{figure}[htb]
+        \centering
+        % \includegraphics[width=0.5\textwidth]{Figures/Graphical_models/rep_trick_example_2.pdf}
+        \includegraphics[width=0.95\textwidth]{Figures/Graphical_models/vae_gaussian.pdf}
+        \caption{Illustration of a Gaussian-Variational AutoEncoder model.}
+        \label{fig:rt_example_gaussian}
+    \end{figure}
+    
+    \end{example}
+
+
+
+\paragraph{Discrete latent variables:}
+% \katy{Here, it has to be clear the use of the softmax and argmax functions
+% in the training process.}
+% We now focus on the case of discrete latent variables.
+% The reparameterization trick, suitable for continuous variables, is not
+% applicable here due to the discrete nature of the latent variable
+% $\Latent$. Instead, 
+% We can use the Gumbel-Max trick~\citep{gumbel1948statistical,
+% maddison2014sampling} for sampling from a categorical distribution.
+Let $\pi_c$ denote the probability of the class $c$, with the condition that
+$\sum_{c=1}^C \pi_c = 1$. The Gumbel-Max trick~\citep{gumbel1948statistical,
+maddison2014sampling} facilitates sampling from this
+distribution by adding \iid  Gumbel (noise) samples to the
+log-probabilities $\log \pi_c$.
+The class corresponding to the highest resulting value is then selected as the
+sample, \ie~$ k = \argmax_{c = 1, \dots, C} \big( \log \pi_c + G_c \big) \text{.}$
+% \begin{equation*}
+%     \label{eq:gumbel_max}
+%     k = \argmax_{c = 1, \dots, C} \big( \log \pi_c + G_c \big) \text{.}
+% \end{equation*}
+Although the Gumbel-Max trick facilitates sampling, it does not inherently allow
+for gradient-based optimization because the argmax operation is not
+differentiable. 
+% This poses a challenge in models such as Variational
+% AutoEncoders (VAE), where the ability to backpropagate through the sampling
+% process is crucial. 
+To address this limitation, the Gumbel-Softmax
+trick~\citep{maddison2016concrete, jang2016categorical} is used, which 
+introduces a differentiable approximation to the
+categorical distribution.
+The G-S trick involves the softmax function, a continuous and
+differentiable approximation of the $\argmax$ operation. It begins by
+expressing the latent vector $\latent$ as a one-hot vector, 
+\ie~$\latent \in \{0,1\}^C$, where~$C$ is the number of classes.
+This  generates a $C$-dimensional vector $\latent^{G-S}$ 
+within the range $[0,1]^C$, defined as
+\begin{equation*}
+    \label{eq:gumbel_softmax}
+    \latent^{G-S}_{c}  = \frac{\exp((\log\pi_c + G_c)/\tau)}
+    {\sum_{j}^{C}\exp((\log\pi_j + G_j)/\tau)} 
+    \text{, for all } c = 1, \dots, C \text{,}
+\end{equation*}
+where $\tau$ is the temperature parameter, and $G_c$ is a Gumbel sample 
+drawn from $\text{Gumbel}(0,1)$.
+As the softmax temperature $\tau$ approaches  $0$, 
+samples from the G-S distribution become one-hot and 
+the G-S distribution becomes identical to the categorical distribution (more details 
+in~\cite{maddison2016concrete}). 
+The Gumbel-Max and Gumbel-Softmax tricks are illustrated in Figure~\ref{fig:rt_gumbel_summary}
+with $C=3$. 
+
+
+\begin{figure}[htb]
+    \centering
+    \includegraphics[width=0.6\textwidth]{Figures/Graphical_models/rep_trick_summary.pdf}
+    \caption{Illustration of the Gumbel-Max and Gumbel-Softmax tricks with $C=3$.
+    The blue circle represents the Gumbel samples drawn from  $\text{Gumbel}(0,1)$.
+    The result of the Gumbel-Max trick is the index $c$ of the maximum value and 
+    the result of the Gumbel-Softmax trick is a $C$-dimensional vector $\latent^{G-S}$ with values in $[0,1]^C$,
+    which is a continuous, differentiable approximation of the $\argmax$.
+    }
+    \label{fig:rt_gumbel_summary}
+\end{figure}
+
+
+\begin{remark}
+    \label{rem:gumbel_softmax}
+    In machine learning models that require discrete decision-making 
+    it is crucial to
+    maintain consistency between the training and evaluation phases. The
+    Straight Through Gumbel-Softmax~\citep{maddison2016concrete} technique addresses 
+    this issue by using the
+    G-S distribution for sampling during the forward step, followed
+    immediately by an argmax operation to discretize the output into one-shot
+    vectors. This ensures that the behavior of the model during training matches
+    its evaluation. In the backward
+    step, the original smooth probabilities from the G-S  distribution
+    are used to compute gradients, thus maintaining differentiability and
+    allowing efficient backpropagation. 
+    This technique bridges the gap between
+    the need for discrete outputs and the advantages of gradient-based
+    optimization.
+\end{remark}
+
+% \begin{remark}
+%     \katy{I think that this remark is not necessary and it is wrong}
+%     Understanding the use of softmax and argmax functions in the context of forward
+%     and backward passes during the neural network training process is important,
+%     especially when dealing with discrete distributions and the inclusion of
+%     stochastic elements like Gumbel noise.
+%     For the forward pass, we select classes using argmax, and for the
+%     backward pass, we rely on the softmax function to compute gradients while
+%     preserving the essence of the choice made in the forward pass. The
+%     Gumbel-Softmax trick bridges the gap between the discrete nature of the data and
+%     the continuous operations required for gradient-based optimization, enabling the
+%     effective training of models that involve categorical decisions.       
+% \end{remark}
+
+
+
+\subsection{Posterior distribution}
+\label{sub:posterior_distribution}
+
+In Bayesian Estimation, a fundamental objective is to compute the posterior
+distribution $p(\latent|\obs)$, which provides insights into the hidden or latent
+variable $\latent$ given the observed data $\obs$. 
+However, as established earlier, direct
+computation of this posterior is often infeasible due to the unknown or complex
+nature of the joint distribution $p(\latent,\obs)$.
+To address this, we can use approximation techniques such as
+variational distributions~\citep{Blei_2017} and normalized importance 
+sampling~\citep{doucet2001introduction}.
+% \paragraph*{Variational Distribution: }
+% \label{sub:variational_distribution}
+As we previously discussed, the variational approach is a powerful tool for
+approximating the posterior distribution 
+$\p(\latent|\obs)$, which  involves defining a simpler, 
+and parameterized variational distribution $\q(\latent|\obs)$. 
+This distribution, often a tractable distribution such as a Gaussian, is
+allows for efficient approximation and computation. 
+% It is particularly effective
+% in complex models where the true posterior is intractable.
+The variational distribution depends on a set of parameters $\phi$ that can be
+optimized by maximizing the ELBO $\elbo(\theta,\phi)$ in 
+Equation~\eqref{eq:elbo} since the maximization
+is w.r.t  $(\theta, \phi)$.
+% \katy{here, we have to present a link between the previous section and this one. I mean 
+% the parameters $\phi$ are obtained from the previous section and 
+% now we are using them to approximate the posterior with the variational distribution, which
+% as we said before, is a simpler distribution that allows to approximate the posterior.}
+% \paragraph*{Normalized Importance Sampling: }
+% \label{sub:normalized_importance_sampling}
+% Another approach to approximate the posterior distribution is through normalized
+% importance sampling. 
+% This method involves drawing samples from an
+% easier-to-sample distribution, known as the proposal distribution, and then
+% weighting these samples to approximate the true posterior. The weights are
+% calculated based on how likely each sample is under the true posterior relative
+% to the proposal distribution. Normalized importance sampling is particularly
+% useful when the variational approach is not feasible or when a non-parametric
+% approximation of the posterior is desired. 
+
+
+On the other hand, the normalized importance sampling technique involves selecting 
+a proposal distribution that is easier to
+sample from, calculating weights for these samples based on the ratio of the
+posterior to the proposal distribution, and then normalizing these weights to
+ensure they sum to one, thus transforming them into proper probabilities. 
+We can use the variational distribution as the proposal
+distribution because we generally choose a variational distribution from which
+we can sample efficiently due to the optimization of the ELBO.  
+% Normalized importance sampling is particularly useful when the variational
+% approach is not feasible.
+% This
+% normalization process corrects for any bias introduced by the proposal
+% distribution, allowing for accurate estimations of expected values under the
+% posterior distribution.
+% It provides a way to estimate
+% expectations with respect to the true posterior without explicitly knowing its
+% functional form. 
+Both the variational distribution and normalized importance
+sampling offer robust solutions for approximating the posterior distribution
+% $p(\latent|\obs)$ 
+in scenarios where direct computation is challenging. 
+By leveraging these methods, we can gain valuable insights into the latent structures of
+complex models, enhancing our understanding and predictive capabilities in
+various applications of Bayesian Estimation.
+
+
+% \yohan{we can use the variational distribution as proposal and we generally
+% chose a variational distribution from which we can sample due to the
+% optimization of the ELBO.}
+
+\subsection{Discussion}
+\label{sub:discussion}
+% This discussion brings together the concepts introduced in the previous sections,
+% highlighting the relation between Deep Learning and Bayesian Estimation
+% methodologies and their applications in two significant areas: Generative
+% Modeling and Unsupervised Bayesian Estimation/Classification.
+
+This discussion synthesizes the concepts introduced in previous sections,
+highlighting the relationship between Deep Learning and Bayesian Estimation
+methodologies and their applications in significant areas like Generative
+Modeling and Unsupervised Bayesian Estimation/Classification.
+
+\paragraph*{Generative models:}
+These models are mainly concerned with modeling the data distribution
+$\p(\obs)$ or sampling new data points according to this distribution. 
+The ability of generative models to learn complex distributions and 
+generate new data is one of  their main advantages.
+The connection with Bayesian estimation becomes evident when we consider that
+$\p(\obs)$ can be expressed by the joint distribution and the posterior
+distribution as $\p(\obs) = \frac{\p(\obs, \latent)}{\p(\latent|\obs)}$. 
+Here, the latent variables $\latent$ play a crucial role in generative models
+and are often used to capture the underlying structure of the data.
+% Understanding or inferring these latent variables from the
+% data involves computing the posterior distribution $\p(\latent|\obs)$, which
+% is the core of Bayesian estimation.
+
+% This relationship provides the basis for the entire generative process, which
+% highlights the importance of the posterior in model formulation. 
+On the other hand, a popular generative model is the Variational AutoEncoder,
+which combines the principles of deep learning and Bayesian estimation to
+generate new data samples (see Example~\ref{ex:gaussian_case}).
+VAEs consist of two key components, an encoder and a decoder. 
+The encoder, a neural network, maps the input data $\obs$
+to a latent representation $\latent$, effectively approximating the posterior
+$\p(\latent|\obs)$. Next, the decoder, another neural network, reconstructs the data
+$\obs$ from the latent representation $\latent$, approximating $\p(\obs|\latent)$.
+The integration of VAE into the broader context of deep learning highlights the
+compatibility and complementarity of these frameworks. VAE provides a bridge the
+representational capabilities of neural networks, and the probabilistic modeling
+capabilities of Bayesian methods. This combination allows the creation of
+powerful generative models that not only generate plausible and diverse data
+samples, but also provide information about the underlying data distribution and
+the latent structures present in it.
+
+
+% exemplify the synergy between these probabilistic frameworks and neural networks.
+% VAEs operate by encoding data into a latent space zz and reconstructing it back
+% to xx, traversing through the latent variables that embody the posterior's
+% intricacies. The encoder-decoder architecture inherent in VAEs not only enhances
+% data generation capabilities but also provides a mechanism to probe the data's
+% latent attributes, making it a robust tool for understanding complex data
+% distributions.
+
+\paragraph*{Unsupervised Bayesian classification:}
+\label{sub:unsupervised_bayesian_estimation_classification}
+In the context of unsupervised learning, Bayesian estimation methods are
+adapted to provide insightful solutions. Here, the  latent variable $\latent$
+can be redefined by a variable of interest $\lab$ ($\latent \leftarrow \lab$).
+This adaptation enables the application of Bayesian inference techniques to
+estimate $\lab$ from the observed data $\obs$,
+leading to the computation of the posterior distribution $\p(\lab|\obs)$.
+This approach overcomes the limitations of point estimation. Instead of
+providing a single estimate of $\lab$, it provides access to the entire posterior
+distribution of $\lab$. This comprehensive perspective is especially valuable in
+unsupervised scenarios where direct observations of $\lab$ are not available. However,
+the performance of this approach depends on the formulation of the model $\p(\lab, \obs)$. 
+It is crucial that this model not only captures the relationship between $\obs$
+and $\lab$, but also facilitates the interpretability of $\lab$ in an unsupervised context.
+We can also consider a model $\p(\lab, \obs, \latent)$, where the latent variable $\latent$
+is introduced to capture the relationship between $\obs$ and $\lab$.
+This additional latent variable $\latent$ can help in capturing more complex, underlying
+relationships within the data that might not be directly observable from $\obs$ alone.
+
+
+
+\section{Sequential data modeling}
+\label{sec:seq_data}
+
+% \yohan{here you have to explain if you are interested in a generative model or
+% directly classification. I will use the generative perspective, next introducing
+% a latent variable to complexify the distribution of x and add a remark
+% explaining that the model can also be used for classification if the latent
+% variable becomes iinterpretable. Whence the interest of TMC (distinguishing
+% latent and hidden variables)}
+We now consider sequential data, building on the foundations presented in the
+previous sections. Sequential data present unique challenges, particularly
+ when it comes to
+modeling temporal dependencies and extracting meaningful patterns over time.
+This discussion leads us to focus on probabilistic models specifically designed
+for sequential data, such as Hidden Markov Models (HMMs) and their extensions.
+We denote a sequence of observations as 
+$\obs_{0:T} = (\obs_0, \obs_1, \dots, \obs_T)$, 
+where $T$ is the length of the sequence.
+Similarly, we use $\latent_{0:T} = (\latent_0, \latent_1, \dots, \latent_T)$ to
+denote a sequence of latent variables.
+
+\subsection{Hidden Markov chains}
+\label{sec:hmc}
+% Our objective is to model the joint distribution $p(\obs_{0:T})$ with a
+% parametric model $p_{\theta}(\obs_{0:T})$. A natural choice for sequential data
+% is the family of Markov Chains (MCs), which incorporate the Markov property,
+% \begin{equation}
+%     \label{eq:markov_property}
+%     \p(\obs_{0:T}) \overset{\text{MC}}{=}  \p(\obs_0) \prod_{t=1}^{T}  
+%     \underbrace{\p(\obs_{t}|\obs_{t-1})}_{\p(\obs_{t}|\obs_{0:t-1})} 
+%     \text{,} \quad \text{ for all } T \in \NN  \text{.}
+% \end{equation}
+% Here, $\obs_t$ depends only on $\obs_{t-1}$, and not on the complete previous
+% observations $\obs_{0:t-1}$.
+% We consider MCs that are homogeneous: 
+% the transition probabilities $\p(\obs_{t}|\obs_{t-1})$ are the same for all $t$
+% (see~\citep{bremaud2017discrete} for more details).
+
+% MCs can be limited because of the previous Markovianity assumption.
+% The introduction of a latent process $\{\lab_t\}_{t\in \NN}$ 
+% can be relevant to overcome this limitation
+% and to capture the dynamics of the system.
+% After this, we are interested in the joint distribution of the sequence of observations
+% and latent variables $\p(\obs_{0:T}, \lab_{0:T})$, for all $T \in \mathbb{N}$.
+% Different models can be considered, depending on the dependencies between the 
+% latent variables and the observations. 
+
+HMCs are a class of probabilistic models
+where the latent process is a Markov chain, 
+and  the observations are conditionally independent
+given the latent process and $\obs_t$ depends only on $\latent_t$.
+The joint distribution of the sequence of observations and latent variables
+is given by
+\begin{equation}
+    \label{eq:hmc_intro}
+    \p(\latent_{0:T}, \obs_{0:T} ) \overset{\text{HMC}}{=} 
+    \underbrace{\p(\latent_0)\prod_{t=1}^{T}  \p(\latent_{t}|\latent_{t-1})}_{\p(\latent_{0:T})}
+    \;  \underbrace{\prod_{t=0}^{T}  \p(\obs_{t}|\latent_{t})}_{\p(\obs_{0:T}|\latent_{0:T})} 
+    \text{,} \quad \text{ for all } T \in \NN  \text{.}
+\end{equation}
+
+
+% The Hidden Markov Chain model has found numerous applications in various domains,
+% each with its (unique) interpretation of latent variables. 
+% In speech recognition~\citep{gales2008application}, 
+% the observations $\obs_{0:T}$
+% consist of acoustic signals, with latent variables $\latent_{0:T}$ representing
+% phonemes of the spoken content. In  bioinformatics~\citep{yoon2009hidden, li2021new},
+% the observations could be sequences of
+% DNA, RNA, or proteins, where $\latent_{0:T}$ correspond to coding regions or the
+% secondary structures within these biological sequences. Furthermore, in natural
+% language processing, as discussed by~\cite{kupiec1992robust, paul2015hidden},
+% $\obs_{0:T}$ may depict a sentence, with $\latent_{0:T}$ capturing its grammatical structure or the
+% syntactic patterns underlying the text. 
+% In image segmentation~\citep{derrode2004signal}, $\latent_t$ could represent the
+% class of a noisy observed pixel $\obs_t$.
+
+
+When the parameters of the HMC are unknown, they can be estimated from a set of
+observations that we have at our disposal.
+The Maximum Likelihood (ML) approach for estimating the parameters of the HMC
+has been widely theoretically studied in~\cite{douc2004asymptotic,Douc-ML-MIS}.
+However, the distribution of the observations $\p(\obs_{0:T})$ is intractable 
+in general. Therefore, the ML approach is not applicable. 
+The distribution $\p(\obs_{0:T})$ can be approximated 
+with~\gls*{smc}
+ methods~\citep{livredoucetshort,chopin2020introduction}.
+Nonetheless, the SMC methods are computationally expensive and differentiable
+approximations to use gradient-based optimization methods could be a 
+problem. This is due to the resampling steps of such 
+algorithms~\citep{kantas2015particle}.
+The EM algorithm~\citep{dempster1977maximum} is also an alternative approach for
+estimating the parameters of the HMC~\eqref{eq:hmc_intro} 
+(see Algorithm~\ref{algo:em_algorithm}).
+% The E-step computes $ \mathcal{Q}(\theta|\theta^j)$ defined as
+% the expectation of the complete log-likelihood
+% $\log \p(\obs_{0:T}, \latent_{0:T})$ w.r.t the posterior distribution of the latent
+% variables, where $\theta^j$ are the
+% parameters at the $j$-th iteration. 
+% % \begin{equation*}
+% %     \mathcal{Q}(\theta|\theta^j)= \E_{p(\latent_{0:T}|\obs_{0:T},\theta^j)}
+% %         \left[\log p(\obs_{0:T},\latent_{0:T}|\theta)\right] \text{.}
+% % \end{equation*}
+% Next, the M-step consists of maximizing the previous expression w.r.t $\theta$,
+% and obtaining the new parameters $\theta^{j+1}  
+% \leftarrow \argmax_{\theta} \mathcal{Q}(\theta|\theta^j)$. 
+When the parameters of the HMC are estimated, the predictive
+ distribution $\p(\obs_{T+1}|\obs_{0:T})$ can be sequentially computed or approximated.
+SMC methods can be used to approximate this distribution.
+
+% \begin{figure}[htb]
+%     \begin{subfigure}[b]{0.48\linewidth}
+%       \centering
+%       \includegraphics[width=6cm]{Figures/Graphical_models/hmc.pdf}
+%       \caption{HMM}
+%       \label{fig:hmm}
+%       \vspace{1.1cm}
+%     \end{subfigure}
+%     \hfill
+%     \begin{subfigure}[b]{0.47\linewidth}
+%       \centering
+%       \includegraphics[width=6cm]{Figures/Graphical_models/rnn.pdf}
+%       \caption{RNN}
+%       \label{fig:rnn}
+%       \vspace{1.1cm}
+%     \end{subfigure}
+  
+%     \begin{subfigure}[b]{0.48\linewidth}
+%       \centering
+%       \includegraphics[width=6.0cm]{Figures/Graphical_models/gum.pdf}
+%       \caption{GUM}
+%       \label{fig:gum}
+%     \end{subfigure}
+%     \hfill
+%     \begin{subfigure}[b]{0.48\linewidth}
+%       \centering
+%       \includegraphics[width=6.0cm]{Figures/Graphical_models/pmc.pdf}
+%       \caption{PMC}
+%       \label{fig:pmc}
+%     \end{subfigure}
+%     \caption{Conditional dependencies of the \gls*{hmc}, \gls*{rnn}, 
+%     \gls*{gum}, and \gls*{pmc}. In the \gls*{rnn}, 
+%     the hidden states $\latent_t$ are shown as diamonds to stress 
+%     that they are no source of stochasticity. 
+%     The \gls*{hmc}, \gls*{rnn}, and \gls*{gum} are particular cases of the \gls*{pmc}.}
+% \end{figure}  
+
+% This model has found many applications in signal processing such as
+% tracking ($\latent_t$ represents the state vector of a target at time $t$ and
+% $\Obs_t$ the associated noisy range bearing measurement) \citep{jazwinski2007stochastic},
+% financial problems ($\latent_t$ represents the volatility of a financial time
+% series) \citep{shepard1999filtering} or image segmentation ($\latent_t$ represents the class
+% associated to a noisy observed pixel $\Obs_t$) \citep{derrode-wp-sp}.
+% % While the HMC model is quite simple, it involves many challenges.
+
+\subsection{Pairwise Markov chains}
+\label{sec:pairwise_triplet_mc}
+In HMCs, the latent process is Markovian, \ie~the latent
+variable $\latent_t$ depends only on $\latent_{t-1}$. It can be relevant to consider
+latent variables that depend on more than one previous latent variable.
+It is also valid for the observations $\obs_{t}$, which can depend on more than
+one previous latent variable.
+For example, in the case of time series, the observations $\obs_{t}$ can depend
+on the previous observation $\obs_{t-1}$ and the latent variable $\latent_{t-1}$.
+We introduce the Pairwise Markov Chain (PMC)~\citep{pieczynski2003pairwise,
+derrode2004signal, le2008fuzzy} model that relax the 
+Markovianity assumption of the HMC. 
+PMCs generalize the HMC
+by considering the joint process of $\{\latent_t, \obs_{t}\}_{t\in \mathbb{N}}$
+as a Markov chain.
+The joint distribution of the sequence of observations and latent variables
+is given by
+\begin{equation}
+    \label{eq:pmc_intro}
+    \p(\latent_{0:T}, \obs_{0:T} ) \overset{\text{PMC}}{=} 
+    \p(\latent_0, \obs_0) \prod_{t=1}^{T}  \p(\latent_{t}, \obs_{t}|\latent_{t-1}, \obs_{t-1})
+    \text{,} \quad \text{ for all } T \in \NN  \text{.}
+\end{equation}
+
+The use of such models has been proposed
+in past contributions, in simpler contexts where the sequence $\latent_{0:T}
+\leftarrow \lab_{0:T}$ represents a series
+of labels for the sequence of observations $\obs_{0:T}$. 
+It has been shown that when the PMC model
+is stationary, it is possible to propose an unsupervised estimation 
+method to estimate jointly  $\theta$ and $\lab_t$ from $\obs_{0:T}$ provided
+that the distribution of the observation given the hidden 
+states is restricted to a set of classical distributions
+such as the Gaussian one~\citep{gorynin2018assessing}.
+Several questions then arise: how can we use the structure of PMCs
+as generative models for modeling $\p(\obs_{0:T})$?
+Can these models be adapted to unsupervised classification
+scenarios where $\p(\lab_{0:T}, \obs_{0:T})$ is parameterized by deep neural networks?
+% In essence, by integrating the versatility of DNNs with probabilistic models, 
+% we can not only create models that predict and classify,
+% but also generate new sequences that are statistically consistent with the
+% original data.  
+In next chapters we will focus on these questions.
+
+% The stationary assumption can be relaxed by considering the TMC model with a third discrete
+% latent process~\citep{lanchantin2004unsupervised}; in this case, the new process models, 
+% the non-stationarity of the pair $(\lab_{0:T},\obs_{0:T})$ and
+% the complete triplet model can also be estimated through an unsupervised
+% procedure \citep{lanchantin2004unsupervised,gorynin2018assessing}.
+% Finally, it is also possible to consider a large class
+% of conditional distributions for the observations by the introduction of 
+% copulas~\citep{derrode2013unsupervised, derrode2016unsupervised}. 
+
+
+% PMCs have been traditionally applied to sequential classification tasks,
+% especially in simpler contexts where the sequence $\latent_{0:T}
+%  \leftarrow \lab_{0:T}$ represents a series
+% of labels for the sequence of observations $\obs_{0:T}$.
+% Several questions then arise: how can we use the structure of PMCs
+% as generative models for modeling $\p(\obs_{0:T})$?
+% Can these models be adapted to unsupervised classification
+% scenarios where $\p(\lab_{0:T}, \obs_{0:T})$ is parameterized by deep neural networks?
+% % In essence, by integrating the versatility of DNNs with probabilistic models, 
+% % we can not only create models that predict and classify,
+% % but also generate new sequences that are statistically consistent with the
+% % original data.  
+% In next chapters we will focus on these questions.
+
+
+
+\subsection{Sequential generative models for Bayesian classification}
+\label{sec:seq_gen_models}
+We can introduce an additional level of complexity with Triplet Markov Chains 
+(TMCs)~\citep{wp-cras-chaines3,pieczynski2005triplet}
+for classification tasks. TMCs provide a refined framework in which we can model
+not only the sequence of observations $\obs_{0:T}$ and their associated labels
+$\lab_{0:T}$, but also incorporate an auxiliary sequence $\latent_{0:T}$, 
+enriching the relationships within the data.
+TMC  have been mainly used
+with a discrete  auxiliary sequence $\latent_{0:T}$~\citep{gorynin2018assessing,
+lanchantin2008unsupervised,pieczynski2007multisensor}.
+In this thesis, we will focus on the case where the sequence $\latent_{0:T}$ is continuous.
+Thus, we consider the joint distribution $\p(\lab_{0:T}, \obs_{0:T}, \latent_{0:T})$,
+for all $T \in \mathbb{N}$, given by
+% The joint distribution $\p(\lab_{0:T}, \obs_{0:T}, \latent_{0:T})$, 
+% for all $T \in \mathbb{N}$, is given by
+\begin{equation}
+    \label{eq:tmc_intro}
+    \p(\lab_{0:T}, \latent_{0:T}, \obs_{0:T} ) \overset{\text{TMC}}{=} 
+    \p(\lab_0,  \latent_0, \obs_0) \prod_{t=1}^{T}  \p(\lab_{t}, 
+    \latent_{t}, \obs_{t} |\lab_{t-1}, \latent_{t-1}, \obs_{t-1})
+    \text{.}%  \text{ for all } T \in \NN  \text{.}
+\end{equation}
+
+In a supervised context, the sequence of labels $\lab_{0:T}$ is known, the
+TMC can be seen as a PMC with an augmented representation of latent variables,
+\ie~$\obs_t \leftarrow (\lab_t, \latent_t)$, for all $t \in \mathbb{N}$.
+ However, the TMC
+model becomes more interesting when the sequence $\{\lab_t\}_{t\in \mathbb{N}}$
+corresponds to an unobserved  physical process of interest, and $\{\latent_t\}_{t\in
+\mathbb{N}}$ is treated as a separate, distinct process.
+However, the TMC model can be used for semi-supervised and unsupervised
+classification tasks, where the labels $\lab_{0:T}$ are unobserved or
+partially observed. In an unsupervised learning~\citep{lanchantin2004unsupervised}, 
+we have to estimate the
+parameters of the model which takes into account the interpretability of
+$\lab_{0:T}$ and also the different roles of $\lab_{0:T}$ and $\latent_{0:T}$.
+While in a semi-supervised context, the labels $\lab_{0:T}$ are partially observed, and
+we look for estimating the missing labels associated to each sequence.
+In both semi-supervised and unsupervised context, TMCs
+combined with DNN can provide a more refined approach to Bayesian classification, 
+which is one of the main objectives of this thesis.\\
+
+
+
+% \katy{HERE}
+% The use of such models has been proposed
+% in past contributions. It has been shown that when the PMC model
+% is stationary, it is possible to propose an unsupervised estimation 
+% method to estimate jointly  $\theta$ and $\lab_t$ from $\obs_{0:T}$ provided
+% that the distribution of the observation given the hidden 
+% states is restricted to a set of classical distributions
+% such as the Gaussian one~\citep{gorynin2018assessing}.
+% The stationary assumption can be relaxed by considering the TMC model with a third discrete
+% latent process~\citep{lanchantin2004unsupervised}; in this case, the new process models, 
+% the non-stationarity of the pair $(\lab_{0:T},\obs_{0:T})$ and
+% the complete triplet model can also be estimated through an unsupervised
+% procedure \citep{lanchantin2004unsupervised,gorynin2018assessing}.
+% Finally, it is also possible to consider a large class
+% of conditional distributions for the observations by the introduction of 
+% copulas~\citep{derrode2013unsupervised, derrode2016unsupervised}. 
+
+
+
+
+% \subsection{Challenges in Sequential Data Modeling}
+% \label{sec:discussion}
+% In this section, we discuss questions that arise from 
+% all the concepts and models presented in this chapter.
+% These questions will be addressed in this thesis.
+
+
+
+
+
+
+% \paragraph*{Choice of the Transition Distributions: }
+% \label{sec:choice_transition_distributions}
+% Both PMC and TMC models give rise to a new question from a modeling point of
+% view: how to choose the transition distributions in~\eqref{eq:pmc_intro} and
+% \eqref{eq:tmc_intro} to capture the dynamics of the system
+% for a given application?
+% % Different factorizations of the transition distributions can be considered.
+% For example, in the case of time series, the observations $\obs_{t}$ can only depend
+% on the previous observation $\obs_{t-1}$ and  latent variables $\lab_{t-1}$.
+% In this case, the transition distribution can be factorized as
+% \begin{equation*}
+%     \label{eq:pmc_factorization}
+%     \p(\lab_{t}, \obs_{t}|\lab_{t-1}, \obs_{t-1}) = 
+%     \p(\lab_{t}|\lab_{t-1} \obs_{t-1}, \obs_{t}) \p(\obs_{t}|\lab_{t-1}, \obs_{t-1}) \text{.}
+% \end{equation*}
+
+
+% Chapters~\ref{chap:pmc}, 
+% ~\ref{chap:semi_supervised_pmc_tmc}, 
+% and~\ref{chap:unsp_pmc_tmc}
+% present different choices of the transition distributions
+% in~\eqref{eq:pmc_intro}, and~\eqref{eq:tmc_intro} 
+% for different applications and different modeling objectives.
+% % Chapter~\ref{chap:medical_perspectives}
+
+% % Chapter~\ref{chap:pmc}
+% % Chapter~\ref{chap:semi_supervised_pmc_tmc}
+% % Chapter~\ref{chap:unsp_pmc_tmc}
+% % Chapter~\ref{chap:medical_perspectives}
+
+% \subsection*{2. Impact of PMC on the Distribution of Observations}
+% \label{sec:impact_pmc}
+% The introduction of the PMC model, which relaxes the Markovianity assumption of
+% the HMC, has an impact on the distribution of the observations.
+% Natural questions arise:  how to evaluate this impact?
+% Can we compare the distributions $\p(\obs_{0:T})$
+% induced by the HMC~\eqref{eq:hmc_intro}, 
+% and the PMC~\eqref{eq:pmc_intro}?\\
+% Notice that an evaluation of the impact of the TMC model on $\p(\obs_{0:T})$ is relevant
+% when a physical interpretation of the latent variables $\lab_{0:T}$ is considered.
+% Otherwise, the TMC model can be seen as a PMC as discussed in
+
+
+
+% Chapter~\ref{chap:pmc} 
+% presents a comparison of the distributions $\p(\obs_{0:T})$
+% induced by the HMC~\eqref{eq:hmc_intro},
+% and the PMC~\eqref{eq:pmc_intro} from a theoretical point of view, 
+% with a particular case of the PMC model.
+% This allows us to compare the ability of the HMC and the PMC to model $\p(\obs_{0:T})$.
+
+
+
+% \subsection*{3. Neural Networks in PMC and TMC Models}
+% \label{sec:neural_networks_pmc_tmc}
+% For applications like image segmentation, some assumptions are introduced in
+% the PMC and TMC models~\citep{derrode2004signal,gorynin2018assessing}, 
+% which can be restrictive and may reduce their modeling capabilities.
+% Exploiting the fact that (deep) NNs can act as universal approximators
+% (see Subsection~\ref{subsec:neural_networks}), 
+% a deep PMC (or TMC) could learn complex, non-linear relationships in the data more effectively
+% than a traditional PMC.
+% Can we propose a general parameterized approach for PMC~\eqref{eq:pmc_intro}
+% and TMC~\eqref{eq:tmc_intro} models with NNs?
+
+
+% Chapters~\ref{chap:pmc}, 
+% ~\ref{chap:semi_supervised_pmc_tmc}, 
+% and~\ref{chap:unsp_pmc_tmc}
+% present general parameterizations of PMC~\eqref{eq:pmc_intro}
+% and TMC~\eqref{eq:tmc_intro} models
+% which include NNs.
+
+
+% \subsection*{4. Interpretation of Latent Variables}
+% \label{sec:interpretation_latent_variables}
+% Bayesian estimation in PMC and TMC models can be challenging
+% when the latent variables $\lab_{0:T}$ need to be interpreted.
+% This challenge is particularly
+% significant when dealing with highly parameterized models. 
+% To maintain interpretability in the parameter estimation of
+%  models~\eqref{eq:pmc_intro}
+% and~\eqref{eq:tmc_intro},
+% and to leverage the interpretability of an established model like HMC, 
+% different approaches can be considered.
+
+
+% In Chapters~\ref{chap:semi_supervised_pmc_tmc}, 
+% and~\ref{chap:unsp_pmc_tmc}, 
+% we consider the case where the latent variables $\lab_{0:T}$ are
+% interpreted as labels in a specific application.
+
+
+% \subsection*{5. Computational Cost of PMC and TMC Models}
+% \label{sec:computational_cost}
+% The computational cost of the Bayesian estimation algorithms for PMC and TMC 
+% models can be high, specially with high-dimensional observations. 
+% Moreover, incorporating NNs into PMC and TMC models can increase the
+% computational cost.
+% Can we propose a general parameterized approach for PMC~\eqref{eq:pmc_intro}
+% and TMC~\eqref{eq:tmc_intro} models (with NNs) that is 
+% computationally efficient for high-dimensional observations?
+
+
+% In Chapters~\ref{chap:pmc}, 
+% ~\ref{chap:semi_supervised_pmc_tmc}, 
+% and~\ref{chap:unsp_pmc_tmc},
+% we propose a Variational Bayesian approach for general 
+% parameter estimation in PMC and TMC models that is computationally efficient
+% for high-dimensional observations.
+
+
+% \subsection*{6. RNNs and Markov Chains Models}
+% The comparison of generative RNNs with Markovian models
+% can be relevant since they are generative models for sequential data.
+% Can we compare their ability to model the distribution of observations 
+% based on a sequence of random or deterministic variables? 
+
+% A partial answer to this question is given in~\citep{salaun2019comparing}, 
+% where the authors compare the ability of generative RNNs and HMCs to model the
+% distribution of observations based on a sequence of random variables. 
+% This comparison is made from a theoretical point of view with a unification of
+% the two models in a common framework.
+% This model is called Generative Unified Model (GUM), which
+% is a particular case of PMC, and reads
+% \begin{equation}
+%     \label{eq:GUM}
+%     \p(\obs_{0:T},\lat_{0:T})  \overset{\rm GUM}{=} 
+%     \p(\lat_0, \obs_0)\prod_{t=1}^T 
+%     \p(\lat_t|\lat_{t-1},\obs_{t-1})\p(\obs_t|\lat_{t}) \text{, }  
+%     \text{for all } T \in \NN  \text{.}
+% \end{equation}
+% However, the comparison of generative RNNs with more complex Markovian models
+% remains an open question.
+% % and it is an extension of question 2.
+% % ~\ref{sec:impact_pmc}.
+
+
+
+% Chapter~\ref{chap:pmc} 
+% introduces the Pairwise Markov Chain (PMC) model
+% as a general generative model for sequential data, 
+% which includes the HMC, the RNN, and the GUM as particular cases.
+% This allows us to compare the ability those models to model
+% the distribution of observations, which is an extension of question 2.
+
+
+% \subsection*{7. Dynamical Variational Autoencoder}
+% \label{sec:dynamic_vae}
+% Variational Autoencoders are deep generative models that 
+% have been widely used to represent high-dimensional complex data through 
+% a low-dimensional latent space. 
+% In the context of sequential data, the VAE model can be extended
+% such that the latent space is not only used to represent the observations but
+% also the temporal dependencies between the observations.
+% This derives an extension of  the VAE model to a dynamical VAE model.
+% % ~\ref{sec:neural_networks_pmc_tmc}.
+% Can we propose Deep Pairwise Markov Chains or Deep Triplet Markov Chains 
+% as a dynamical VAE? (extension of question 3).
+
+% All the proposed models in this thesis (Chapters~\ref{chap:pmc}, 
+% ~\ref{chap:semi_supervised_pmc_tmc}, 
+% and~\ref{chap:unsp_pmc_tmc})
+%  are generative models for sequential data and since they are adapted to
+% high-dimensional observations, they can be seen as dynamical VAEs.
+
+
+% \subsection*{8. Learning Step}
+% Parameter estimation depends on the availability of data, and the specific application.
+% Different learning contexts can be considered: supervised, semi-supervised, and
+% unsupervised learning. For example, in the case of unsupervised learning and image segmentation,
+% the noisy observations $\obs_{0:T}$ are available, but the labels sequence
+% $\lab_{0:T}$ are not.
+% The question then arises: How feasible is parameter estimation in PMC and TMC
+% models across different learning contexts and applications?
+
+% Chapter~\ref{chap:pmc} presents a 
+% parameter estimation algorithm for PMC models in the supervised learning context.
+% Chapter~\ref{chap:semi_supervised_pmc_tmc} 
+% introduces a parameter estimation algorithm for TMC models in the
+% semi-supervised learning context.
+% In Chapter~\ref{chap:unsp_pmc_tmc}, 
+% we propose a parameter estimation algorithm for PMC and TMC models in the
+% unsupervised learning context. All these algorithms are presented in the
+% context of sequential classification.
+
+
+
+% \newpage
+\subsection{Organization of the thesis}
+
+In this thesis, we address several fundamental questions that arise from the
+concepts and models presented. These questions guide the research and structure
+of the thesis, ensuring a comprehensive exploration of the topics. The key
+questions include:
+
+% - how to build powerful generative models from pairwise Markov models and do we
+% have guarantee on their modeling power? 
+
+% - how to exploit the generality of TMC
+% for semi-unsupervised classification (supervised would coincide with the
+% previous question)? 
+
+% - when we use the previous models with deep parameterization
+% (so highly parameterized model), how do we deal with the challenging
+% unsupervised case where in addition to a model we have to learn the
+% interpretability of the hidden labels? 
+
+% - what are the challenges in AI for
+% vascular surgery which could be adressed with the techniques presented in this
+% manuscript (applied perspective).
+
+
+
+\begin{itemize}
+    \item How can we build powerful generative models from PMC
+    models~\eqref{eq:pmc_intro}, 
+    and what guarantees do we have on their modeling power?    
+    \item In sequential Bayesian classification, when only a subset of
+    labels is observed, how can we estimate the unobserved labels from the
+    observations and the observed labels using a general TMC model~\eqref{eq:tmc_intro}? 
+    Does the
+    supervised case coincide with the previous question?
+    \item How can PMC and TMC models be applied to unsupervised classification
+    tasks, and what are the challenges of ensuring interpretability of hidden random
+    variables in unsupervised classification?
+    \item Can these models be adapted to different scenarios
+    where the distributions~\eqref{eq:pmc_intro} and~\eqref{eq:tmc_intro}  
+    are parameterized by deep neural networks?
+    \item What adaptations to the VI algorithm are necessary for 
+    general parameter estimation of these models?
+    \item What are the challenges in AI for vascular surgery that could be addressed
+    with the techniques presented in this thesis (applied
+    perspective)?
+\end{itemize}
+
+To systematically address these questions, the thesis is structured to first
+introduce the fundamental principles and challenges of deep learning, 
+ followed by a detailed exploration of Bayesian
+estimation and its application in understanding complex data structures. Later
+sections focus on models for sequential data such as the PMC and TMC models,
+underscoring their theoretical foundations and practical implications
+
+
+Chapter~\ref{chap:pmc} 
+introduces the PMC model as a generative model that can model complex
+dependencies between observations and latent variables. We discuss how it can
+serve as a general model from which different models such as the HMC and the RNN,
+among others, can be derived as specific cases. Additionally, we present a
+general parameterization of the PMC model, which includes deep parameterization
+(DNNs). In the second part, we develop an adapted VI algorithm for general
+parameter estimation of this model. We also explore the linear and stationary
+Gaussian PMC model for a theoretical analysis of its generative power.
+
+
+
+Chapter~\ref{chap:semi_supervised_pmc_tmc}
+is dedicated to the semi-supervised learning problem. We propose a probabilistic
+approach to deal with sequential Bayesian classification when only a subset of
+labels is observed. The goal is to estimate the unobserved labels from the
+observations and the observed labels using a general TMC model 
+(which includes a deep parameterization). We introduce a
+new adaptation of VI, enabling us to estimate the parameters of the
+model and the unobserved labels.
+
+
+Chapter~\ref{chap:unsp_pmc_tmc}
+focuses on the unsupervised classification task. We propose PMC and TMC models
+for estimating unobserved labels associated with a sequence
+of observations. For each introduced model, an original unsupervised Bayesian
+estimation method is proposed. In particular, it considers the interpretability
+of the hidden random variables in terms of classification.
+
+
+Finally, chapter 5
+% ~\ref{chap:medical_perspectives}
+presents a workflow adapted to the data provided by
+the GEPFROMED group, and future perspectives that integrate the classical
+neural network models with a probabilistic approach. We also discuss the
+potential of the proposed models for the segmentation of medical data.
+
+% \begin{itemize}
+%     \item  you did not propose Monte Carlo techniques. You can insist on the
+%     fact that VBI is suitable due to the assumed large dimension of z. By the
+%     way, in the introduction, you can explain that Monte Carlo approximation of
+%     the EM may be inefficient in large dimensions.
+%     \item Example of the DKL gaussian case
+% \end{itemize}
+
+% \begin{remark}
+%     In the case of DPMCs, their
+%     gradients are computable from the backpropagation
+%     algorithm~\citep{rumelhart1986learning} since $\pz$ and $\px$ 
+%     are differentiable w.r.t. $\theta$. 
+%     Moreover, the parameters $\phi$ of the variational distribution $\q$
+%     are the parameters of the DNNs which are differentiable w.r.t. $\phi$.
+%     Thus, Algorithm~\ref{algo:algo_train_dpmc_gen} can be applied to DPMCs.
+% \end{remark}
+

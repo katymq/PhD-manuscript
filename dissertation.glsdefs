@@ -1,0 +1,1204 @@
+\glsdefs@newdocentry{dgms}%
+{%
+name={\acronymfont {\glsentryshort {dgms}}},%
+sort={DGMs},%
+type={acronym},%
+first={DGMs},%
+firstplural={DGMss},%
+text={DGMs},%
+plural={DGMss},%
+description={Deep Generative Models},%
+descriptionplural={Deep Generative Models},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Deep Generative Models},%
+longplural={Deep Generative Modelss},%
+short={DGMs},%
+shortplural={DGMss},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{pmc}%
+{%
+name={\acronymfont {\glsentryshort {pmc}}},%
+sort={PMC},%
+type={acronym},%
+first={PMC},%
+firstplural={PMCs},%
+text={PMC},%
+plural={PMCs},%
+description={Pairwise Markov Chain},%
+descriptionplural={Pairwise Markov Chain},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Pairwise Markov Chain},%
+longplural={Pairwise Markov Chains},%
+short={PMC},%
+shortplural={PMCs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{hmc}%
+{%
+name={\acronymfont {\glsentryshort {hmc}}},%
+sort={HMC},%
+type={acronym},%
+first={HMC},%
+firstplural={HMCs},%
+text={HMC},%
+plural={HMCs},%
+description={Hidden Markov Chain},%
+descriptionplural={Hidden Markov Chain},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Hidden Markov Chain},%
+longplural={Hidden Markov Chains},%
+short={HMC},%
+shortplural={HMCs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{tmc}%
+{%
+name={\acronymfont {\glsentryshort {tmc}}},%
+sort={TMC},%
+type={acronym},%
+first={TMC},%
+firstplural={TMCs},%
+text={TMC},%
+plural={TMCs},%
+description={Triplet Markov Chain},%
+descriptionplural={Triplet Markov Chain},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Triplet Markov Chain},%
+longplural={Triplet Markov Chains},%
+short={TMC},%
+shortplural={TMCs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{dpmc}%
+{%
+name={\acronymfont {\glsentryshort {dpmc}}},%
+sort={DPMC},%
+type={acronym},%
+first={DPMC},%
+firstplural={DPMCs},%
+text={DPMC},%
+plural={DPMCs},%
+description={Deep Pairwise Markov Chain},%
+descriptionplural={Deep Pairwise Markov Chain},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Deep Pairwise Markov Chain},%
+longplural={Deep Pairwise Markov Chains},%
+short={DPMC},%
+shortplural={DPMCs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{dtmc}%
+{%
+name={\acronymfont {\glsentryshort {dtmc}}},%
+sort={DTMC},%
+type={acronym},%
+first={DTMC},%
+firstplural={DTMCs},%
+text={DTMC},%
+plural={DTMCs},%
+description={Deep Triplet Markov Chain},%
+descriptionplural={Deep Triplet Markov Chain},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Deep Triplet Markov Chain},%
+longplural={Deep Triplet Markov Chains},%
+short={DTMC},%
+shortplural={DTMCs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{spmc}%
+{%
+name={\acronymfont {\glsentryshort {spmc}}},%
+sort={SPMC},%
+type={acronym},%
+first={SPMC},%
+firstplural={SPMCs},%
+text={SPMC},%
+plural={SPMCs},%
+description={Semi Pairwise Markov Chain},%
+descriptionplural={Semi Pairwise Markov Chain},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Semi Pairwise Markov Chain},%
+longplural={Semi Pairwise Markov Chains},%
+short={SPMC},%
+shortplural={SPMCs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{gum}%
+{%
+name={\acronymfont {\glsentryshort {gum}}},%
+sort={GUM},%
+type={acronym},%
+first={GUM},%
+firstplural={GUMs},%
+text={GUM},%
+plural={GUMs},%
+description={Generative Unified Model},%
+descriptionplural={Generative Unified Model},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Generative Unified Model},%
+longplural={Generative Unified Models},%
+short={GUM},%
+shortplural={GUMs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{smc}%
+{%
+name={\acronymfont {\glsentryshort {smc}}},%
+sort={SMC},%
+type={acronym},%
+first={SMC},%
+firstplural={SMCs},%
+text={SMC},%
+plural={SMCs},%
+description={Sequential Monte Carlo},%
+descriptionplural={Sequential Monte Carlo},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Sequential Monte Carlo},%
+longplural={Sequential Monte Carlos},%
+short={SMC},%
+shortplural={SMCs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{mc}%
+{%
+name={\acronymfont {\glsentryshort {mc}}},%
+sort={MC},%
+type={acronym},%
+first={MC},%
+firstplural={MCs},%
+text={MC},%
+plural={MCs},%
+description={Markov Chain},%
+descriptionplural={Markov Chain},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Markov Chain},%
+longplural={Markov Chains},%
+short={MC},%
+shortplural={MCs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{map}%
+{%
+name={\acronymfont {\glsentryshort {map}}},%
+sort={MMAP},%
+type={acronym},%
+first={MMAP},%
+firstplural={MMAPs},%
+text={MMAP},%
+plural={MMAPs},%
+description={Marginal Maximum A Posteriori},%
+descriptionplural={Marginal Maximum A Posteriori},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Marginal Maximum A Posteriori},%
+longplural={Marginal Maximum A Posterioris},%
+short={MMAP},%
+shortplural={MMAPs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{vi}%
+{%
+name={\acronymfont {\glsentryshort {vi}}},%
+sort={VI},%
+type={acronym},%
+first={VI},%
+firstplural={VIs},%
+text={VI},%
+plural={VIs},%
+description={Variational Inference},%
+descriptionplural={Variational Inference},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Variational Inference},%
+longplural={Variational Inferences},%
+short={VI},%
+shortplural={VIs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{vbi}%
+{%
+name={\acronymfont {\glsentryshort {vbi}}},%
+sort={VBI},%
+type={acronym},%
+first={VBI},%
+firstplural={VBIs},%
+text={VBI},%
+plural={VBIs},%
+description={Variational Bayesian Inference},%
+descriptionplural={Variational Bayesian Inference},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Variational Bayesian Inference},%
+longplural={Variational Bayesian Inferences},%
+short={VBI},%
+shortplural={VBIs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{vae}%
+{%
+name={\acronymfont {\glsentryshort {vae}}},%
+sort={VAE},%
+type={acronym},%
+first={VAE},%
+firstplural={VAEs},%
+text={VAE},%
+plural={VAEs},%
+description={Variational AutoEncoder},%
+descriptionplural={Variational AutoEncoder},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Variational AutoEncoder},%
+longplural={Variational AutoEncoders},%
+short={VAE},%
+shortplural={VAEs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{cvae}%
+{%
+name={\acronymfont {\glsentryshort {cvae}}},%
+sort={CVAE},%
+type={acronym},%
+first={CVAE},%
+firstplural={CVAEs},%
+text={CVAE},%
+plural={CVAEs},%
+description={Conditional Variational AutoEncoder},%
+descriptionplural={Conditional Variational AutoEncoder},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Conditional Variational AutoEncoder},%
+longplural={Conditional Variational AutoEncoders},%
+short={CVAE},%
+shortplural={CVAEs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{ae}%
+{%
+name={\acronymfont {\glsentryshort {ae}}},%
+sort={AE},%
+type={acronym},%
+first={AE},%
+firstplural={AEs},%
+text={AE},%
+plural={AEs},%
+description={AutoEncoder},%
+descriptionplural={AutoEncoder},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={AutoEncoder},%
+longplural={AutoEncoders},%
+short={AE},%
+shortplural={AEs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{kld}%
+{%
+name={\acronymfont {\glsentryshort {kld}}},%
+sort={KLD},%
+type={acronym},%
+first={KLD},%
+firstplural={KLDs},%
+text={KLD},%
+plural={KLDs},%
+description={Kullback-Leibler Divergence},%
+descriptionplural={Kullback-Leibler Divergence},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Kullback-Leibler Divergence},%
+longplural={Kullback-Leibler Divergences},%
+short={KLD},%
+shortplural={KLDs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{elbo}%
+{%
+name={\acronymfont {\glsentryshort {elbo}}},%
+sort={ELBO},%
+type={acronym},%
+first={ELBO},%
+firstplural={ELBOs},%
+text={ELBO},%
+plural={ELBOs},%
+description={Evidence Lower Bound},%
+descriptionplural={Evidence Lower Bound},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Evidence Lower Bound},%
+longplural={Evidence Lower Bounds},%
+short={ELBO},%
+shortplural={ELBOs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{nns}%
+{%
+name={\acronymfont {\glsentryshort {nns}}},%
+sort={NN},%
+type={acronym},%
+first={NN},%
+firstplural={NNs},%
+text={NN},%
+plural={NNs},%
+description={Neural Network},%
+descriptionplural={Neural Network},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Neural Network},%
+longplural={Neural Networks},%
+short={NN},%
+shortplural={NNs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{gan}%
+{%
+name={\acronymfont {\glsentryshort {gan}}},%
+sort={GAN},%
+type={acronym},%
+first={GAN},%
+firstplural={GANs},%
+text={GAN},%
+plural={GANs},%
+description={Generative Adversarial Network},%
+descriptionplural={Generative Adversarial Network},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Generative Adversarial Network},%
+longplural={Generative Adversarial Networks},%
+short={GAN},%
+shortplural={GANs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{dl}%
+{%
+name={\acronymfont {\glsentryshort {dl}}},%
+sort={DL},%
+type={acronym},%
+first={DL},%
+firstplural={DLs},%
+text={DL},%
+plural={DLs},%
+description={Deep learning},%
+descriptionplural={Deep learning},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Deep learning},%
+longplural={Deep learnings},%
+short={DL},%
+shortplural={DLs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{dnns}%
+{%
+name={\acronymfont {\glsentryshort {dnns}}},%
+sort={DNN},%
+type={acronym},%
+first={DNN},%
+firstplural={DNNs},%
+text={DNN},%
+plural={DNNs},%
+description={Deep Neural Network},%
+descriptionplural={Deep Neural Network},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Deep Neural Network},%
+longplural={Deep Neural Networks},%
+short={DNN},%
+shortplural={DNNs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{rnn}%
+{%
+name={\acronymfont {\glsentryshort {rnn}}},%
+sort={RNN},%
+type={acronym},%
+first={RNN},%
+firstplural={RNNs},%
+text={RNN},%
+plural={RNNs},%
+description={Recurrent Neural Network},%
+descriptionplural={Recurrent Neural Network},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Recurrent Neural Network},%
+longplural={Recurrent Neural Networks},%
+short={RNN},%
+shortplural={RNNs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{srnn}%
+{%
+name={\acronymfont {\glsentryshort {srnn}}},%
+sort={SRNN},%
+type={acronym},%
+first={SRNN},%
+firstplural={SRNNs},%
+text={SRNN},%
+plural={SRNNs},%
+description={Stochastic Recurrent Neural Network},%
+descriptionplural={Stochastic Recurrent Neural Network},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Stochastic Recurrent Neural Network},%
+longplural={Stochastic Recurrent Neural Networks},%
+short={SRNN},%
+shortplural={SRNNs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{svrnn}%
+{%
+name={\acronymfont {\glsentryshort {svrnn}}},%
+sort={SVRNN},%
+type={acronym},%
+first={SVRNN},%
+firstplural={SVRNNs},%
+text={SVRNN},%
+plural={SVRNNs},%
+description={Semi-supervised Variational Recurrent Neural Network},%
+descriptionplural={Semi-supervised Variational Recurrent Neural Network},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Semi-supervised Variational Recurrent Neural Network},%
+longplural={Semi-supervised Variational Recurrent Neural Networks},%
+short={SVRNN},%
+shortplural={SVRNNs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{vsl}%
+{%
+name={\acronymfont {\glsentryshort {vsl}}},%
+sort={VSL},%
+type={acronym},%
+first={VSL},%
+firstplural={VSLs},%
+text={VSL},%
+plural={VSLs},%
+description={Variational Sequential Labeler},%
+descriptionplural={Variational Sequential Labeler},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Variational Sequential Labeler},%
+longplural={Variational Sequential Labelers},%
+short={VSL},%
+shortplural={VSLs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{vrnn}%
+{%
+name={\acronymfont {\glsentryshort {vrnn}}},%
+sort={VRNN},%
+type={acronym},%
+first={VRNN},%
+firstplural={VRNNs},%
+text={VRNN},%
+plural={VRNNs},%
+description={Variational Recurrent Neural Network},%
+descriptionplural={Variational Recurrent Neural Network},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Variational Recurrent Neural Network},%
+longplural={Variational Recurrent Neural Networks},%
+short={VRNN},%
+shortplural={VRNNs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{cnn}%
+{%
+name={\acronymfont {\glsentryshort {cnn}}},%
+sort={CNN},%
+type={acronym},%
+first={CNN},%
+firstplural={CNNs},%
+text={CNN},%
+plural={CNNs},%
+description={Convolutional Neural Network},%
+descriptionplural={Convolutional Neural Network},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Convolutional Neural Network},%
+longplural={Convolutional Neural Networks},%
+short={CNN},%
+shortplural={CNNs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{gru}%
+{%
+name={\acronymfont {\glsentryshort {gru}}},%
+sort={GRU},%
+type={acronym},%
+first={GRU},%
+firstplural={GRUs},%
+text={GRU},%
+plural={GRUs},%
+description={Gated Recurrent Unit},%
+descriptionplural={Gated Recurrent Unit},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Gated Recurrent Unit},%
+longplural={Gated Recurrent Units},%
+short={GRU},%
+shortplural={GRUs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{lstm}%
+{%
+name={\acronymfont {\glsentryshort {lstm}}},%
+sort={LSTM},%
+type={acronym},%
+first={LSTM},%
+firstplural={LSTMs},%
+text={LSTM},%
+plural={LSTMs},%
+description={Long Short-Term Memory},%
+descriptionplural={Long Short-Term Memory},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Long Short-Term Memory},%
+longplural={Long Short-Term Memorys},%
+short={LSTM},%
+shortplural={LSTMs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{mlp}%
+{%
+name={\acronymfont {\glsentryshort {mlp}}},%
+sort={MLP},%
+type={acronym},%
+first={MLP},%
+firstplural={MLPs},%
+text={MLP},%
+plural={MLPs},%
+description={Multi-Layer Perceptron},%
+descriptionplural={Multi-Layer Perceptron},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Multi-Layer Perceptron},%
+longplural={Multi-Layer Perceptrons},%
+short={MLP},%
+shortplural={MLPs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{em}%
+{%
+name={\acronymfont {\glsentryshort {em}}},%
+sort={EM},%
+type={acronym},%
+first={EM},%
+firstplural={EMs},%
+text={EM},%
+plural={EMs},%
+description={Expectation-Maximization},%
+descriptionplural={Expectation-Maximization},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Expectation-Maximization},%
+longplural={Expectation-Maximizations},%
+short={EM},%
+shortplural={EMs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{fb}%
+{%
+name={\acronymfont {\glsentryshort {fb}}},%
+sort={FB},%
+type={acronym},%
+first={FB},%
+firstplural={FBs},%
+text={FB},%
+plural={FBs},%
+description={Forward Backward},%
+descriptionplural={Forward Backward},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Forward Backward},%
+longplural={Forward Backwards},%
+short={FB},%
+shortplural={FBs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{ml}%
+{%
+name={\acronymfont {\glsentryshort {ml}}},%
+sort={ML},%
+type={acronym},%
+first={ML},%
+firstplural={MLs},%
+text={ML},%
+plural={MLs},%
+description={Maximum Likelihood},%
+descriptionplural={Maximum Likelihood},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Maximum Likelihood},%
+longplural={Maximum Likelihoods},%
+short={ML},%
+shortplural={MLs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{mle}%
+{%
+name={\acronymfont {\glsentryshort {mle}}},%
+sort={MLE},%
+type={acronym},%
+first={MLE},%
+firstplural={MLEs},%
+text={MLE},%
+plural={MLEs},%
+description={Maximum Likelihood Estimation},%
+descriptionplural={Maximum Likelihood Estimation},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Maximum Likelihood Estimation},%
+longplural={Maximum Likelihood Estimations},%
+short={MLE},%
+shortplural={MLEs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{sem}%
+{%
+name={\acronymfont {\glsentryshort {sem}}},%
+sort={SEM},%
+type={acronym},%
+first={SEM},%
+firstplural={SEMs},%
+text={SEM},%
+plural={SEMs},%
+description={Stochastic Expectation-Maximization},%
+descriptionplural={Stochastic Expectation-Maximization},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Stochastic Expectation-Maximization},%
+longplural={Stochastic Expectation-Maximizations},%
+short={SEM},%
+shortplural={SEMs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{semipmc}%
+{%
+name={\acronymfont {\glsentryshort {semipmc}}},%
+sort={SPMC},%
+type={acronym},%
+first={SPMC},%
+firstplural={SPMCs},%
+text={SPMC},%
+plural={SPMCs},%
+description={Semi Pairwise Markov Chain},%
+descriptionplural={Semi Pairwise Markov Chain},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Semi Pairwise Markov Chain},%
+longplural={Semi Pairwise Markov Chains},%
+short={SPMC},%
+shortplural={SPMCs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{ppmc}%
+{%
+name={\acronymfont {\glsentryshort {ppmc}}},%
+sort={PPMC},%
+type={acronym},%
+first={PPMC},%
+firstplural={PPMCs},%
+text={PPMC},%
+plural={PPMCs},%
+description={Partially Pairwise Markov Chain},%
+descriptionplural={Partially Pairwise Markov Chain},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Partially Pairwise Markov Chain},%
+longplural={Partially Pairwise Markov Chains},%
+short={PPMC},%
+shortplural={PPMCs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{dppmc}%
+{%
+name={\acronymfont {\glsentryshort {dppmc}}},%
+sort={DPPMC},%
+type={acronym},%
+first={DPPMC},%
+firstplural={DPPMCs},%
+text={DPPMC},%
+plural={DPPMCs},%
+description={Deep Partially Pairwise Markov Chain},%
+descriptionplural={Deep Partially Pairwise Markov Chain},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Deep Partially Pairwise Markov Chain},%
+longplural={Deep Partially Pairwise Markov Chains},%
+short={DPPMC},%
+shortplural={DPPMCs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{pdf}%
+{%
+name={\acronymfont {\glsentryshort {pdf}}},%
+sort={pdf},%
+type={acronym},%
+first={pdf},%
+firstplural={pdfs},%
+text={pdf},%
+plural={pdfs},%
+description={probability density function},%
+descriptionplural={probability density function},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={probability density function},%
+longplural={probability density functions},%
+short={pdf},%
+shortplural={pdfs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{gepro}%
+{%
+name={\acronymfont {\glsentryshort {gepro}}},%
+sort={GEPROMED},%
+type={acronym},%
+first={GEPROMED},%
+firstplural={GEPROMEDs},%
+text={GEPROMED},%
+plural={GEPROMEDs},%
+description={Groupe Européen de Recherche sur les Prothèses Appliquées à la Chirurgie Vasculaire},%
+descriptionplural={Groupe Européen de Recherche sur les Prothèses Appliquées à la Chirurgie Vasculaire},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Groupe Européen de Recherche sur les Prothèses Appliquées à la Chirurgie Vasculaire},%
+longplural={Groupe Européen de Recherche sur les Prothèses Appliquées à la Chirurgie Vasculaires},%
+short={GEPROMED},%
+shortplural={GEPROMEDs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{gmms}%
+{%
+name={\acronymfont {\glsentryshort {gmms}}},%
+sort={GMMs},%
+type={acronym},%
+first={GMMs},%
+firstplural={GMMss},%
+text={GMMs},%
+plural={GMMss},%
+description={Gaussian Mixture Models},%
+descriptionplural={Gaussian Mixture Models},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Gaussian Mixture Models},%
+longplural={Gaussian Mixture Modelss},%
+short={GMMs},%
+shortplural={GMMss},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{gans}%
+{%
+name={\acronymfont {\glsentryshort {gans}}},%
+sort={GANs},%
+type={acronym},%
+first={GANs},%
+firstplural={GANss},%
+text={GANs},%
+plural={GANss},%
+description={Generative Adversarial Networks},%
+descriptionplural={Generative Adversarial Networks},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Generative Adversarial Networks},%
+longplural={Generative Adversarial Networkss},%
+short={GANs},%
+shortplural={GANss},%
+counter={page},%
+parent={},%
+%
+}%
+

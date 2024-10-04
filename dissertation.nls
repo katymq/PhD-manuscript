@@ -1,0 +1,33 @@
+
+\begin{thenomenclature} 
+\nomgroup{G}
+  \item [{$a$}]\begingroup Light lower case letters represent scalars or functions\nomeqref {0}\nompageref{iii}
+  \item [{$A$}]\begingroup Upper case letters represent matrices\nomeqref {0}\nompageref{iii}
+  \item [{$\mathbb{R}^n$}]\begingroup Set of real vectors of dimension $n$\nomeqref {0}\nompageref{iii}
+  \item [{$\mathbb{R}^{n \times m}$}]\begingroup Set of real matrices of dimension $n \times m$\nomeqref {0}\nompageref{iii}
+  \item [{$\mathbb{C}$}]\begingroup Set of complex numbers\nomeqref {0}\nompageref{iii}
+  \item [{$\Re$}]\begingroup Real part of a complex number\nomeqref {0}\nompageref{iii}
+  \item [{$\mathrm{diag}(\cdot)$}]\begingroup Diagonal matrix\nomeqref {0}\nompageref{iii}
+  \item [{$\cdot^{\top}$}]\begingroup Transpose operator of a matrix or a vector\nomeqref {0}\nompageref{iii}
+  \item [{$\rm sigm $}]\begingroup Sigmoid function $ \rm sigm (x) = 1/(1 + \exp(-x))$\nomeqref {0}\nompageref{iii}
+\nomgroup{P}
+  \item [{$x$}]\begingroup (Observed) random variable and its realization. As far as the context is clear, we use the same symbol for both.\nomeqref {0}\nompageref{iii}
+  \item [{$y$}]\begingroup Random variable and its realization, which represents the label associated with $x$\nomeqref {0}\nompageref{iii}
+  \item [{$z$}]\begingroup Latent random variable and its realization\nomeqref {0}\nompageref{iii}
+  \item [{$x_t$}]\begingroup Random variable or realization at time $t$\nomeqref {0}\nompageref{iii}
+  \item [{$x_{t:k}$}]\begingroup Random variable or realization from time $t$ to $k$\nomeqref {0}\nompageref{iii}
+  \item [{$x_{0:T}$}]\begingroup Sequence of random variables or realizations from time $0$ to $T$\nomeqref {0}\nompageref{iii}
+  \item [{$\mathcal{N}(x; \mu, \sigma)$}]\begingroup Gaussian density function with mean $\mu$ and covariance $\sigma$ taken at point $x$\nomeqref {0}\nompageref{iii}
+  \item [{$\mathcal{N}(\mu, \sigma)$}]\begingroup Gaussian distribution with mean $\mu$ and covariance $\sigma$\nomeqref {0}\nompageref{iii}
+  \item [{$\mathcal Ber (p)$}]\begingroup Bernoulli distribution of parameter $p$\nomeqref {0}\nompageref{iii}
+  \item [{$\sim$}]\begingroup Indicates the law followed by a random variable\nomeqref {0}\nompageref{iii}
+  \item [{$p(x)$}]\begingroup Probability of a realization $x$ (discrete case) and probability density function of $x$ (continuous case)\nomeqref {0}\nompageref{iii}
+  \item [{$\mathrm{D}_{\mathrm{KL}}(q \mid p)$}]\begingroup Kullback-Leibler divergence between distributions $q$ and $p$\nomeqref {0}\nompageref{iii}
+  \item [{$\mathbb{E}(x)$}]\begingroup Expectation of a random variable $x$\nomeqref {0}\nompageref{iii}
+  \item [{$\mathbb{E}_{p(\cdot)}(\cdot)$}]\begingroup Expectation under the distribution $p(\cdot)$\nomeqref {0}\nompageref{iii}
+  \item [{$\mathrm{Var}(x)$}]\begingroup Variance of a random variable $x$\nomeqref {0}\nompageref{iii}
+  \item [{$\mathrm{Cov}(x, y)$}]\begingroup Covariance between the random variables $x$, and $y$\nomeqref {0}\nompageref{iii}
+  \item [{$[\mu_{\theta}^{x}, \sigma_{\theta}^{x}]$}]\begingroup Mean and variance or covariance matrix of the random variable $x$ that depends on $\theta$\nomeqref {0}\nompageref{iii}
+  \item [{$\rho_{\theta}^{x}$}]\begingroup Bernoulli parameter of the random variable $x$ depends on $\theta$\nomeqref {0}\nompageref{iii}
+
+\end{thenomenclature}

@@ -1,0 +1,291 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\@writefile{toc}{\contentsline {chapter}{\numberline {4}Deep Markov models for unsupervised classification}{65}{chapter.4}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:unsp_pmc_tmc}{{4}{65}{Deep Markov models for unsupervised classification}{chapter.4}{}}
+\@writefile{toc}{\etoc@startlocaltoc{5}}
+\citation{doucet2009tutorial}
+\@writefile{toc}{\contentsline {section}{\numberline {4.1}Introduction}{66}{section.4.1}\protected@file@percent }
+\@writefile{brf}{\backcite{doucet2009tutorial}{{66}{4.1}{section.4.1}}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.2}PMCs for unsupervised classification}{67}{section.4.2}\protected@file@percent }
+\newlabel{sec:generalParam}{{4.2}{67}{PMCs for unsupervised classification}{section.4.2}{}}
+\newlabel{eq:pmc_intro_uns}{{4.1}{67}{PMCs for unsupervised classification}{equation.4.2.1}{}}
+\newlabel{eq:pmc_gen}{{4.2}{67}{PMCs for unsupervised classification}{equation.4.2.2}{}}
+\newlabel{fig:dhmcin}{{4.1a}{67}{HMC\relax }{figure.caption.22}{}}
+\newlabel{sub@fig:dhmcin}{{a}{67}{HMC\relax }{figure.caption.22}{}}
+\newlabel{fig:dpmccn1}{{4.1b}{67}{SPMC\relax }{figure.caption.22}{}}
+\newlabel{sub@fig:dpmccn1}{{b}{67}{SPMC\relax }{figure.caption.22}{}}
+\newlabel{fig:dpmccn2}{{4.1c}{67}{PMC\relax }{figure.caption.22}{}}
+\newlabel{sub@fig:dpmccn2}{{c}{67}{PMC\relax }{figure.caption.22}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.1}{\ignorespaces Graphical representations of the HMC, SPMC, and PMC models.\relax }}{67}{figure.caption.22}\protected@file@percent }
+\newlabel{fig:pmc_graphs}{{4.1}{67}{Graphical representations of the HMC, SPMC, and PMC models.\relax }{figure.caption.22}{}}
+\newlabel{pmc-theta-1}{{4.4}{67}{PMCs for unsupervised classification}{equation.4.2.4}{}}
+\newlabel{pmc-theta-2}{{4.5}{67}{PMCs for unsupervised classification}{equation.4.2.4}{}}
+\newlabel{param-1}{{4.6}{68}{}{equation.4.2.6}{}}
+\newlabel{param-2}{{4.7}{68}{}{equation.4.2.7}{}}
+\newlabel{param-32}{{4.8}{68}{}{equation.4.2.8}{}}
+\newlabel{param-4}{{4.9}{68}{}{equation.4.2.9}{}}
+\newlabel{param-1_bis}{{4.10}{68}{}{equation.4.2.10}{}}
+\newlabel{param-2_bis}{{4.11}{68}{}{equation.4.2.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.1}Bayesian inference for PMCs}{68}{subsection.4.2.1}\protected@file@percent }
+\newlabel{sec:inference_pmc}{{4.2.1}{68}{Bayesian inference for PMCs}{subsection.4.2.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Estimation of $\theta $}{68}{subsection.4.2.1}\protected@file@percent }
+\citation{pieczynski2003pairwise}
+\citation{NEURIPS2019_9015}
+\citation{jax2018github}
+\citation{dempster1977maximum}
+\citation{xu1996convergence,balakrishnan2017statistical}
+\newlabel{likelihood-pmc}{{4.12}{69}{Estimation of $\theta $}{equation.4.2.12}{}}
+\@writefile{brf}{\backcite{pieczynski2003pairwise}{{69}{4.2.1}{equation.4.2.12}}}
+\newlabel{eq:alpha}{{4.13}{69}{Estimation of $\theta $}{equation.4.2.13}{}}
+\@writefile{brf}{\backcite{NEURIPS2019_9015}{{69}{4.2.1}{equation.4.2.13}}}
+\newlabel{grad-likelihood}{{4.14}{69}{Estimation of $\theta $}{equation.4.2.14}{}}
+\@writefile{brf}{\backcite{jax2018github}{{69}{4.2.1}{equation.4.2.14}}}
+\newlabel{rem-EM}{{4.2.1}{69}{}{remark.4.2.1}{}}
+\@writefile{brf}{\backcite{dempster1977maximum}{{69}{4.2.1}{remark.4.2.1}}}
+\citation{pieczynski2003pairwise}
+\@writefile{brf}{\backcite{xu1996convergence}{{70}{4.2.1}{remark.4.2.1}}}
+\@writefile{brf}{\backcite{balakrishnan2017statistical}{{70}{4.2.1}{remark.4.2.1}}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {3}{\ignorespaces Unsupervised estimation of $\theta $ in general PMC models.\relax }}{70}{algorithm.3}\protected@file@percent }
+\newlabel{algo:algo_theta_pmc}{{3}{70}{Unsupervised estimation of $\theta $ in general PMC models.\relax }{algorithm.3}{}}
+\newlabel{line:start_dpmc}{{1}{70}{Unsupervised estimation of $\theta $ in general PMC models.\relax }{algorithm.3}{}}
+\newlabel{update-GEM}{{5}{70}{Unsupervised estimation of $\theta $ in general PMC models.\relax }{algorithm.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Estimation of $y_t$}{70}{algorithm.3}\protected@file@percent }
+\@writefile{brf}{\backcite{pieczynski2003pairwise}{{70}{4.2.1}{algorithm.3}}}
+\newlabel{eq:beta}{{4.15}{70}{Estimation of $\lab _t$}{equation.4.2.15}{}}
+\newlabel{eq:pair_post_margin}{{4.16}{70}{Estimation of $\lab _t$}{equation.4.2.16}{}}
+\newlabel{eq:post_margin}{{4.17}{70}{Estimation of $\lab _t$}{equation.4.2.16}{}}
+\citation{rumelhart1986learning}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {4}{\ignorespaces Unsupervised estimation of $y_t$ in general PMC models.\relax }}{71}{algorithm.4}\protected@file@percent }
+\newlabel{algo:algo_hk_pmc}{{4}{71}{Unsupervised estimation of $\lab _t$ in general PMC models.\relax }{algorithm.4}{}}
+\newlabel{line:end_dpmc}{{4}{71}{Unsupervised estimation of $\lab _t$ in general PMC models.\relax }{algorithm.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.2}Deep PMCs for unsupervised classification}{71}{subsection.4.2.2}\protected@file@percent }
+\newlabel{sec:deeppmc}{{4.2.2}{71}{Deep PMCs for unsupervised classification}{subsection.4.2.2}{}}
+\@writefile{brf}{\backcite{rumelhart1986learning}{{71}{4.2.2}{subsection.4.2.2}}}
+\@writefile{toc}{\contentsline {subsubsection}{Constrained output layer}{72}{subsection.4.2.2}\protected@file@percent }
+\newlabel{sec:constrained_archi}{{4.2.2}{72}{Constrained output layer}{subsection.4.2.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.2}{\ignorespaces DNN architecture with constrained output layer for $\psi ^{y}_{\theta }$ with two hidden layers. $\Sigma =\psi ^{y}_{\theta }(y_{t-1},x_{t-1},y_{t-1}x_{t-1}) ={\rm  sigm} (\textcolor {black}{\gamma _1} l^3_1+ \textcolor {black}{\gamma _2}l^3_2+ \textcolor {black}{\gamma _3}l^3_3+ \textcolor {black}{\kappa })$, where the last layer parameters $ \{\gamma _1,\gamma _2,\gamma _3,\kappa \}$ are frozen to $\gamma _1=b_{\omega _2}-b_{\omega _1}, \gamma _2=a_{\omega _2}-a_{\omega _1}, \gamma _3=a_{\omega _1}$ and $\kappa =b_{\omega _1}$.  The parameters $\theta _{\mathrm  {fr}}$ are related to the output layer which computes the function $\psi ^{y}_{\theta }$ of the linear PMC model \eqref  {param-1_bis}. Due to the one-hot encoding of the discrete r.v. $y_{t-1}$ ($y_{t-1}=\omega _1 \leftrightarrow y_{t-1}=0$ and $y_{t-1}=\omega _2 \leftrightarrow y_{t-1}=1$), this parameterization is equivalent to that of \eqref  {param-1_bis} up to the given correspondence between $\theta _{\mathrm  {fr}}=(\gamma _1, \gamma _2, \gamma _3,\kappa )$ and $(a_{\omega _1},a_{\omega _2},b_{\omega _1},b_{\omega _2})$. \textcolor {black}{When the number of classes $C$ increases, the size of the first and last layer increases due to the one-hot encoding of $y_{t-1}$.} Linear activation functions are used in the last hidden layer in red. \relax }}{72}{figure.caption.23}\protected@file@percent }
+\newlabel{fig:constrained_archi}{{4.2}{72}{DNN architecture with constrained output layer for $\pyun $ with two hidden layers. $\Sigma =\pyun (\lab _{t-1},\obs _{t-1},\lab _{t-1}\obs _{t-1}) ={\rm sigm} (\textcolor {black}{\gamma _1} l^3_1+ \textcolor {black}{\gamma _2}l^3_2+ \textcolor {black}{\gamma _3}l^3_3+ \textcolor {black}{\kappa })$, where the last layer parameters $ \{\gamma _1,\gamma _2,\gamma _3,\kappa \}$ are frozen to $\gamma _1=b_{\omega _2}-b_{\omega _1}, \gamma _2=a_{\omega _2}-a_{\omega _1}, \gamma _3=a_{\omega _1}$ and $\kappa =b_{\omega _1}$.\\ The parameters $\theta _{\fr }$ are related to the output layer which computes the function $\pyun $ of the linear PMC model \eqref {param-1_bis}. Due to the one-hot encoding of the discrete r.v. $\lab _{t-1}$ ($\lab _{t-1}=\omega _1 \leftrightarrow \lab _{t-1}=0$ and $\lab _{t-1}=\omega _2 \leftrightarrow \lab _{t-1}=1$), this parameterization is equivalent to that of \eqref {param-1_bis} up to the given correspondence between $\theta _{\fr }=(\gamma _1, \gamma _2, \gamma _3,\kappa )$ and $(a_{\omega _1},a_{\omega _2},b_{\omega _1},b_{\omega _2})$. \textcolor {black}{When the number of classes $C$ increases, the size of the first and last layer increases due to the one-hot encoding of $\lab _{t-1}$.} Linear activation functions are used in the last hidden layer in red. \relax }{figure.caption.23}{}}
+\citation{erhan2010does}
+\citation{Mohamed-DBN,Glorot,deep-SPM}
+\citation{sagan2012space}
+\@writefile{toc}{\contentsline {subsubsection}{Pretraining by backpropagation}{73}{figure.caption.23}\protected@file@percent }
+\newlabel{sec:pretraining_backprop}{{4.2.2}{73}{Pretraining by backpropagation}{figure.caption.23}{}}
+\@writefile{brf}{\backcite{erhan2010does}{{73}{4.2.2}{remark.4.2.2}}}
+\@writefile{brf}{\backcite{Mohamed-DBN}{{73}{4.2.2}{remark.4.2.2}}}
+\@writefile{brf}{\backcite{Glorot}{{73}{4.2.2}{remark.4.2.2}}}
+\@writefile{brf}{\backcite{deep-SPM}{{73}{4.2.2}{remark.4.2.2}}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.3}Simulations}{73}{subsection.4.2.3}\protected@file@percent }
+\newlabel{sec:pmc}{{4.2.3}{73}{Simulations}{subsection.4.2.3}{}}
+\@writefile{brf}{\backcite{sagan2012space}{{73}{4.2.3}{subsection.4.2.3}}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {5}{\ignorespaces A general estimation algorithm for deep parameterization of PMC models.\relax }}{74}{algorithm.5}\protected@file@percent }
+\newlabel{algo:algo_train_dpmc}{{5}{74}{A general estimation algorithm for deep parameterization of PMC models.\relax }{algorithm.5}{}}
+\newlabel{line:nondeep1}{{1}{74}{A general estimation algorithm for deep parameterization of PMC models.\relax }{algorithm.5}{}}
+\newlabel{line:nondeep3}{{3}{74}{A general estimation algorithm for deep parameterization of PMC models.\relax }{algorithm.5}{}}
+\newlabel{fig:nonlin_corr_pmc_sce1_a}{{4.3a}{75}{Error rate from the unsupervised segmentations with a noise described by \eqref {eq:noise_eq1}. Results are averaged on all the \emph {cattle}-type images from the database.\relax }{figure.caption.24}{}}
+\newlabel{sub@fig:nonlin_corr_pmc_sce1_a}{{a}{75}{Error rate from the unsupervised segmentations with a noise described by \eqref {eq:noise_eq1}. Results are averaged on all the \emph {cattle}-type images from the database.\relax }{figure.caption.24}{}}
+\newlabel{fig:nonlin_corr_pmc_sce1_b}{{4.3b}{75}{Selected classifications for $a_{\omega _2}=0.4$ (signaled by the red vertical line in Figure~\ref {fig:nonlin_corr_pmc_sce1_a}). Error rates appear below the images.\relax }{figure.caption.24}{}}
+\newlabel{sub@fig:nonlin_corr_pmc_sce1_b}{{b}{75}{Selected classifications for $a_{\omega _2}=0.4$ (signaled by the red vertical line in Figure~\ref {fig:nonlin_corr_pmc_sce1_a}). Error rates appear below the images.\relax }{figure.caption.24}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.3}{\ignorespaces Unsupervised image segmentation with PMC models. Figure~\ref {fig:nonlin_corr_pmc_sce1_a} displays averaged results while Figure~\ref {fig:nonlin_corr_pmc_sce1_b} describes a particular classification.\relax }}{75}{figure.caption.24}\protected@file@percent }
+\newlabel{fig:nonlin_corr_pmc_sce1}{{4.3}{75}{Unsupervised image segmentation with PMC models. Figure~\ref {fig:nonlin_corr_pmc_sce1_a} displays averaged results while Figure~\ref {fig:nonlin_corr_pmc_sce1_b} describes a particular classification.\relax }{figure.caption.24}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.3}TMCs for unsupervised classification}{75}{section.4.3}\protected@file@percent }
+\newlabel{sec-tmc}{{4.3}{75}{TMCs for unsupervised classification}{section.4.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.1}Variational Inference for general TMCs}{76}{subsection.4.3.1}\protected@file@percent }
+\newlabel{sec:inference_tmc}{{4.3.1}{76}{Variational Inference for general TMCs}{subsection.4.3.1}{}}
+\newlabel{backward-decomposition}{{4.18}{76}{Variational Inference for general TMCs}{equation.4.3.18}{}}
+\newlabel{prop:prop1}{{4.3.1}{76}{}{proposition.4.3.1}{}}
+\newlabel{prop1_ineq}{{4.19}{77}{}{equation.4.3.19}{}}
+\newlabel{elbo-opt}{{4.20}{77}{}{equation.4.3.20}{}}
+\newlabel{elbo-1}{{4.21}{77}{}{equation.4.3.21}{}}
+\newlabel{elbo-3}{{4.23}{77}{}{equation.4.3.23}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.2}Estimation algorithm for TMCs}{77}{subsection.4.3.2}\protected@file@percent }
+\newlabel{tmc-trans}{{4.24}{77}{Estimation algorithm for TMCs}{equation.4.3.24}{}}
+\citation{higgins2017beta,kingma2014semi}
+\newlabel{tmc-theta-1}{{4.25}{78}{Estimation algorithm for TMCs}{equation.4.3.25}{}}
+\newlabel{tmc-theta-2}{{4.26}{78}{Estimation algorithm for TMCs}{equation.4.3.25}{}}
+\newlabel{tmc-theta-3}{{4.27}{78}{Estimation algorithm for TMCs}{equation.4.3.25}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Joint estimation of $\theta $ and $\phi $}{78}{remark.4.3.1}\protected@file@percent }
+\newlabel{sec:joint_estimation}{{4.3.2}{78}{Joint estimation of $\theta $ and $\phi $}{remark.4.3.1}{}}
+\@writefile{brf}{\backcite{higgins2017beta}{{78}{4.3.2}{remark.4.3.1}}}
+\@writefile{brf}{\backcite{kingma2014semi}{{78}{4.3.2}{remark.4.3.1}}}
+\@writefile{toc}{\contentsline {subsubsection}{The $\beta $-ELBO}{78}{remark.4.3.1}\protected@file@percent }
+\newlabel{corollary1}{{1}{78}{}{corollary.1}{}}
+\citation{higgins2017beta}
+\newlabel{tilde-p}{{4.28}{79}{}{equation.4.3.28}{}}
+\newlabel{barre-p}{{4.29}{79}{}{equation.4.3.29}{}}
+\newlabel{elbo-opt-2}{{4.30}{79}{}{equation.4.3.30}{}}
+\newlabel{L-1}{{4.31}{79}{}{equation.4.3.31}{}}
+\newlabel{L-2}{{4.32}{79}{}{equation.4.3.32}{}}
+\@writefile{brf}{\backcite{higgins2017beta}{{79}{4.3.2}{equation.4.3.32}}}
+\newlabel{L-1_decomposed}{{4.33}{79}{The $\beta $-ELBO}{equation.4.3.33}{}}
+\citation{higgins2017beta}
+\citation{kingma2014semi,klys2018learning,kumar2021learning}
+\newlabel{L-2_decomposed}{{4.34}{80}{The $\beta $-ELBO}{equation.4.3.34}{}}
+\@writefile{brf}{\backcite{higgins2017beta}{{80}{4.3.2}{equation.4.3.34}}}
+\@writefile{toc}{\contentsline {subsubsection}{Cross-entropy penalization}{80}{equation.4.3.34}\protected@file@percent }
+\newlabel{L-3}{{4.35}{80}{Cross-entropy penalization}{equation.4.3.35}{}}
+\@writefile{brf}{\backcite{kingma2014semi}{{80}{4.3.2}{equation.4.3.35}}}
+\@writefile{brf}{\backcite{klys2018learning}{{80}{4.3.2}{equation.4.3.35}}}
+\@writefile{brf}{\backcite{kumar2021learning}{{80}{4.3.2}{equation.4.3.35}}}
+\newlabel{eq:beta_elbo_xent}{{4.36}{80}{Cross-entropy penalization}{equation.4.3.36}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Monte Carlo approximation}{81}{equation.4.3.36}\protected@file@percent }
+\newlabel{L-approx}{{4.37}{81}{Monte Carlo approximation}{equation.4.3.37}{}}
+\newlabel{L-1-approx}{{4.38}{81}{Monte Carlo approximation}{equation.4.3.38}{}}
+\newlabel{L-2-approx}{{4.39}{81}{Monte Carlo approximation}{equation.4.3.39}{}}
+\newlabel{L-3-approx}{{4.40}{81}{Monte Carlo approximation}{equation.4.3.40}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {6}{\ignorespaces Parameter estimation in general TMCs.\relax }}{82}{algorithm.6}\protected@file@percent }
+\newlabel{algo:tmc_elbo_opt}{{6}{82}{Parameter estimation in general TMCs.\relax }{algorithm.6}{}}
+\newlabel{line:start_dtmc}{{2}{82}{Parameter estimation in general TMCs.\relax }{algorithm.6}{}}
+\newlabel{eq:elbo_grad}{{4.41}{82}{Parameter estimation in general TMCs.\relax }{equation.4.3.41}{}}
+\newlabel{line:end_dtmc}{{13}{82}{Parameter estimation in general TMCs.\relax }{equation.4.3.41}{}}
+\citation{livredoucetshort}
+\citation{doucet2009tutorial}
+\citation{Fearnhead-smoothing}
+\@writefile{toc}{\contentsline {subsubsection}{Estimation of $y_t$}{83}{equation.4.3.41}\protected@file@percent }
+\newlabel{estimation-h-tmc}{{4.3.2}{83}{Estimation of $\lab _t$}{equation.4.3.41}{}}
+\newlabel{posterior-tmc}{{4.42}{83}{Estimation of $\lab _t$}{equation.4.3.42}{}}
+\@writefile{brf}{\backcite{livredoucetshort}{{83}{4.3.2}{equation.4.3.42}}}
+\@writefile{brf}{\backcite{doucet2009tutorial}{{83}{4.3.2}{equation.4.3.43}}}
+\@writefile{brf}{\backcite{Fearnhead-smoothing}{{83}{4.3.2}{equation.4.3.43}}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.3}Deep TMCs for unsupervised classification}{83}{subsection.4.3.3}\protected@file@percent }
+\newlabel{sec-deep-tmc}{{4.3.3}{83}{Deep TMCs for unsupervised classification}{subsection.4.3.3}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {7}{\ignorespaces A Sequential Monte Carlo algorithm for Bayesian classification in general TMC.\relax }}{84}{algorithm.7}\protected@file@percent }
+\newlabel{algo:tmc_inf}{{7}{84}{A Sequential Monte Carlo algorithm for Bayesian classification in general TMC.\relax }{algorithm.7}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Constrained ouput layer}{85}{subsection.4.3.3}\protected@file@percent }
+\newlabel{constraint-tmc}{{4.3.3}{85}{Constrained ouput layer}{subsection.4.3.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Pretraining of the unfrozen parameters}{85}{subsection.4.3.3}\protected@file@percent }
+\newlabel{tmc-unfrozen}{{4.3.3}{85}{Pretraining of the unfrozen parameters}{subsection.4.3.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.4}{\ignorespaces Graphical and condensed representation of the parameterization of $\psi ^{y}_{\theta }$ in the DTMC models. \emph  {r.t.} stands for reparameterization trick. The dashed arrows represent the fact that some variables are copied. For clarity, we do not represent the block $\psi ^{y}_{\theta }$ which is similar to Figure~\ref {fig:constrained_archi}, up to the introduction of $z_{t-1:t}$. \relax }}{85}{figure.caption.25}\protected@file@percent }
+\newlabel{fig:pretrain_dmtmc}{{4.4}{85}{Graphical and condensed representation of the parameterization of $\pyun $ in the DTMC models. \emph {r.t.} stands for reparameterization trick. The dashed arrows represent the fact that some variables are copied. For clarity, we do not represent the block $\pyun $ which is similar to Figure~\ref {fig:constrained_archi}, up to the introduction of $\latent _{t-1:t}$. \relax }{figure.caption.25}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {8}{\ignorespaces A general estimation algorithm for deep parameterizations of TMC models\relax }}{86}{algorithm.8}\protected@file@percent }
+\newlabel{algo:algo_train_dmtmc}{{8}{86}{A general estimation algorithm for deep parameterizations of TMC models\relax }{algorithm.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.4}Simulations}{86}{subsection.4.3.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{The minimal TMCs}{86}{subsection.4.3.4}\protected@file@percent }
+\newlabel{sec:tmc_models}{{4.3.4}{86}{The minimal TMCs}{subsection.4.3.4}{}}
+\newlabel{joint-tmmc}{{4.44}{86}{The minimal TMCs}{equation.4.3.44}{}}
+\citation{gorynin2018assessing,li2019adaptive,chen2020modeling}
+\newlabel{eq:tmc_simple_q}{{4.45}{87}{The minimal TMCs}{equation.4.3.45}{}}
+\@writefile{brf}{\backcite{gorynin2018assessing}{{87}{4.3.4}{equation.4.3.45}}}
+\@writefile{brf}{\backcite{li2019adaptive}{{87}{4.3.4}{equation.4.3.45}}}
+\@writefile{brf}{\backcite{chen2020modeling}{{87}{4.3.4}{equation.4.3.45}}}
+\@writefile{toc}{\contentsline {subsubsection}{Experiments and results}{87}{equation.4.3.45}\protected@file@percent }
+\newlabel{sec:exp_res_tmc}{{4.3.4}{87}{Experiments and results}{equation.4.3.45}{}}
+\newlabel{fig:mult_noise_graph_a}{{4.5a}{88}{Error rate from the unsupervised segmentations of Scenario~\eqref {eq:noise_eq1}. Results are averaged on all the \emph {camel}-type images from the database.\relax }{figure.caption.26}{}}
+\newlabel{sub@fig:mult_noise_graph_a}{{a}{88}{Error rate from the unsupervised segmentations of Scenario~\eqref {eq:noise_eq1}. Results are averaged on all the \emph {camel}-type images from the database.\relax }{figure.caption.26}{}}
+\newlabel{fig:mult_noise_graph_b}{{4.5b}{88}{Selected illustrations for $a_{\omega _2}=0.5$ (signaled by the red vertical line on Fig. \ref {fig:mult_noise_graph_a}). Error rates appear below the images.\relax }{figure.caption.26}{}}
+\newlabel{sub@fig:mult_noise_graph_b}{{b}{88}{Selected illustrations for $a_{\omega _2}=0.5$ (signaled by the red vertical line on Fig. \ref {fig:mult_noise_graph_a}). Error rates appear below the images.\relax }{figure.caption.26}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.5}{\ignorespaces Unsupervised image segmentation with General Triplet Markov Chains (Scenario~\eqref  {eq:noise_eq1}).\relax }}{88}{figure.caption.26}\protected@file@percent }
+\newlabel{fig:mult_noise_graph}{{4.5}{88}{Unsupervised image segmentation with General Triplet Markov Chains (Scenario~\eqref {eq:noise_eq1}).\relax }{figure.caption.26}{}}
+\newlabel{scenario-2-tmc}{{4.46}{89}{Experiments and results}{equation.4.3.46}{}}
+\newlabel{fig:nonstatio_noise_a}{{4.6a}{89}{Error rate from the unsupervised segmentations of Scenario \eqref {scenario-2-tmc}. Results are averaged on all the \emph {dog}-type images from the database.\relax }{figure.caption.27}{}}
+\newlabel{sub@fig:nonstatio_noise_a}{{a}{89}{Error rate from the unsupervised segmentations of Scenario \eqref {scenario-2-tmc}. Results are averaged on all the \emph {dog}-type images from the database.\relax }{figure.caption.27}{}}
+\newlabel{fig:nonstatio_noise_c}{{4.6b}{89}{Selected illustrations for $a_{\omega _2}=2.2$ (signaled by the red vertical line on Fig. \ref {fig:nonstatio_noise_a}). Error rates appear below the images.\relax }{figure.caption.27}{}}
+\newlabel{sub@fig:nonstatio_noise_c}{{b}{89}{Selected illustrations for $a_{\omega _2}=2.2$ (signaled by the red vertical line on Fig. \ref {fig:nonstatio_noise_a}). Error rates appear below the images.\relax }{figure.caption.27}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.6}{\ignorespaces Unsupervised image segmentation with General Triplet Markov Chains (Scenario \eqref  {scenario-2-tmc}).\relax }}{89}{figure.caption.27}\protected@file@percent }
+\newlabel{fig:nonstatio_noise}{{4.6}{89}{Unsupervised image segmentation with General Triplet Markov Chains (Scenario \eqref {scenario-2-tmc}).\relax }{figure.caption.27}{}}
+\citation{gorynin2018assessing,li2019adaptive,chen2020modeling}
+\citation{rumelhart1986learning,mikolov2014learning}
+\@writefile{brf}{\backcite{gorynin2018assessing}{{90}{4.3.4}{figure.caption.27}}}
+\@writefile{brf}{\backcite{li2019adaptive}{{90}{4.3.4}{figure.caption.27}}}
+\@writefile{brf}{\backcite{chen2020modeling}{{90}{4.3.4}{figure.caption.27}}}
+\@writefile{brf}{\backcite{rumelhart1986learning}{{90}{4.3.2}{remark.4.3.2}}}
+\@writefile{brf}{\backcite{mikolov2014learning}{{90}{4.3.2}{remark.4.3.2}}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.4}Experiments on real datasets}{90}{section.4.4}\protected@file@percent }
+\newlabel{sec:realworld}{{4.4}{90}{Experiments on real datasets}{section.4.4}{}}
+\citation{reyes2016transition}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.1}Unsupervised segmentation of biomedical images}{91}{subsection.4.4.1}\protected@file@percent }
+\newlabel{sec:realworld_mct}{{4.4.1}{91}{Unsupervised segmentation of biomedical images}{subsection.4.4.1}{}}
+\pp@spagectr{FN@totalid}{3}{1}{91}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.2}Unsupervised clustering for human activity recognition}{91}{subsection.4.4.2}\protected@file@percent }
+\newlabel{sec:realworld_har}{{4.4.2}{91}{Unsupervised clustering for human activity recognition}{subsection.4.4.2}{}}
+\@writefile{brf}{\backcite{reyes2016transition}{{91}{4.4.2}{subsection.4.4.2}}}
+\pp@spagectr{FN@totalid}{4}{1}{91}
+\citation{reyes2016transition}
+\citation{reyes2016transition}
+\@writefile{lot}{\contentsline {table}{\numberline {4.1}{\ignorespaces Averaged error rates (\%) in unsupervised image segmentation with all the generalized TMCs assessed on ten micro-computed tomography slices. The detailed scores are given in Appendix~\ref {app:error_rates}.\relax }}{92}{table.caption.28}\protected@file@percent }
+\newlabel{table:microct_scores}{{4.1}{92}{Averaged error rates (\%) in unsupervised image segmentation with all the generalized TMCs assessed on ten micro-computed tomography slices. The detailed scores are given in Appendix~\ref {app:error_rates}.\relax }{table.caption.28}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.2}{\ignorespaces Averaged error rates (\%) in the binary clustering of the first twenty raw entries of the HAPT dataset~\citep  {reyes2016transition}. The detailed scores are given in Appendix~\ref {app:error_rates}.\relax }}{92}{table.caption.30}\protected@file@percent }
+\@writefile{brf}{\backcite{reyes2016transition}{{92}{4.2}{table.caption.30}}}
+\newlabel{table:har_scores}{{4.2}{92}{Averaged error rates (\%) in the binary clustering of the first twenty raw entries of the HAPT dataset~\citep {reyes2016transition}. The detailed scores are given in Appendix~\ref {app:error_rates}.\relax }{table.caption.30}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.7}{\ignorespaces Illustration of the unsupervised segmentation of slice \texttt  {B}, as reported in Table \ref {table:microct_scores}. The D-MTMC appears to better fit the non-stationary noise, offering a $4\%$-point improvement in the error rate. The stent components appearing in red are segmented beforehand with a thresholding technique and are considered as image borders during the segmentation using the probabilistic models.\relax }}{92}{figure.caption.29}\protected@file@percent }
+\newlabel{fig:mct_illustrations}{{4.7}{92}{Illustration of the unsupervised segmentation of slice \texttt {B}, as reported in Table \ref {table:microct_scores}. The D-MTMC appears to better fit the non-stationary noise, offering a $4\%$-point improvement in the error rate. The stent components appearing in red are segmented beforehand with a thresholding technique and are considered as image borders during the segmentation using the probabilistic models.\relax }{figure.caption.29}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.5}Conclusions}{93}{section.4.5}\protected@file@percent }
+\@setckpt{ch4}{
+\setcounter{page}{94}
+\setcounter{equation}{46}
+\setcounter{enumi}{0}
+\setcounter{enumii}{0}
+\setcounter{enumiii}{0}
+\setcounter{enumiv}{0}
+\setcounter{footnote}{2}
+\setcounter{mpfootnote}{0}
+\setcounter{part}{0}
+\setcounter{chapter}{4}
+\setcounter{section}{5}
+\setcounter{subsection}{0}
+\setcounter{subsubsection}{0}
+\setcounter{paragraph}{0}
+\setcounter{subparagraph}{0}
+\setcounter{figure}{7}
+\setcounter{table}{2}
+\setcounter{NAT@ctr}{0}
+\setcounter{nlinenum}{0}
+\setcounter{etoc@tocid}{5}
+\setcounter{blindtext}{1}
+\setcounter{Blindtext}{5}
+\setcounter{blind@countparstart}{0}
+\setcounter{blindlist}{0}
+\setcounter{blindlistlevel}{0}
+\setcounter{blindlist@level}{0}
+\setcounter{blind@listcount}{0}
+\setcounter{blind@levelcount}{0}
+\setcounter{blind@randomcount}{0}
+\setcounter{blind@randommax}{0}
+\setcounter{blind@pangramcount}{0}
+\setcounter{blind@pangrammax}{0}
+\setcounter{section@level}{0}
+\setcounter{Item}{0}
+\setcounter{Hfootnote}{4}
+\setcounter{bookmark@seq@number}{60}
+\setcounter{@todonotes@numberoftodonotes}{0}
+\setcounter{caption@flags}{2}
+\setcounter{continuedfloat}{0}
+\setcounter{subfigure}{0}
+\setcounter{subtable}{0}
+\setcounter{tcbbreakpart}{0}
+\setcounter{tcblayer}{0}
+\setcounter{tcolorbox@number}{0}
+\setcounter{FN@totalid}{4}
+\setcounter{pp@a@FN@totalid}{4}
+\setcounter{lstnumber}{1}
+\setcounter{parentequation}{0}
+\setcounter{@pps}{0}
+\setcounter{@ppsavesec}{0}
+\setcounter{@ppsaveapp}{0}
+\setcounter{AM@survey}{0}
+\setcounter{float@type}{32}
+\setcounter{algorithm}{8}
+\setcounter{ALG@line}{4}
+\setcounter{ALG@rem}{0}
+\setcounter{ALG@nested}{0}
+\setcounter{ALG@Lnr}{2}
+\setcounter{ALG@blocknr}{10}
+\setcounter{ALG@storecount}{0}
+\setcounter{ALG@tmpcounter}{0}
+\setcounter{definition}{0}
+\setcounter{example}{0}
+\setcounter{remark}{0}
+\setcounter{remarks}{0}
+\setcounter{proposition}{0}
+\setcounter{theorem}{0}
+\setcounter{usecaseinner}{0}
+\setcounter{lemma}{0}
+\setcounter{model}{0}
+\setcounter{corollary}{1}
+\setcounter{scenario}{0}
+\setcounter{su@anzahl}{0}
+\setcounter{LT@tables}{0}
+\setcounter{LT@chunks}{0}
+\setcounter{lstlisting}{0}
+}
